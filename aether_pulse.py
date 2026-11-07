@@ -2870,6 +2870,7 @@ try {{
       <button type="button" class="tab-btn active" onclick="switchTab('leaderboard', this)">Efficiency Leaderboard</button>
       <button type="button" class="tab-btn" onclick="switchTab('t3board', this)">T3 Usage &amp; Telemetry Graphs</button>
       <button type="button" class="tab-btn" onclick="switchTab('bounty', this)">Bounty Board &amp; Camaraderie</button>
+      <button type="button" class="tab-btn" onclick="switchTab('subtiers', this)">⚡ Sub Tiers: Unoemono ➔ Quap</button>
       <button type="button" class="tab-btn" onclick="switchTab('arena', this)">Platform Comparison</button>
       <button type="button" class="tab-btn" onclick="switchTab('doctor', this)">Cache Doctor &amp; Harnesses</button>
       <button type="button" class="tab-btn" onclick="switchTab('spotlight', this)">Architect Spotlight &amp; Directory</button>
@@ -3373,6 +3374,153 @@ try {{
     </div>
   </section>
 
+
+  <!-- TAB: SUBSCRIPTION TIERS & HUMOROUS LOADOUT BUILDER -->
+  <section id="tab-subtiers" class="tab-pane">
+    <div class="panel" style="margin-block-end:20px;">
+      <div class="ledger-label">Decision 2.A · Dynamic Subscription Tier Engine</div>
+      <h2 style="margin:4px 0 8px 0;">Subscription Tier Loadout &amp; Humorous Scale</h2>
+      <p class="prose" style="max-width:820px;margin-bottom:16px;">
+        Never be confused by arbitrary terminology again! Aether Pulse dynamically names your multi-agent mesh based on how many subscriptions you pay for:
+        <strong>1 = Unoemono</strong>, <strong>2 = Couples Fighting</strong>, <strong>3 = Trinity</strong>, <strong>4 = Quap</strong>, and so on up to the <strong>10-Ring Circus</strong>.
+        Select your active subscriptions below or type your own custom alias!
+      </p>
+
+      <!-- Active Tier Display Card -->
+      <div id="web-tier-hero" style="background:linear-gradient(135deg, rgba(0,102,204,0.14) 0%, rgba(224,122,95,0.14) 100%);border:1px solid var(--accent);border-radius:12px;padding:20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
+        <div>
+          <span style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);">Active Subscription Tier</span>
+          <div id="web-tier-title" style="font-size:1.75rem;font-weight:800;color:var(--text-primary);margin:4px 0;">3-Harness Trinity</div>
+          <div id="web-tier-tagline" style="font-size:0.9375rem;color:var(--text-muted);font-style:italic;">"The sacred three-way prompt-caching triangle"</div>
+          <div id="web-tier-cost" style="font-size:0.8125rem;color:var(--accent);margin-top:6px;font-weight:600;">Est. Monthly Subscription Cost: $60/mo · Active Harnesses: 3</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button type="button" class="btn btn-primary" onclick="copySubscriptionLoadout()" style="display:inline-flex;align-items:center;gap:6px;">
+            📋 Copy My Loadout Card
+          </button>
+        </div>
+      </div>
+
+      <!-- Interactive Subscription Checkbox Matrix -->
+      <h3 style="font-size:1rem;margin:16px 0 10px 0;">1. Select Your Active AI Subscriptions</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:10px;margin-bottom:20px;">
+        <label style="background:var(--bg-card);border:1px solid var(--border-hairline);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" class="sub-check" value="claude" data-cost="20" checked onchange="recalculateWebTier()">
+          <div>
+            <div style="font-weight:700;font-size:0.875rem;">Claude Code</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">$20/mo · Anthropic Pro</div>
+          </div>
+        </label>
+
+        <label style="background:var(--bg-card);border:1px solid var(--border-hairline);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" class="sub-check" value="antigravity" data-cost="20" checked onchange="recalculateWebTier()">
+          <div>
+            <div style="font-weight:700;font-size:0.875rem;">Google Antigravity</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">$20/mo · Gemini Advanced</div>
+          </div>
+        </label>
+
+        <label style="background:var(--bg-card);border:1px solid var(--border-hairline);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" class="sub-check" value="codex" data-cost="20" checked onchange="recalculateWebTier()">
+          <div>
+            <div style="font-weight:700;font-size:0.875rem;">OpenAI Codex</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">$20/mo · ChatGPT Plus</div>
+          </div>
+        </label>
+
+        <label style="background:var(--bg-card);border:1px solid var(--border-hairline);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" class="sub-check" value="cursor" data-cost="20" onchange="recalculateWebTier()">
+          <div>
+            <div style="font-weight:700;font-size:0.875rem;">Cursor Pro</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">$20/mo · Shadow Workspace</div>
+          </div>
+        </label>
+
+        <label style="background:var(--bg-card);border:1px solid var(--border-hairline);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" class="sub-check" value="windsurf" data-cost="15" onchange="recalculateWebTier()">
+          <div>
+            <div style="font-weight:700;font-size:0.875rem;">Windsurf Cascade</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">$15/mo · Codeium Flow</div>
+          </div>
+        </label>
+
+        <label style="background:var(--bg-card);border:1px solid var(--border-hairline);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" class="sub-check" value="aider" data-cost="10" onchange="recalculateWebTier()">
+          <div>
+            <div style="font-weight:700;font-size:0.875rem;">Aider CLI</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">$10/mo · Git Auto-Commit API</div>
+          </div>
+        </label>
+
+        <label style="background:var(--bg-card);border:1px solid var(--border-hairline);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" class="sub-check" value="devin" data-cost="500" onchange="recalculateWebTier()">
+          <div>
+            <div style="font-weight:700;font-size:0.875rem;">Devin Enterprise</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">$500/mo · Autonomous Cloud</div>
+          </div>
+        </label>
+
+        <label style="background:var(--bg-card);border:1px solid var(--border-hairline);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" class="sub-check" value="copilot" data-cost="10" onchange="recalculateWebTier()">
+          <div>
+            <div style="font-weight:700;font-size:0.875rem;">GitHub Copilot</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">$10/mo · Inline Autocomplete</div>
+          </div>
+        </label>
+
+        <label style="background:var(--bg-card);border:1px solid var(--border-hairline);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" class="sub-check" value="perplexity" data-cost="20" onchange="recalculateWebTier()">
+          <div>
+            <div style="font-weight:700;font-size:0.875rem;">Perplexity Pro</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">$20/mo · Web Search &amp; Citations</div>
+          </div>
+        </label>
+
+        <label style="background:var(--bg-card);border:1px solid var(--border-hairline);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" class="sub-check" value="t3" data-cost="25" onchange="recalculateWebTier()">
+          <div>
+            <div style="font-weight:700;font-size:0.875rem;">Ping T3 Code</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">$25/mo · Multi-Provider Swarm</div>
+          </div>
+        </label>
+      </div>
+
+      <!-- Make Your Own Custom Tier Name -->
+      <h3 style="font-size:1rem;margin:16px 0 8px 0;">2. Make Your Own Custom Tier Alias (Optional Override)</h3>
+      <div style="display:flex;gap:10px;align-items:center;max-width:600px;margin-bottom:24px;">
+        <input type="text" id="web-custom-tier-input" placeholder="e.g., The Procrastinator's Quartet, Debt Machine, etc." oninput="recalculateWebTier()" style="flex:1;padding:10px 14px;border-radius:8px;background:var(--bg-main);border:1px solid var(--border-hairline);color:var(--text-primary);font-size:0.875rem;">
+        <button type="button" class="peer-btn" onclick="document.getElementById('web-custom-tier-input').value=''; recalculateWebTier();">Reset to Funny Default</button>
+      </div>
+
+      <!-- Humorous Tier Roster Table -->
+      <h3 style="font-size:1rem;margin:16px 0 10px 0;">3. The Official Incoherent &amp; Funny Tier Hierarchy</h3>
+      <div style="overflow-x:auto;">
+        <table class="leaderboard-table" style="width:100%;">
+          <thead>
+            <tr>
+              <th style="width:70px;">Subs</th>
+              <th style="width:180px;">Tier Name</th>
+              <th>Official Tagline</th>
+              <th style="width:140px;">Estimated Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td><strong style="color:var(--accent);">Unoemono</strong></td><td>Solo lone wolf with one exhausted token allowance</td><td>~$20/mo</td></tr>
+            <tr><td>2</td><td><strong style="color:#d97706;">Couples Fighting</strong></td><td>Two CLIs arguing over who caused the merge conflict</td><td>~$40/mo</td></tr>
+            <tr><td>3</td><td><strong style="color:#248a3d;">Trinity</strong></td><td>The sacred three-way prompt-caching triangle (Default Architect Loadout)</td><td>~$60/mo</td></tr>
+            <tr><td>4</td><td><strong style="color:#ea4aaa;">Quap</strong></td><td>Four harnesses deep in incoherent multi-model synergy</td><td>~$80/mo</td></tr>
+            <tr><td>5</td><td><strong style="color:#a855f7;">Pentagoon</strong></td><td>Five subscriptions, certified AI terminal goon squad</td><td>~$100/mo</td></tr>
+            <tr><td>6</td><td><strong style="color:#ef4444;">Six-Pack Meltdown</strong></td><td>Six subscriptions shredding your monthly compute budget</td><td>~$120/mo</td></tr>
+            <tr><td>7</td><td><strong style="color:#eab308;">Seven Deadly Subs</strong></td><td>Seven deadly sins of context bloat and rate limits</td><td>~$140/mo</td></tr>
+            <tr><td>8</td><td><strong style="color:#06b6d4;">Octo-Chaos</strong></td><td>Eight tentacles flailing across every shell session</td><td>~$160/mo</td></tr>
+            <tr><td>9</td><td><strong style="color:#3b82f6;">Cloud Nine Overdraft</strong></td><td>Floating on infinite context while your card declines</td><td>~$180/mo</td></tr>
+            <tr><td>10</td><td><strong style="color:#ec4899;">Ten-Ring Circus</strong></td><td>The full ten-ring unhinged developer clown show</td><td>~$700/mo+</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <!-- FLOATING WEIGHTY LIQUID-PHYSICS WEBSOCKET OVERLAY (Freefloat Drift + Bounce / Pac-Man Wrap) -->
@@ -3503,10 +3651,12 @@ try {{
       <div class="mc-step-pane" id="mc-step-2">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
           <span class="capability-tag" style="background:rgba(52,199,89,0.12);color:#248a3d;">Decision 2.A</span>
-          <h3 style="margin:0;color:var(--text-primary);">The 3-Harness Trinity Mesh Architecture</h3>
+          <h3 style="margin:0;color:var(--text-primary);">The Subscription Tier Scale (Unoemono ➔ Quap)</h3>
         </div>
         <p>
-          Don't lock your workflow into a single IDE or isolated CLI. The Trinity Mesh routes tasks dynamically to their optimal cost-performance frontier:
+          Don't lock your workflow into a single IDE or isolated CLI. Multi-harness engineering scales dynamically based on your subscriptions:
+          <strong>1 = Unoemono</strong>, <strong>2 = Couples Fighting</strong>, <strong>3 = Trinity</strong>, <strong>4 = Quap</strong>, and up to the <strong>10-Ring Circus</strong>!
+          In our reference loadout (3-Harness Trinity), tasks route dynamically to their optimal cost-performance frontier:
         </p>
         <div class="mc-card-callout">
           <h4>🌐 The 3 Specialized Frontiers</h4>

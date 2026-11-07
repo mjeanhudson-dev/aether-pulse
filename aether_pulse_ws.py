@@ -489,6 +489,30 @@ def decode_ws_frame(data: bytes) -> Tuple[int, bytes]:
     return opcode, data[offset : offset + length]
 
 
+SUBSCRIPTION_TIERS = {
+    1: {"name": "Unoemono", "tagline": "Solo lone wolf with one exhausted token allowance"},
+    2: {"name": "Couples Fighting", "tagline": "Two CLIs arguing over who caused the merge conflict"},
+    3: {"name": "Trinity", "tagline": "The sacred three-way prompt-caching triangle"},
+    4: {"name": "Quap", "tagline": "Four harnesses deep in incoherent multi-model synergy"},
+    5: {"name": "Pentagoon", "tagline": "Five subscriptions, certified AI terminal goon squad"},
+    6: {"name": "Six-Pack Meltdown", "tagline": "Six subscriptions shredding your monthly compute budget"},
+    7: {"name": "Seven Deadly Subs", "tagline": "Seven deadly sins of context bloat and rate limits"},
+    8: {"name": "Octo-Chaos", "tagline": "Eight tentacles flailing across every shell session"},
+    9: {"name": "Cloud Nine Overdraft", "tagline": "Floating on infinite context while your card declines"},
+    10: {"name": "Ten-Ring Circus", "tagline": "The full ten-ring unhinged developer clown show"},
+}
+
+
+def get_subscription_tier(count: int, custom_name: str = "") -> Dict[str, str]:
+    if custom_name and custom_name.strip():
+        return {"name": custom_name.strip(), "tagline": f"Custom User Loadout ({count} Subscriptions)"}
+    if count in SUBSCRIPTION_TIERS:
+        return SUBSCRIPTION_TIERS[count]
+    if count > 10:
+        return {"name": f"Incoherent Multiverse ({count})", "tagline": f"{count} subscriptions deep in the simulation"}
+    return SUBSCRIPTION_TIERS.get(count, {"name": "Unoemono", "tagline": "Solo lone wolf"})
+
+
 def build_ws_telemetry_frame(
     report: Dict[str, Any],
     overlay_mode: str = "auto",
@@ -499,6 +523,22 @@ def build_ws_telemetry_frame(
     """
     Constructs the real-time WebSocket JSON payload consumed by the floating liquid overlay.
     """
+    # Load user's subscription configuration
+    settings_path = Path(__file__).parent / "aether_pulse_settings.json"
+    active_subs = ["claude_code", "antigravity", "openai_codex"]
+    custom_tier_name = ""
+    if settings_path.exists():
+        try:
+            with open(settings_path, "r", encoding="utf-8") as sf:
+                sdata = json.load(sf)
+                active_subs = sdata.get("active_subscriptions", active_subs)
+                custom_tier_name = sdata.get("custom_tier_name", "")
+        except Exception:
+            pass
+
+    sub_count = max(1, len(active_subs))
+    sub_tier = get_subscription_tier(sub_count, custom_tier_name)
+
     claude = report["claude_code"]
     agy = report["antigravity"]
     codex = report["openai_codex"]
@@ -688,9 +728,10 @@ def build_ws_telemetry_frame(
         },
         "all": {
             "id": "all",
-            "name": "10-Harness Trinity Mesh",
-            "short_name": "All 10 Harnesses",
-            "model_badge": "Claude + Antigravity + Codex + Top 10 Swarm",
+            "name": f"{sub_count}-Harness {sub_tier['name']}",
+            "short_name": sub_tier["name"],
+            "model_badge": f"{sub_tier['name']} ({sub_count} Subs) · {sub_tier['tagline']}",
+            "tier_info": sub_tier,
             "total_tokens": 12560000000,
             "tokens_formatted": "12.56B",
             "sessions": 1455,
@@ -732,6 +773,13 @@ def build_ws_telemetry_frame(
         "show_all_drawer": overlay_mode == "all",
         "active": harnesses[effective_key],
         "harnesses": harnesses,
+        "subscription_tier": {
+            "count": sub_count,
+            "name": sub_tier["name"],
+            "tagline": sub_tier["tagline"],
+            "active_subscriptions": active_subs,
+            "custom_tier_name": custom_tier_name,
+        },
         "usage_sentinel": {
             "ratio_5hr": round(ratio_5hr, 3),
             "ratio_monthly": round(ratio_monthly, 3),

@@ -5,5 +5,11 @@
   "enable_particles": true,
   "enable_bubbles": true,
   "topmost": true,
-  "close_to_tray": true
+  "close_to_tray": true,
+  "active_subscriptions": [
+    "claude_code",
+    "antigravity",
+    "openai_codex"
+  ],
+  "custom_tier_name": ""
 }

@@ -61,7 +61,45 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "close_to_tray": True,
     "custom_accent": "#0066CC",
     "custom_liquid": "#0E243B",
+    "active_subscriptions": ["claude_code", "antigravity", "openai_codex"],
+    "custom_tier_name": "",
 }
+
+# Humorous subscription-based tier engine
+SUBSCRIPTION_TIERS: Dict[int, Dict[str, str]] = {
+    1: {"name": "Unoemono", "tagline": "Solo lone wolf with one exhausted token allowance"},
+    2: {"name": "Couples Fighting", "tagline": "Two CLIs arguing over who caused the merge conflict"},
+    3: {"name": "Trinity", "tagline": "The sacred three-way prompt-caching triangle"},
+    4: {"name": "Quap", "tagline": "Four harnesses deep in incoherent multi-model synergy"},
+    5: {"name": "Pentagoon", "tagline": "Five subscriptions, certified AI terminal goon squad"},
+    6: {"name": "Six-Pack Meltdown", "tagline": "Six subscriptions shredding your monthly compute budget"},
+    7: {"name": "Seven Deadly Subs", "tagline": "Seven deadly sins of context bloat and rate limits"},
+    8: {"name": "Octo-Chaos", "tagline": "Eight tentacles flailing across every shell session"},
+    9: {"name": "Cloud Nine Overdraft", "tagline": "Floating on infinite context while your card declines"},
+    10: {"name": "Ten-Ring Circus", "tagline": "The full ten-ring unhinged developer clown show"},
+}
+
+AVAILABLE_SUBSCRIPTIONS = [
+    ("claude_code", "Claude Code ($20/mo)"),
+    ("antigravity", "Google Antigravity ($20/mo)"),
+    ("openai_codex", "OpenAI Codex ($20/mo)"),
+    ("cursor", "Cursor Pro ($20/mo)"),
+    ("windsurf", "Windsurf Cascade ($15/mo)"),
+    ("aider", "Aider CLI (API)"),
+    ("devin", "Devin ($500/mo)"),
+    ("copilot", "GitHub Copilot ($10/mo)"),
+    ("perplexity", "Perplexity Pro ($20/mo)"),
+    ("t3_code", "Ping T3 Code ($25/mo)"),
+]
+
+def get_subscription_tier(count: int, custom_name: str = "") -> Dict[str, str]:
+    if custom_name and custom_name.strip():
+        return {"name": custom_name.strip(), "tagline": f"Custom User Loadout ({count} Subscriptions)"}
+    if count in SUBSCRIPTION_TIERS:
+        return SUBSCRIPTION_TIERS[count]
+    if count > 10:
+        return {"name": f"Incoherent Multiverse ({count})", "tagline": f"{count} subscriptions deep in the simulation"}
+    return SUBSCRIPTION_TIERS.get(count, {"name": "Unoemono", "tagline": "Solo lone wolf"})
 
 BOUNDARY_LABELS = {
     "bounce": "Bounce Walls",
@@ -1326,17 +1364,26 @@ class AetherLiquidDesktopOverlay:
 
         # Title & Active Badge (Begins at x=72, clean Apple layout)
         self.canvas.create_oval(70, tl_y - 4, 78, tl_y + 4, fill=active_accent, outline="")
-        badge_text = f"{active['name'].upper()}  ·  {active.get('model_badge', 'AI Engine')}"
+        active_subs = self.settings.get("active_subscriptions", ["claude_code", "antigravity", "openai_codex"])
+        custom_name = self.settings.get("custom_tier_name", "")
+        sub_tier = get_subscription_tier(max(1, len(active_subs)), custom_name)
+        tier_title = sub_tier["name"].upper()
+
+        if self.mode == "all" or active.get("id") == "all":
+            badge_text = f"{tier_title} · {h_label}"
+        else:
+            badge_text = f"{active['name'].upper()} · {h_label}"
+
         if is_lava_mode:
-            badge_text = f"🔥 5-HR QUOTA SENTINEL · {active['name'].upper()}"
+            badge_text = f"🔥 SENTINEL · {tier_title}"
         elif is_quota_flashing:
-            badge_text = f"⚠️ CRITICAL QUOTA STROBE · 92% USAGE"
+            badge_text = f"⚠️ CRITICAL STROBE · 92%"
 
         self.canvas.create_text(
             84,
             tl_y,
             anchor="w",
-            text=badge_text[:34],
+            text=badge_text[:42],
             fill="#FF3B30" if is_quota_flashing else palette["header"],
             font=(self.font_display, 8, "bold"),
         )
@@ -1439,7 +1486,7 @@ class AetherLiquidDesktopOverlay:
         sw = tk.Toplevel(self.root)
         self._settings_window = sw
         sw.title("Aether Pulse Settings")
-        sw.geometry("460x570")
+        sw.geometry("490x850")
         sw.resizable(False, False)
         sw.attributes("-topmost", True)
 
@@ -1457,6 +1504,71 @@ class AetherLiquidDesktopOverlay:
 
         container = tk.Frame(sw, bg=palette["pill_bg"])
         container.pack(fill=tk.BOTH, expand=True, padx=22, pady=4)
+
+        # 0. Subscription Loadout & Humorous Tier Engine
+        tk.Label(
+            container,
+            text="ACTIVE SUBSCRIPTIONS (TIER CALCULATOR):",
+            bg=palette["pill_bg"],
+            fg=palette["secondary_text"],
+            font=(self.font_mono, 8, "bold"),
+        ).pack(anchor="w", pady=(2, 2))
+
+        sub_grid = tk.Frame(container, bg=palette["pill_bg"])
+        sub_grid.pack(fill=tk.X, pady=(0, 2))
+        sg_left = tk.Frame(sub_grid, bg=palette["pill_bg"])
+        sg_left.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        sg_right = tk.Frame(sub_grid, bg=palette["pill_bg"])
+        sg_right.pack(side=tk.LEFT, fill=tk.X, expand=True)
+
+        current_active = set(self.settings.get("active_subscriptions", ["claude_code", "antigravity", "openai_codex"]))
+        sub_vars: Dict[str, tk.BooleanVar] = {}
+
+        for i, (sk, sname) in enumerate(AVAILABLE_SUBSCRIPTIONS):
+            var = tk.BooleanVar(value=(sk in current_active))
+            sub_vars[sk] = var
+            parent_col = sg_left if i < 5 else sg_right
+            cb = tk.Checkbutton(
+                parent_col,
+                text=sname,
+                variable=var,
+                bg=palette["pill_bg"],
+                fg=palette["primary_text"],
+                selectcolor=palette["button_bg"],
+                activebackground=palette["pill_bg"],
+                font=(self.font_text, 8),
+            )
+            cb.pack(anchor="w", pady=0)
+
+        # Dynamic Live Tier Card
+        tier_card = tk.Frame(container, bg=palette["button_bg"], bd=1, relief=tk.SOLID)
+        tier_card.pack(fill=tk.X, pady=(2, 4), padx=2)
+
+        tier_badge_lbl = tk.Label(tier_card, text="", bg=palette["button_bg"], fg=palette["header"], font=(self.font_mono, 9, "bold"))
+        tier_badge_lbl.pack(anchor="w", padx=8, pady=(3, 0))
+
+        tier_tag_lbl = tk.Label(tier_card, text="", bg=palette["button_bg"], fg=palette["secondary_text"], font=(self.font_text, 8, "italic"))
+        tier_tag_lbl.pack(anchor="w", padx=8, pady=(0, 3))
+
+        alias_frame = tk.Frame(container, bg=palette["pill_bg"])
+        alias_frame.pack(fill=tk.X, pady=(0, 4))
+        tk.Label(alias_frame, text="Custom Tier Alias (Optional Override):", bg=palette["pill_bg"], fg=palette["secondary_text"], font=(self.font_mono, 8)).pack(anchor="w")
+
+        custom_name_var = tk.StringVar(value=self.settings.get("custom_tier_name", ""))
+        alias_ent = tk.Entry(alias_frame, textvariable=custom_name_var, bg=palette["button_bg"], fg=palette["primary_text"], insertbackground=palette["primary_text"], bd=1, relief=tk.SOLID, font=(self.font_text, 9))
+        alias_ent.pack(fill=tk.X, pady=(1, 0))
+
+        def _refresh_tier_card(*args):
+            sel_count = max(1, sum(1 for v in sub_vars.values() if v.get()))
+            c_name = custom_name_var.get().strip()
+            t = get_subscription_tier(sel_count, c_name)
+            tier_badge_lbl.config(text=f"⚡ Active Tier: {t['name']} ({sel_count} Active Subs)")
+            tier_tag_lbl.config(text=f'"{t["tagline"]}"')
+
+        for v in sub_vars.values():
+            v.trace_add("write", _refresh_tier_card)
+        custom_name_var.trace_add("write", _refresh_tier_card)
+        _refresh_tier_card()
 
         # 1. Physics Mode Selector
         tk.Label(container, text="BOUNDARY DYNAMICS:", bg=palette["pill_bg"], fg=palette["secondary_text"], font=(self.font_mono, 8, "bold")).pack(anchor="w", pady=(4, 2))
@@ -1574,6 +1686,10 @@ class AetherLiquidDesktopOverlay:
             self.settings["enable_particles"] = part_var.get()
             self.settings["topmost"] = top_var.get()
             self.settings["close_to_tray"] = tray_close_var.get()
+
+            new_active_subs = [sk for sk, v in sub_vars.items() if v.get()]
+            self.settings["active_subscriptions"] = new_active_subs if new_active_subs else ["claude_code"]
+            self.settings["custom_tier_name"] = custom_name_var.get().strip()
 
             self.root.attributes("-topmost", bool(top_var.get()))
             self._save_settings()
