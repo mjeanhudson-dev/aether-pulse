@@ -3,8 +3,24 @@ REM FUNCTION: Launch Aether Pulse Local Desktop Liquid-Physics Overlay & WebSock
 REM USE_CASE: Run floating topmost HUD over Claude Code, Antigravity, Codex CLI, and T3 Code
 title Aether Pulse Liquid HUD Launcher
 cd /d "%~dp0"
-start "Aether Pulse WebSocket Daemon" /B pythonw aether_pulse_ws.py
-start "Aether Pulse Liquid Desktop HUD" /B pythonw aether_liquid_overlay.pyw
+
+echo ==============================================================
+echo    ⚡ AETHER PULSE — LIQUID PHYSICS TOPMOST DESKTOP HUD
+echo ==============================================================
+echo [1/2] Starting WebSocket Telemetry Daemon on 127.0.0.1:8765...
+start "Aether Pulse WS Daemon" /B pythonw aether_pulse_ws.py
+
+echo [2/2] Launching Liquid Overlay Window...
+start "Aether Pulse Liquid Desktop HUD" pythonw aether_liquid_overlay.pyw
 if errorlevel 1 (
-    python aether_liquid_overlay.py
+    echo [!] pythonw encountered an issue; falling back to python...
+    start "Aether Pulse Liquid Desktop HUD" python aether_liquid_overlay.py
 )
+
+echo.
+echo [✓] Aether Pulse Liquid HUD is now floating on your screen!
+echo     - Drag the capsule over any terminal/IDE to auto-sense harnesses.
+echo     - Click [AUTO] on the right side to switch between Claude / Antigravity / Codex / All.
+echo     - Click [BNC] to switch physics: Screen Bounce (BNC) / Pac-Man Wrap (PAC) / Pin (PIN).
+echo.
+timeout /t 3 >nul
