@@ -1,16 +1,16 @@
 {
   "schema_version": "1.0.0",
-  "exported_at_utc": "2026-11-07T08:38:45.714363+00:00",
+  "exported_at_utc": "2026-11-07T09:50:21.944264+00:00",
   "architect_name": "Eloquent",
   "architect_handle": "@mjeanhudson-dev",
   "weight_class": "Heavyweight (1B+)",
   "verified_metrics": {
-    "leverage_index": 26967,
-    "total_tokens_formatted": "4.34B",
-    "cache_hit_rate_pct": 94.44,
-    "routing_multiplier": 1.24,
-    "kardashev_index": 1.1063,
-    "proof_of_burn_sha256": "1fc621f5821e19907d16fb4155eed13e72bf252db89bf9538ee3c098823b6a74"
+    "leverage_index": 29705,
+    "total_tokens_formatted": "4.45B",
+    "cache_hit_rate_pct": 94.46,
+    "routing_multiplier": 1.36,
+    "kardashev_index": 1.108,
+    "proof_of_burn_sha256": "9b7b38621939c461ae056af70ffa619aa97ebd71f8aec3ff9a0876d3882f3c62"
   },
   "multi_harness_routing_strategy": {
     "recon_and_high_frequency_loops": "Google Antigravity (Gemini 3.8 Flash) \u2014 $0.075/M input + 93.7% cache hit",

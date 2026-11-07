@@ -239,7 +239,8 @@ class TestAetherPulseEngine(unittest.TestCase):
         # 1-button side mode cycling & boundary physics cycling
         self.assertEqual(aether_pulse_ws.next_overlay_mode("auto"), "all")
         self.assertEqual(aether_pulse_ws.next_overlay_mode("all"), "claude_code")
-        self.assertEqual(aether_pulse_ws.next_overlay_mode("claude_code"), "antigravity")
+        self.assertEqual(aether_pulse_ws.next_overlay_mode("claude_code"), "gemini")
+        self.assertEqual(aether_pulse_ws.next_overlay_mode("gemini"), "antigravity")
         self.assertEqual(aether_pulse_ws.next_overlay_mode("antigravity"), "openai_codex")
         self.assertEqual(aether_pulse_ws.next_overlay_mode("openai_codex"), "cursor")
         self.assertEqual(aether_pulse_ws.next_overlay_mode("t3_code"), "auto")
