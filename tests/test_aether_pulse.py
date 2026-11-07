@@ -163,10 +163,22 @@ class TestAetherPulseEngine(unittest.TestCase):
         t3 = aether_pulse.build_t3_usage_analytics(report)
         self.assertIn("tier_mix", t3)
         self.assertIn("token_composition", t3)
+        self.assertIn("cost_by_type", t3)
+        self.assertIn("tokens_by_type", t3)
+        self.assertIn("periods", t3)
+        self.assertIn("model_breakdown", t3)
+        self.assertIn("day_breakdown", t3)
+        self.assertIn("hour_breakdown", t3)
         self.assertIn("trajectory", t3)
         self.assertGreaterEqual(len(t3["trajectory"]), 12)
         self.assertGreater(t3["cost_arbitrage"]["compression_pct"], 90.0)
         self.assertIn("CREATE PROPERTY GRAPH", t3["bigquery_property_graph_ddl"])
+
+        # Verify Fritsch-Carlson Monotone Cubic Spline produces smooth Cubic Bezier (`C`) with no `<circle>` dots
+        spline = aether_pulse.build_monotone_cubic_spline_svg_path([(44.0, 154.0), (180.0, 90.0), (360.0, 140.0), (604.0, 28.0)], 154.0)
+        self.assertIn("M 44.00,154.00", spline["line_path"])
+        self.assertIn(" C ", spline["line_path"])
+        self.assertTrue(spline["area_path"].endswith("Z"))
 
         with tempfile.TemporaryDirectory() as tmp:
             tmp_dir = Path(tmp)
@@ -176,8 +188,30 @@ class TestAetherPulseEngine(unittest.TestCase):
             html_str = html_path.read_text(encoding="utf-8")
             self.assertIn('id="t3-usage-board"', html_str)
             self.assertIn('id="trajectory-svg-chart"', html_str)
+            self.assertIn('id="spline-line-claude"', html_str)
+            self.assertIn('id="spline-line-agy"', html_str)
+            self.assertIn('id="spline-line-codex"', html_str)
+            self.assertIn('id="t3-scrobble-tooltip"', html_str)
+            self.assertIn('id="t3-breakdown-switcher"', html_str)
+            self.assertIn('id="download-desktop-overlay-btn"', html_str)
             self.assertIn('id="aether-liquid-hud"', html_str)
             self.assertIn('id="hud-side-CycleBtn"', html_str)
+            self.assertIn('id="hud-side-BoundaryBtn"', html_str)
+
+            # Verify zero `<circle` elements inside `#trajectory-svg-chart`
+            svg_chunk = html_str.split('id="trajectory-svg-chart"')[1].split("</svg>")[0]
+            self.assertNotIn("<circle", svg_chunk, "Trajectory spline chart must have zero circle dots!")
+
+            # Verify Desktop Overlay downloadable `.zip` bundle was generated and scrubbed
+            zip_path = tmp_dir / "AetherPulse-Desktop-Overlay.zip"
+            self.assertTrue(zip_path.exists(), "AetherPulse-Desktop-Overlay.zip must be generated")
+            import zipfile
+            with zipfile.ZipFile(zip_path, "r") as zf:
+                names = zf.namelist()
+                self.assertIn("AetherPulse-Desktop-Overlay/aether_liquid_overlay.py", names)
+                self.assertIn("AetherPulse-Desktop-Overlay/aether_liquid_overlay.pyw", names)
+                self.assertIn("AetherPulse-Desktop-Overlay/Launch-Aether-Overlay.bat", names)
+                self.assertIn("AetherPulse-Desktop-Overlay/README-DESKTOP-OVERLAY.md", names)
 
     def test_websocket_telemetry_and_harness_target_detection(self):
         import aether_pulse_ws
@@ -202,23 +236,44 @@ class TestAetherPulseEngine(unittest.TestCase):
         self.assertEqual(opcode, 1)
         self.assertEqual(decoded, payload)
 
-        # 1-button side mode cycling
+        # 1-button side mode cycling & boundary physics cycling
         self.assertEqual(aether_pulse_ws.next_overlay_mode("auto"), "all")
         self.assertEqual(aether_pulse_ws.next_overlay_mode("all"), "claude_code")
         self.assertEqual(aether_pulse_ws.next_overlay_mode("claude_code"), "antigravity")
         self.assertEqual(aether_pulse_ws.next_overlay_mode("antigravity"), "openai_codex")
         self.assertEqual(aether_pulse_ws.next_overlay_mode("openai_codex"), "auto")
 
+        self.assertEqual(aether_pulse_ws.next_boundary_mode("bounce"), "pacman")
+        self.assertEqual(aether_pulse_ws.next_boundary_mode("pacman"), "pin")
+        self.assertEqual(aether_pulse_ws.next_boundary_mode("pin"), "bounce")
+
     def test_liquid_physics_solver_and_chrome_extension_manifest_v3(self):
         import aether_pulse_ws
 
         state = aether_pulse_ws.create_liquid_physics_state(x=100.0, y=100.0, num_nodes=9)
-        state = aether_pulse_ws.step_liquid_physics(state, target_x=320.0, target_y=180.0, dt=0.016)
+        state = aether_pulse_ws.step_liquid_physics(state, target_x=320.0, target_y=180.0, dt=0.016, is_dragging=True)
         # Spring-mass inertia: position moves smoothly toward target without teleporting
         self.assertGreater(state["x"], 100.0)
         self.assertLess(state["x"], 320.0)
         self.assertNotEqual(state["tilt_deg"], 0.0)
         self.assertGreater(max(abs(w) for w in state["wave_heights"]), 0.0)
+
+        # Verify freefloat wall bounce (`boundary_mode="bounce"`)
+        b_state = aether_pulse_ws.create_liquid_physics_state(x=20.0, y=20.0, boundary_mode="bounce", width=390.0, height=104.0)
+        b_state["vx"] = -600.0
+        b_state["vy"] = -450.0
+        for _ in range(15):
+            aether_pulse_ws.step_liquid_physics(b_state, 20.0, 20.0, dt=0.016, is_dragging=False, bounds_w=800.0, bounds_h=600.0)
+        self.assertGreater(b_state["wall_bounces"], 0, "Freefloat bounce mode must reflect off viewport walls!")
+        self.assertGreater(b_state["vx"], 0.0)
+
+        # Verify freefloat Pac-Man toroidal screen wrap (`boundary_mode="pacman"`)
+        p_state = aether_pulse_ws.create_liquid_physics_state(x=780.0, y=580.0, boundary_mode="pacman", width=390.0, height=104.0)
+        p_state["vx"] = 650.0
+        p_state["vy"] = 500.0
+        for _ in range(15):
+            aether_pulse_ws.step_liquid_physics(p_state, 780.0, 580.0, dt=0.016, is_dragging=False, bounds_w=800.0, bounds_h=600.0)
+        self.assertGreater(p_state["edge_wraps"], 0, "Freefloat pacman mode must wrap across monitor edges!")
 
         ext_dir = PROJECT_DIR / "chrome-extension"
         manifest_path = ext_dir / "manifest.json"

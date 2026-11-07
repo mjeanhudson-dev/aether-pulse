@@ -73,6 +73,13 @@ Components are authored as semantic, zero-dependency HTML5 + CSS structures insi
 2. **Unified Telemetry Ledger Strip (`.ledger-strip`):** A single elevated surface divided by `1px` hairline vertical rules (`border-inline-end: 1px solid var(--border-hairline)`) displaying the 4 primary metrics without loud multi-colored cards.
 3. **Segmented View Switcher & Pill Filters (`.segmented-tabs`, `.filter-pills`):** Tactile Apple-style segmented controls with active pill elevation (`0 1px 3px rgba(0,0,0,0.08)`).
 4. **Accessible Responsive Data Table (`.table-region`):** Uses `tabindex="0" role="region" aria-labelledby="..."`, sticky `<thead>` and row `<th>` elements, and `@container (width < 760px)` card-stack transformation.
+5. **T3 Code Multi-Harness Interactive Spline Usage Board (`#t3-usage-board`):**
+   - **Zero-Dot Smooth Monotone Cubic Splines:** Uses **Fritsch–Carlson Monotone Cubic Hermite → SVG Cubic Bézier (`M x,y C c1x,c1y c2x,c2y x,y`)** interpolation (`build_monotone_cubic_spline_svg_path` / `buildMonotoneCubicSpline`) with zero `<circle>` dots and zero baseline overshoot across all 3 harnesses simultaneously (`Claude Code` `#E07A5F`, `Antigravity` `#2997FF`, `OpenAI Codex` `#30D158`).
+   - **Interactive Mouse Scrobbler:** Hovering/scrobbling across `#trajectory-svg-chart` moves `#t3-scrobble-line` and updates `#t3-scrobble-tooltip` with per-harness and combined `Tokens`, `Cost`, `Cache Hit %`, and `Leverage` across `Past 24h`, `7 days`, `30 days`, and `90 days`.
+   - **T3 5-Column `Totals` Strip, `Cost by type` / `Tokens by type` Bars, and `Model | Day | Hour` Breakdown Table** with inline proportional model bars and Aether Pulse's secular efficiency columns (`Cache Hit %`, `CR/CW Reuse`).
+6. **Draggable & Freefloating Liquid-Physics Telemetry Vessel (`#aether-liquid-hud` & `aether_liquid_overlay.py`):**
+   - Preserves pointer throw velocity on release (`pointerup` / `<ButtonRelease-1>`) with continuous buoyancy wiggle/drift.
+   - Switchable boundary physics (`Bounce Walls` `BNC` vs. `Pac-Man Screen Wrap` `PAC` vs. `Pin Anchor` `PIN`) and continuous spatial harness detection (`WindowFromPoint` + `QueryFullProcessImageNameW` on desktop; `elementFromPoint` in browser).
 
 ---
 

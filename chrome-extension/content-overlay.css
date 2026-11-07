@@ -129,10 +129,16 @@
   color: #E5E5EA;
 }
 
+#aether-ext-liquid-vessel .aether-side-col {
+  display: flex;
+  flex-direction: column;
+  border-inline-start: 1px solid rgba(255, 255, 255, 0.10);
+}
+
 #aether-ext-liquid-vessel .aether-side-btn {
   appearance: none;
   border: none;
-  border-inline-start: 1px solid rgba(255, 255, 255, 0.10);
+  flex: 1;
   background: rgba(255, 255, 255, 0.04);
   color: #F5F5F7;
   cursor: pointer;
@@ -140,9 +146,13 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  padding: 8px 4px;
+  gap: 3px;
+  padding: 6px 4px;
   transition: background-color 140ms ease;
+}
+
+#aether-ext-liquid-vessel .aether-side-btn + .aether-side-btn {
+  border-block-start: 1px solid rgba(255, 255, 255, 0.10);
 }
 
 #aether-ext-liquid-vessel .aether-side-btn:hover {

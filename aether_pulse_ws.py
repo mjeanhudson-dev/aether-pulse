@@ -33,6 +33,7 @@ import aether_pulse
 
 WS_MAGIC_GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 OVERLAY_MODES = ["auto", "all", "claude_code", "antigravity", "openai_codex"]
+BOUNDARY_MODES = ["bounce", "pacman", "pin"]
 
 MODE_LABELS = {
     "auto": "Auto-Sense Target",
@@ -40,6 +41,12 @@ MODE_LABELS = {
     "claude_code": "Claude Code (Pinned)",
     "antigravity": "Antigravity (Pinned)",
     "openai_codex": "OpenAI Codex (Pinned)",
+}
+
+BOUNDARY_LABELS = {
+    "bounce": "Bounce Walls",
+    "pacman": "Pac-Man Wrap",
+    "pin": "Pinned Anchor",
 }
 
 
@@ -52,6 +59,17 @@ def next_overlay_mode(current_mode: str) -> str:
         return "auto"
     idx = OVERLAY_MODES.index(current_mode)
     return OVERLAY_MODES[(idx + 1) % len(OVERLAY_MODES)]
+
+
+def next_boundary_mode(current_mode: str) -> str:
+    """
+    Cycles the freefloat boundary physics mode when releasing the drag:
+      bounce (Elastic Wall Bounce) -> pacman (Toroidal Edge Wrap) -> pin (Stationary Spring) -> bounce
+    """
+    if current_mode not in BOUNDARY_MODES:
+        return "bounce"
+    idx = BOUNDARY_MODES.index(current_mode)
+    return BOUNDARY_MODES[(idx + 1) % len(BOUNDARY_MODES)]
 
 
 def detect_harness_from_context(
@@ -80,14 +98,15 @@ def probe_window_at_point(
     ignore_hwnd: int = 0,
 ) -> Dict[str, str]:
     """
-    Uses Win32 `WindowFromPoint` / `GetForegroundWindow` to inspect the OS window
-    physically located underneath `(screen_x, screen_y)` when dragging the overlay.
+    Uses Win32 `WindowFromPoint` / `GetForegroundWindow` + process image inspection
+    to identify the OS window physically located underneath `(screen_x, screen_y)`.
     """
     if sys.platform != "win32":
         return {"window_title": "", "process_name": "", "detected_harness": "all"}
 
     try:
         user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
         pt = ctypes.wintypes.POINT(int(screen_x), int(screen_y))
         hwnd = user32.WindowFromPoint(pt)
         if not hwnd or (ignore_hwnd and hwnd == ignore_hwnd):
@@ -103,10 +122,27 @@ def probe_window_at_point(
         buf = ctypes.create_unicode_buffer(512)
         user32.GetWindowTextW(hwnd, buf, 512)
         title = aether_pulse.scrub_personal_identity(buf.value)
-        detected = detect_harness_from_context(title, "", "")
+
+        proc_name = ""
+        try:
+            pid = ctypes.wintypes.DWORD(0)
+            user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+            if pid.value:
+                PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+                hproc = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid.value)
+                if hproc:
+                    pbuf = ctypes.create_unicode_buffer(512)
+                    sz = ctypes.wintypes.DWORD(512)
+                    if kernel32.QueryFullProcessImageNameW(hproc, 0, pbuf, ctypes.byref(sz)):
+                        proc_name = Path(pbuf.value).name
+                    kernel32.CloseHandle(hproc)
+        except Exception:
+            pass
+
+        detected = detect_harness_from_context(title, proc_name, "")
         return {
             "window_title": title,
-            "process_name": "",
+            "process_name": proc_name,
             "detected_harness": detected,
         }
     except Exception:
@@ -117,10 +153,13 @@ def create_liquid_physics_state(
     x: float = 120.0,
     y: float = 120.0,
     num_nodes: int = 9,
+    boundary_mode: str = "bounce",
+    width: float = 392.0,
+    height: float = 104.0,
 ) -> Dict[str, Any]:
     """
-    Initializes the 2nd-order Spring-Mass-Damper + 1D Coupled Shallow-Water Wave state
-    that gives the floating overlay a weighty, liquid-filled tactile feel when dragged.
+    Initializes the 2nd-order Spring-Mass-Damper + Freefloat Drift/Wiggle +
+    1D Coupled Shallow-Water Wave state for the floating liquid overlay.
     """
     return {
         "x": float(x),
@@ -133,6 +172,12 @@ def create_liquid_physics_state(
         "tilt_deg": 0.0,
         "squish_x": 1.0,
         "squish_y": 1.0,
+        "boundary_mode": boundary_mode if boundary_mode in BOUNDARY_MODES else "bounce",
+        "phase": 0.0,
+        "width": float(width),
+        "height": float(height),
+        "wall_bounces": 0,
+        "edge_wraps": 0,
         "wave_heights": [0.0 for _ in range(num_nodes)],
         "wave_velocities": [0.0 for _ in range(num_nodes)],
     }
@@ -143,53 +188,136 @@ def step_liquid_physics(
     target_x: float,
     target_y: float,
     dt: float = 0.016,
+    is_dragging: bool = True,
+    bounds_w: float = 1920.0,
+    bounds_h: float = 1080.0,
 ) -> Dict[str, Any]:
     """
     Advances the weighty liquid-vessel physics by `dt` seconds:
-      1. Computes spring-mass-damper acceleration toward `(target_x, target_y)`.
-      2. Excites the internal liquid meniscus wave heights with horizontal & vertical inertia.
-      3. Propagates coupled wave neighbor deltas with viscous fluid damping.
-      4. Computes vessel shear/tilt angle and subtle elastic squish.
+      1. While `is_dragging=True`: computes spring-mass-damper acceleration toward `(target_x, target_y)`.
+      2. When released (`is_dragging=False`):
+         - In `'bounce'` or `'pacman'` mode, applies freefloat buoyancy wiggle + throw momentum:
+           * `'bounce'`: reflects off `[0, bounds_w - width] x [0, bounds_h - height]` walls with splash impulse.
+           * `'pacman'`: wraps toroidally bottom-to-top and side-to-side when crossing monitor/viewport edges.
+         - In `'pin'` mode, settles smoothly at `(target_x, target_y)` with micro-buoyancy.
+      3. Excites the internal liquid meniscus wave heights and propagates coupled neighbor waves.
     """
     dt = max(0.001, min(0.050, float(dt)))
     m = float(state.get("mass", 1.85))
     k = float(state.get("stiffness", 150.0))
     c = float(state.get("damping", 21.0))
+    bmode = str(state.get("boundary_mode", "bounce"))
+    w = float(state.get("width", 392.0))
+    h = float(state.get("height", 104.0))
+    phase = float(state.get("phase", 0.0)) + dt
 
     x = float(state["x"])
     y = float(state["y"])
     vx = float(state["vx"])
     vy = float(state["vy"])
 
-    fx = k * (float(target_x) - x) - c * vx
-    fy = k * (float(target_y) - y) - c * vy
-    ax = fx / m
-    ay = fy / m
+    heights = list(state["wave_heights"])
+    vels = list(state["wave_velocities"])
+    n = len(heights)
 
-    vx += ax * dt
-    vy += ay * dt
-    x += vx * dt
-    y += vy * dt
+    if is_dragging or bmode == "pin":
+        wiggle_x = math.sin(phase * 2.6) * 2.5 if not is_dragging else 0.0
+        wiggle_y = math.cos(phase * 2.1) * 2.0 if not is_dragging else 0.0
+        fx = k * ((float(target_x) + wiggle_x) - x) - c * vx
+        fy = k * ((float(target_y) + wiggle_y) - y) - c * vy
+        ax = fx / m
+        ay = fy / m
+        vx += ax * dt
+        vy += ay * dt
+        x += vx * dt
+        y += vy * dt
+    else:
+        # Freefloat Drift + Wiggle mode after letting go of drag
+        wiggle_ax = math.sin(phase * 2.4) * 42.0 + math.cos(phase * 5.1) * 18.0
+        wiggle_ay = math.cos(phase * 1.9) * 34.0 + math.sin(phase * 4.3) * 15.0
+        fluid_drag = 0.22
+        ax = wiggle_ax - fluid_drag * vx
+        ay = wiggle_ay - fluid_drag * vy
+        vx += ax * dt
+        vy += ay * dt
+
+        # Maintain pleasant minimum freefloat drift velocity so it stays alive when released
+        spd = math.hypot(vx, vy)
+        if spd < 38.0:
+            ang = phase * 1.3 if spd < 1e-3 else math.atan2(vy, vx)
+            vx += math.cos(ang) * 26.0 * dt
+            vy += math.sin(ang) * 26.0 * dt
+        elif spd > 980.0:
+            scale = 980.0 / spd
+            vx *= scale
+            vy *= scale
+
+        x += vx * dt
+        y += vy * dt
+
+        max_x = max(16.0, float(bounds_w) - w)
+        max_y = max(16.0, float(bounds_h) - h)
+
+        if bmode == "bounce":
+            bounced = False
+            if x <= 0.0:
+                x = 0.0
+                vx = abs(vx) * 0.92 + 18.0
+                bounced = True
+            elif x >= max_x:
+                x = max_x
+                vx = -abs(vx) * 0.92 - 18.0
+                bounced = True
+
+            if y <= 0.0:
+                y = 0.0
+                vy = abs(vy) * 0.92 + 14.0
+                bounced = True
+            elif y >= max_y:
+                y = max_y
+                vy = -abs(vy) * 0.92 - 14.0
+                bounced = True
+
+            if bounced:
+                state["wall_bounces"] = int(state.get("wall_bounces", 0)) + 1
+                mid = n // 2
+                vels[mid] += 36.0 if vy < 0 else -36.0
+        elif bmode == "pacman":
+            wrapped = False
+            if x > float(bounds_w):
+                x = -w + 4.0
+                wrapped = True
+            elif x + w < 0.0:
+                x = float(bounds_w) - 4.0
+                wrapped = True
+
+            if y > float(bounds_h):
+                y = -h + 4.0
+                wrapped = True
+            elif y + h < 0.0:
+                y = float(bounds_h) - 4.0
+                wrapped = True
+
+            if wrapped:
+                state["edge_wraps"] = int(state.get("edge_wraps", 0)) + 1
+                for idx_w in range(n):
+                    vels[idx_w] += math.sin(idx_w * 0.9) * 28.0
 
     # Vessel tilt and subtle liquid-weight squish
-    tilt_deg = max(-10.5, min(10.5, vx * 0.014))
+    tilt_deg = max(-10.5, min(10.5, vx * 0.014 + math.sin(phase * 3.2) * (0.65 if not is_dragging else 0.0)))
     speed = math.hypot(vx, vy)
     squish_x = 1.0 + max(-0.04, min(0.06, abs(vx) * 0.00004 - abs(vy) * 0.00002))
     squish_y = 1.0 / squish_x if squish_x != 0 else 1.0
 
     # Coupled 1D shallow-water sloshing wave along the liquid horizon
-    heights = list(state["wave_heights"])
-    vels = list(state["wave_velocities"])
-    n = len(heights)
     wave_tension = 95.0
     wave_damping = 4.8
     wave_spread = 0.28
 
     for i in range(n):
-        # Normalized position across the vessel [-1.0, +1.0]
         norm_pos = (i / max(1, n - 1)) * 2.0 - 1.0
-        # Horizontal acceleration sloshes liquid toward trailing wall; vertical acceleration ripples center
-        slosh_impulse = (-ax * 0.0038 * norm_pos) + (ay * 0.0012 * math.cos(norm_pos * math.pi))
+        ambient_ripple = math.sin(phase * 3.4 + i * 0.65) * 0.35
+        slosh_impulse = (-ax * 0.0038 * norm_pos) + (ay * 0.0012 * math.cos(norm_pos * math.pi)) + ambient_ripple
         restoring = -wave_tension * heights[i] - wave_damping * vels[i]
         vels[i] += (restoring * dt) + slosh_impulse
         heights[i] += vels[i] * dt
@@ -216,11 +344,12 @@ def step_liquid_physics(
     state["vx"] = round(vx, 3)
     state["vy"] = round(vy, 3)
     state["speed"] = round(speed, 2)
+    state["phase"] = round(phase, 4)
     state["tilt_deg"] = round(tilt_deg, 3)
     state["squish_x"] = round(squish_x, 4)
     state["squish_y"] = round(squish_y, 4)
-    state["wave_heights"] = [round(h, 4) for h in heights]
-    state["wave_velocities"] = [round(v, 4) for v in vels]
+    state["wave_heights"] = [round(h_val, 4) for h_val in heights]
+    state["wave_velocities"] = [round(v_val, 4) for v_val in vels]
     return state
 
 
@@ -274,6 +403,7 @@ def build_ws_telemetry_frame(
     overlay_mode: str = "auto",
     detected_harness: str = "all",
     target_label: str = "Desktop Workspace",
+    boundary_mode: str = "bounce",
 ) -> Dict[str, Any]:
     """
     Constructs the real-time WebSocket JSON payload consumed by the floating liquid overlay.
@@ -296,8 +426,9 @@ def build_ws_telemetry_frame(
             "cr_cw_reuse": claude["cache_reuse_multiplier"],
             "leverage_index": claude["leverage_index"],
             "saved_usd": round(claude["pricing"]["sonnet_saved_usd"]),
+            "cost_usd": round(claude["pricing"]["sonnet_actual_usd"], 2),
             "liquid_fill_ratio": round(min(0.98, max(0.15, claude["cache_hit_rate_pct"] / 100.0)), 4),
-            "accent_hex": "#0066CC",
+            "accent_hex": "#E07A5F",
         },
         "antigravity": {
             "id": "antigravity",
@@ -311,6 +442,7 @@ def build_ws_telemetry_frame(
             "cr_cw_reuse": agy["cache_reuse_multiplier"],
             "leverage_index": agy["leverage_index"],
             "saved_usd": round(agy["pricing"]["sonnet_saved_usd"]),
+            "cost_usd": round(agy["pricing"]["flash_actual_usd"], 2),
             "liquid_fill_ratio": round(min(0.98, max(0.15, agy["cache_hit_rate_pct"] / 100.0)), 4),
             "accent_hex": "#2997FF",
         },
@@ -326,6 +458,7 @@ def build_ws_telemetry_frame(
             "cr_cw_reuse": codex["cache_reuse_multiplier"],
             "leverage_index": codex["leverage_index"],
             "saved_usd": round(codex["pricing"]["sonnet_saved_usd"]),
+            "cost_usd": round(codex["pricing"]["sonnet_actual_usd"], 2),
             "liquid_fill_ratio": round(min(0.98, max(0.15, codex["cache_hit_rate_pct"] / 100.0)), 4),
             "accent_hex": "#30D158",
         },
@@ -341,6 +474,7 @@ def build_ws_telemetry_frame(
             "cr_cw_reuse": comb["cache_reuse_multiplier"],
             "leverage_index": comb["leverage_index"],
             "saved_usd": round(comb["pricing"]["sonnet_saved_usd"]),
+            "cost_usd": round(comb["pricing"]["sonnet_actual_usd"], 2),
             "liquid_fill_ratio": round(min(0.98, max(0.15, comb["cache_hit_rate_pct"] / 100.0)), 4),
             "accent_hex": "#0066CC",
         },
@@ -357,6 +491,8 @@ def build_ws_telemetry_frame(
         "operator_handle": aether_pulse.OPERATOR_HANDLE,
         "overlay_mode": overlay_mode,
         "overlay_mode_label": MODE_LABELS.get(overlay_mode, "Auto-Sense Target"),
+        "boundary_mode": boundary_mode,
+        "boundary_mode_label": BOUNDARY_LABELS.get(boundary_mode, "Bounce Walls"),
         "detected_harness": detected_harness,
         "effective_harness": effective_key,
         "target_label": aether_pulse.scrub_personal_identity(target_label),
@@ -377,6 +513,7 @@ class AetherPulseWebSocketServer:
         self.port = port
         self.report = aether_pulse.scan_local_harnesses()
         self.overlay_mode = "auto"
+        self.boundary_mode = "bounce"
         self.detected_harness = "all"
         self.target_label = "Aether Pulse Workspace"
 
@@ -415,6 +552,7 @@ class AetherPulseWebSocketServer:
                     self.overlay_mode,
                     self.detected_harness,
                     self.target_label,
+                    self.boundary_mode,
                 )
             ).encode("utf-8")
             writer.write(encode_ws_frame(initial_payload))
@@ -435,6 +573,10 @@ class AetherPulseWebSocketServer:
                             self.overlay_mode = next_overlay_mode(self.overlay_mode)
                         elif mtype == "set_mode":
                             self.overlay_mode = msg.get("mode", "auto")
+                        elif mtype == "cycle_boundary":
+                            self.boundary_mode = next_boundary_mode(self.boundary_mode)
+                        elif mtype == "set_boundary":
+                            self.boundary_mode = msg.get("boundary_mode", "bounce")
                         elif mtype == "drag_probe":
                             sx = int(msg.get("screenX", 0))
                             sy = int(msg.get("screenY", 0))
@@ -458,6 +600,7 @@ class AetherPulseWebSocketServer:
                         self.overlay_mode,
                         self.detected_harness,
                         self.target_label,
+                        self.boundary_mode,
                     )
                 ).encode("utf-8")
                 writer.write(encode_ws_frame(frame_payload))
@@ -470,6 +613,7 @@ class AetherPulseWebSocketServer:
                     self.overlay_mode,
                     self.detected_harness,
                     self.target_label,
+                    self.boundary_mode,
                 ),
                 indent=2,
             ).encode("utf-8")
