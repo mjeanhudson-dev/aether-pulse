@@ -6,4 +6,4 @@ compatibility_date = "2026-11-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "aether-pulse-leaderboard"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "1d514af9-d743-4a55-b2cb-17374e175020"

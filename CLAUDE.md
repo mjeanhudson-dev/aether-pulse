@@ -6,4 +6,5 @@
   1. Maintain native **Light & Dark Mode** via `<meta name="color-scheme" content="light dark">`, CSS `light-dark()`, and the tri-state segmented controller (`System` / `Light` / `Dark`).
   2. **Zero Color-to-Color Transitions:** Never introduce linear gradients on text or badges, neon accent colors, thick colored side-borders, or emoji icons. Use tonal surface elevation, `1px` hairline dividers, and `1.5px`-stroke inline SVGs.
   3. **High-Resolution Optical Legibility:** Keep body text at `16px` (`1rem`), table cells at `15px` (`0.9375rem`) with `tabular-nums`, and ledger figures at `38px` (`2.375rem`) with `-0.03em` tracking.
+  4. **Zero-Dot Monotone Cubic Splines & Freefloat Liquid Physics:** Never render `<circle>` dots on `#trajectory-svg-chart`; always use Fritsch–Carlson monotone cubic Bézier (`C`) paths with mouse scrobbling. Preserve `Bounce` (`BNC`), `Pac-Man Wrap` (`PAC`), and `Pin` (`PIN`) freefloat boundary modes in `aether_pulse_ws.py`, `aether_liquid_overlay.py`, and `chrome-extension/content-overlay.js`.
 - **Verification Gate:** Run `python -m unittest discover -s tests -v` and `python aether_pulse_mcp.py --self-test` before every commit.

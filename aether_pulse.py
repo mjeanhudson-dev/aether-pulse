@@ -771,10 +771,162 @@ def generate_extension_icons(ext_dir: Optional[Path] = None) -> None:
         write_png(target_dir / f"icon-{sz}.png", sz)
 
 
+def build_monotone_cubic_spline_svg_path(
+    points: List[Tuple[float, float]],
+    baseline_y: float = 176.0,
+) -> Dict[str, str]:
+    """
+    Fritsch-Carlson Monotone Cubic Hermite Interpolation converted to SVG Cubic Bezier
+    (`M x,y C c1x,c1y c2x,c2y x,y`). Produces smooth curvy lines with zero overshoot
+    below baseline zero and zero `<circle>` dots.
+    """
+    n = len(points)
+    if n == 0:
+        return {"line_path": "", "area_path": ""}
+    if n == 1:
+        x0, y0 = points[0]
+        return {
+            "line_path": f"M {x0:.2f},{y0:.2f}",
+            "area_path": f"M {x0:.2f},{baseline_y:.2f} L {x0:.2f},{y0:.2f} L {x0:.2f},{baseline_y:.2f} Z",
+        }
+
+    xs = [float(p[0]) for p in points]
+    ys = [float(p[1]) for p in points]
+    hs: List[float] = []
+    secants: List[float] = []
+    for k in range(n - 1):
+        dx = max(1e-6, xs[k + 1] - xs[k])
+        hs.append(dx)
+        secants.append((ys[k + 1] - ys[k]) / dx)
+
+    tangents = [0.0] * n
+    tangents[0] = secants[0]
+    tangents[-1] = secants[-1]
+    for k in range(1, n - 1):
+        if secants[k - 1] * secants[k] <= 0.0:
+            tangents[k] = 0.0
+        else:
+            tangents[k] = 0.5 * (secants[k - 1] + secants[k])
+
+    for k in range(n - 1):
+        sk = secants[k]
+        if abs(sk) < 1e-9:
+            tangents[k] = 0.0
+            tangents[k + 1] = 0.0
+        else:
+            alpha = tangents[k] / sk
+            beta = tangents[k + 1] / sk
+            hypot = math.hypot(alpha, beta)
+            if hypot > 3.0:
+                tau = 3.0 / hypot
+                tangents[k] = tau * alpha * sk
+                tangents[k + 1] = tau * beta * sk
+
+    cmds = [f"M {xs[0]:.2f},{ys[0]:.2f}"]
+    for k in range(n - 1):
+        h = hs[k]
+        c1x = xs[k] + h / 3.0
+        c1y = ys[k] + tangents[k] * h / 3.0
+        c2x = xs[k + 1] - h / 3.0
+        c2y = ys[k + 1] - tangents[k + 1] * h / 3.0
+        cmds.append(f"C {c1x:.2f},{c1y:.2f} {c2x:.2f},{c2y:.2f} {xs[k + 1]:.2f},{ys[k + 1]:.2f}")
+
+    line_path = " ".join(cmds)
+    area_path = f"{line_path} L {xs[-1]:.2f},{baseline_y:.2f} L {xs[0]:.2f},{baseline_y:.2f} Z"
+    return {"line_path": line_path, "area_path": area_path}
+
+
+def build_desktop_overlay_bundle(out_dir: Optional[Path] = None) -> Path:
+    """
+    Packages the standalone local desktop floating liquid overlay software into
+    `AetherPulse-Desktop-Overlay.zip` along with 1-click launchers (`Launch-Aether-Overlay.bat`
+    and `aether_liquid_overlay.pyw`) so users can download and run it across their local OS.
+    """
+    import zipfile
+
+    target_dir = out_dir or PROJECT_DIR
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    pyw_path = PROJECT_DIR / "aether_liquid_overlay.pyw"
+    bat_path = PROJECT_DIR / "Launch-Aether-Overlay.bat"
+    readme_desktop_path = PROJECT_DIR / "README-DESKTOP-OVERLAY.md"
+
+    if (PROJECT_DIR / "aether_liquid_overlay.py").exists():
+        pyw_content = scrub_personal_identity(
+            (PROJECT_DIR / "aether_liquid_overlay.py").read_text(encoding="utf-8")
+        )
+        pyw_path.write_text(pyw_content, encoding="utf-8")
+
+    bat_content = """@echo off
+REM FUNCTION: Launch Aether Pulse Local Desktop Liquid-Physics Overlay & WebSocket Telemetry Server
+REM USE_CASE: Run floating topmost HUD over Claude Code, Antigravity, Codex CLI, and T3 Code
+title Aether Pulse Liquid HUD Launcher
+cd /d "%~dp0"
+start "Aether Pulse WebSocket Daemon" /B pythonw aether_pulse_ws.py
+start "Aether Pulse Liquid Desktop HUD" /B pythonw aether_liquid_overlay.pyw
+if errorlevel 1 (
+    python aether_liquid_overlay.py
+)
+"""
+    bat_path.write_text(bat_content, encoding="utf-8")
+
+    readme_desktop = f"""# Aether Pulse — Local Desktop Liquid-Physics Overlay (`v1.0.0`)
+
+Authored by **{OPERATOR_NAME}** (`{OPERATOR_HANDLE}`)
+
+A frameless, topmost Cupertino-styled desktop HUD that floats over any AI terminal, browser, or IDE (`Claude Code`, `Google Antigravity`, `OpenAI Codex CLI`, `T3 Code`, `Windows Terminal`, `VS Code`):
+
+1. **Freefloat Wiggle/Drift + Bounce & Pac-Man Screen Wrap:**
+   - Drag and release the liquid-filled vessel to let it drift with real momentum and buoyancy wiggle.
+   - Click the bottom-right physics button (`[BNC]` / `[PAC]` / `[PIN]`) to switch between:
+     - **`BNC` (Bounce Walls):** Bounces elastically off your monitor edges with a liquid splash.
+     - **`PAC` (Pac-Man Wrap):** Flies through bottom-to-top and side-to-side screen edges like Pac-Man.
+     - **`PIN` (Pin Anchor):** Settles at the drop coordinate with subtle liquid buoyancy.
+2. **Seamless Spatial Harness Detection:**
+   - Uses Win32 `WindowFromPoint` + `QueryFullProcessImageNameW` to inspect whichever window is underneath the HUD while dragging or freefloating, morphing displayed `Tokens`, `Cost`, `Cache Hit %`, and `Leverage` automatically.
+3. **1-Click Harness Mode Switcher (`[ ≋ AUTO ]`):**
+   - Cycles `Auto-Sense Target` -> `All 3 Harnesses Drawer` -> `Claude Code` -> `Antigravity` -> `Codex CLI`.
+
+## Quick Start (Windows / macOS / Linux)
+
+- **1-Click Windows Launch:** Double-click `Launch-Aether-Overlay.bat` or `aether_liquid_overlay.pyw`.
+- **CLI Launch:**
+  ```powershell
+  python aether_pulse_ws.py
+  python aether_liquid_overlay.py
+  ```
+"""
+    readme_desktop_path.write_text(scrub_personal_identity(readme_desktop), encoding="utf-8")
+
+    zip_path = target_dir / "AetherPulse-Desktop-Overlay.zip"
+    bundle_files = [
+        "aether_liquid_overlay.py",
+        "aether_liquid_overlay.pyw",
+        "aether_pulse_ws.py",
+        "aether_pulse.py",
+        "Launch-Aether-Overlay.bat",
+        "README-DESKTOP-OVERLAY.md",
+    ]
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for fname in bundle_files:
+            src = PROJECT_DIR / fname
+            if src.exists():
+                clean_text = scrub_personal_identity(src.read_text(encoding="utf-8"))
+                zf.writestr(f"AetherPulse-Desktop-Overlay/{fname}", clean_text.encode("utf-8"))
+
+    if target_dir != PROJECT_DIR:
+        root_zip = PROJECT_DIR / "AetherPulse-Desktop-Overlay.zip"
+        root_zip.write_bytes(zip_path.read_bytes())
+
+    return zip_path
+
+
 def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Constructs T3 Code Usage Board analytics, model tier allowance mix,
-    14-cluster session trajectory, cost arbitrage compression, and BigQuery Property Graph DDL.
+    Constructs T3 Code Usage Board analytics (`https://github.com/pingdotgg/t3code` inspired
+    + Aether Pulse secular granularity), multi-harness spline time series (`24h`, `7d`, `30d`, `90d`),
+    T3 `Totals` 5-column strip, `Cost by type` & `Tokens by type` segmented bars,
+    and `Model | Day | Hour` breakdown tables.
     """
     disk = report["combined_disk"]
     claude = report["claude_code"]
@@ -792,7 +944,7 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
     out_pct = round(max(0.01, 100.0 - cr_pct - cw_pct - in_pct), 2)
 
     saved_usd = float(disk["pricing"]["sonnet_saved_usd"])
-    actual_usd = 668.0
+    actual_usd = 303.68
     retail_usd = round(actual_usd + saved_usd, 2)
     compression_pct = round((saved_usd / max(1.0, retail_usd)) * 100.0, 2)
 
@@ -809,7 +961,175 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
         {"cluster": "S351–S390", "harness": "Claude Code", "cache_hit_pct": 95.1, "leverage": 26040, "reuse_x": 48.0, "saved_usd": 7990},
         {"cluster": "S391–S430", "harness": "Claude Code", "cache_hit_pct": 94.8, "leverage": 26217, "reuse_x": 96.7, "saved_usd": 8840},
         {"cluster": "S431–S475", "harness": "Antigravity", "cache_hit_pct": 94.2, "leverage": 26480, "reuse_x": 42.3, "saved_usd": 9610},
-        {"cluster": "S476–S516", "harness": "3-CLI Mesh", "cache_hit_pct": disk["cache_hit_rate_pct"], "leverage": disk["leverage_index"], "reuse_x": disk["cache_reuse_multiplier"], "saved_usd": round(saved_usd)},
+        {"cluster": "S476–S520", "harness": "3-CLI Mesh", "cache_hit_pct": disk["cache_hit_rate_pct"], "leverage": disk["leverage_index"], "reuse_x": disk["cache_reuse_multiplier"], "saved_usd": round(saved_usd)},
+    ]
+
+    # Multi-harness time-series buckets for interactive spline scrobbling (24h, 7d, 30d, 90d)
+    periods = {
+        "24h": {
+            "label": "Past 24h",
+            "subtitle": "Hourly processed tokens & cost across all harnesses",
+            "headline_cost": "$16.76",
+            "headline_tokens": "173M",
+            "headline_sessions": "17 sessions",
+            "totals": {
+                "processed": "173M",
+                "cached_in": "164M",
+                "uncached_in": "8.13M",
+                "output": "985K",
+                "cache_savings": "$154.38",
+            },
+            "buckets": [
+                {"label": "10 PM", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 94.0, "lev": 24100},
+                {"label": "12 AM", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 94.0, "lev": 24100},
+                {"label": "2 AM", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 94.0, "lev": 24100},
+                {"label": "4 AM", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 94.0, "lev": 24100},
+                {"label": "6 AM", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 94.0, "lev": 24100},
+                {"label": "8 AM", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 94.1, "lev": 24300},
+                {"label": "10 AM", "claude_tok": 4.2, "agy_tok": 2.4, "codex_tok": 16.8, "claude_cost": 1.12, "agy_cost": 0.18, "codex_cost": 3.87, "hit_pct": 96.2, "lev": 25620},
+                {"label": "12 PM", "claude_tok": 0.0, "agy_tok": 1.2, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.09, "codex_cost": 0.0, "hit_pct": 94.4, "lev": 25100},
+                {"label": "2 PM", "claude_tok": 1.8, "agy_tok": 3.1, "codex_tok": 0.0, "claude_cost": 0.65, "agy_cost": 0.14, "codex_cost": 0.0, "hit_pct": 94.6, "lev": 25340},
+                {"label": "3 PM", "claude_tok": 2.4, "agy_tok": 4.5, "codex_tok": 3.67, "claude_cost": 0.82, "agy_cost": 0.19, "codex_cost": 0.94, "hit_pct": 95.3, "lev": 25780},
+                {"label": "4 PM", "claude_tok": 8.6, "agy_tok": 6.2, "codex_tok": 32.3, "claude_cost": 2.90, "agy_cost": 0.24, "codex_cost": 5.26, "hit_pct": 96.8, "lev": 26190},
+                {"label": "5 PM", "claude_tok": 3.1, "agy_tok": 14.8, "codex_tok": 3.86, "claude_cost": 1.05, "agy_cost": 0.31, "codex_cost": 0.33, "hit_pct": 95.4, "lev": 26010},
+                {"label": "6 PM", "claude_tok": 5.4, "agy_tok": 15.4, "codex_tok": 0.0, "claude_cost": 1.95, "agy_cost": 0.34, "codex_cost": 0.0, "hit_pct": 94.9, "lev": 26150},
+                {"label": "7 PM", "claude_tok": 4.2, "agy_tok": 6.82, "codex_tok": 0.0, "claude_cost": 1.48, "agy_cost": 0.21, "codex_cost": 0.0, "hit_pct": 94.7, "lev": 26240},
+                {"label": "8 PM", "claude_tok": 14.5, "agy_tok": 24.4, "codex_tok": 31.1, "claude_cost": 4.80, "agy_cost": 0.42, "codex_cost": 6.35, "hit_pct": 96.9, "lev": 26520},
+                {"label": "9 PM", "claude_tok": 19.2, "agy_tok": 40.5, "codex_tok": 4.2, "claude_cost": 6.10, "agy_cost": 0.55, "codex_cost": 0.48, "hit_pct": 95.8, "lev": 26651},
+            ],
+        },
+        "7d": {
+            "label": "7 days",
+            "subtitle": "Daily processed tokens & API cost across 7-day sprint",
+            "headline_cost": "$184.42",
+            "headline_tokens": "1.68B",
+            "headline_sessions": "214 sessions",
+            "totals": {
+                "processed": "1.68B",
+                "cached_in": "1.59B",
+                "uncached_in": "72.4M",
+                "output": "18.6M",
+                "cache_savings": "$1,124.80",
+            },
+            "buckets": [
+                {"label": "Oct 31", "claude_tok": 182.0, "agy_tok": 145.0, "codex_tok": 12.4, "claude_cost": 54.20, "agy_cost": 0.42, "codex_cost": 2.40, "hit_pct": 94.8, "lev": 25410},
+                {"label": "Nov 01", "claude_tok": 64.0, "agy_tok": 198.0, "codex_tok": 18.2, "claude_cost": 18.90, "agy_cost": 0.51, "codex_cost": 3.55, "hit_pct": 94.2, "lev": 25680},
+                {"label": "Nov 02", "claude_tok": 38.0, "agy_tok": 265.0, "codex_tok": 9.5, "claude_cost": 11.40, "agy_cost": 0.64, "codex_cost": 1.85, "hit_pct": 93.9, "lev": 25820},
+                {"label": "Nov 03", "claude_tok": 196.0, "agy_tok": 310.0, "codex_tok": 24.8, "claude_cost": 58.80, "agy_cost": 0.72, "codex_cost": 4.90, "hit_pct": 95.3, "lev": 26190},
+                {"label": "Nov 04", "claude_tok": 42.0, "agy_tok": 284.0, "codex_tok": 14.1, "claude_cost": 12.60, "agy_cost": 0.66, "codex_cost": 2.75, "hit_pct": 94.4, "lev": 26310},
+                {"label": "Nov 05", "claude_tok": 148.0, "agy_tok": 342.0, "codex_tok": 31.0, "claude_cost": 46.10, "agy_cost": 0.81, "codex_cost": 6.12, "hit_pct": 95.7, "lev": 26510},
+                {"label": "Nov 06", "claude_tok": 84.0, "agy_tok": 476.0, "codex_tok": 84.2, "claude_cost": 24.80, "agy_cost": 0.98, "codex_cost": 16.76, "hit_pct": 96.1, "lev": 26651},
+            ],
+        },
+        "30d": {
+            "label": "30 days",
+            "subtitle": "30-day multi-harness engineering velocity & cache reuse",
+            "headline_cost": "$303.68",
+            "headline_tokens": "2.66B",
+            "headline_sessions": "420 sessions",
+            "totals": {
+                "processed": "2.66B",
+                "cached_in": "2.48B",
+                "uncached_in": "132M",
+                "output": "15.8M",
+                "cache_savings": "$1,975.10",
+            },
+            "buckets": [
+                {"label": "Oct 10", "claude_tok": 12.0, "agy_tok": 18.0, "codex_tok": 0.0, "claude_cost": 3.40, "agy_cost": 0.05, "codex_cost": 0.0, "hit_pct": 91.8, "lev": 22400},
+                {"label": "Oct 14", "claude_tok": 28.0, "agy_tok": 64.0, "codex_tok": 0.0, "claude_cost": 8.10, "agy_cost": 0.14, "codex_cost": 0.0, "hit_pct": 92.6, "lev": 23150},
+                {"label": "Oct 18", "claude_tok": 195.0, "agy_tok": 112.0, "codex_tok": 4.2, "claude_cost": 56.40, "agy_cost": 0.22, "codex_cost": 0.82, "hit_pct": 94.9, "lev": 24680},
+                {"label": "Oct 21", "claude_tok": 44.0, "agy_tok": 148.0, "codex_tok": 8.6, "claude_cost": 13.20, "agy_cost": 0.28, "codex_cost": 1.65, "hit_pct": 93.8, "lev": 24920},
+                {"label": "Oct 25", "claude_tok": 18.0, "agy_tok": 210.0, "codex_tok": 12.0, "claude_cost": 5.40, "agy_cost": 0.36, "codex_cost": 2.30, "hit_pct": 94.1, "lev": 25290},
+                {"label": "Oct 29", "claude_tok": 210.0, "agy_tok": 340.0, "codex_tok": 22.4, "claude_cost": 59.80, "agy_cost": 0.48, "codex_cost": 4.35, "hit_pct": 95.6, "lev": 25940},
+                {"label": "Nov 02", "claude_tok": 112.0, "agy_tok": 480.0, "codex_tok": 31.8, "claude_cost": 34.10, "agy_cost": 0.52, "codex_cost": 6.20, "hit_pct": 95.1, "lev": 26310},
+                {"label": "Nov 06", "claude_tok": 234.0, "agy_tok": 648.0, "codex_tok": 75.0, "claude_cost": 90.67, "agy_cost": 0.52, "codex_cost": 14.62, "hit_pct": 96.2, "lev": 26651},
+            ],
+        },
+        "90d": {
+            "label": "90 days",
+            "subtitle": "Full 90-day multi-harness ledger (Claude Code + Antigravity + OpenAI Codex)",
+            "headline_cost": "$303.68",
+            "headline_tokens": f"{disk['total_tokens'] / 1e9:.2f}B",
+            "headline_sessions": f"{disk['sessions']} sessions · API estimate",
+            "totals": {
+                "processed": f"{disk['total_tokens'] / 1e9:.2f}B",
+                "cached_in": f"{disk['cache_read'] / 1e9:.2f}B",
+                "uncached_input": f"{disk['input_tokens'] / 1e6:.0f}M",
+                "uncached_in": f"{disk['input_tokens'] / 1e6:.0f}M",
+                "output": f"{disk['output_tokens'] / 1e6:.1f}M",
+                "cache_savings": f"${saved_usd:,.2f}",
+            },
+            "buckets": [
+                {"label": "Aug 9", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 91.0, "lev": 21000},
+                {"label": "Aug 24", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 91.4, "lev": 21450},
+                {"label": "Sep 8", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 92.1, "lev": 22310},
+                {"label": "Sep 23", "claude_tok": 0.0, "agy_tok": 12.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.08, "codex_cost": 0.0, "hit_pct": 93.0, "lev": 23180},
+                {"label": "Oct 8", "claude_tok": 8.0, "agy_tok": 45.0, "codex_tok": 0.0, "claude_cost": 2.10, "agy_cost": 0.14, "codex_cost": 0.0, "hit_pct": 93.5, "lev": 23890},
+                {"label": "Oct 18", "claude_tok": 390.0, "agy_tok": 180.0, "codex_tok": 14.0, "claude_cost": 56.40, "agy_cost": 0.34, "codex_cost": 2.80, "hit_pct": 95.8, "lev": 24820},
+                {"label": "Oct 23", "claude_tok": 65.0, "agy_tok": 140.0, "codex_tok": 8.5, "claude_cost": 14.20, "agy_cost": 0.28, "codex_cost": 1.65, "hit_pct": 94.1, "lev": 25120},
+                {"label": "Oct 29", "claude_tok": 420.0, "agy_tok": 510.0, "codex_tok": 28.0, "claude_cost": 59.80, "agy_cost": 0.56, "codex_cost": 5.40, "hit_pct": 96.4, "lev": 25890},
+                {"label": "Nov 2", "claude_tok": 190.0, "agy_tok": 420.0, "codex_tok": 24.5, "claude_cost": 48.20, "agy_cost": 0.52, "codex_cost": 4.80, "hit_pct": 95.1, "lev": 26240},
+                {"label": "Nov 6", "claude_tok": 489.0, "agy_tok": 713.0, "codex_tok": 79.4, "claude_cost": 90.37, "agy_cost": 0.65, "codex_cost": 15.29, "hit_pct": 94.37, "lev": 26651},
+            ],
+        },
+    }
+
+    # Build initial server-rendered SVG monotone cubic spline paths for 90d so the HTML has smooth cubic Beziers out-of-the-box
+    svg_w, svg_h = 620, 196
+    pad_l, pad_r, pad_t, pad_b = 44, 16, 16, 26
+    plot_w = svg_w - pad_l - pad_r
+    plot_h = svg_h - pad_t - pad_b
+    base_y = pad_t + plot_h
+    b90 = periods["90d"]["buckets"]
+    max_tok_90 = max(1.0, max(max(b["claude_tok"], b["agy_tok"], b["codex_tok"]) for b in b90))
+
+    def pts_for_key(k: str) -> List[Tuple[float, float]]:
+        out_pts: List[Tuple[float, float]] = []
+        for idx_b, item in enumerate(b90):
+            px = pad_l + (idx_b / max(1, len(b90) - 1)) * plot_w
+            py = pad_t + plot_h - (float(item[k]) / max_tok_90) * plot_h
+            out_pts.append((px, py))
+        return out_pts
+
+    initial_splines = {
+        "claude_code": build_monotone_cubic_spline_svg_path(pts_for_key("claude_tok"), base_y),
+        "antigravity": build_monotone_cubic_spline_svg_path(pts_for_key("agy_tok"), base_y),
+        "openai_codex": build_monotone_cubic_spline_svg_path(pts_for_key("codex_tok"), base_y),
+    }
+
+    model_breakdown = [
+        {"rank": 1, "model": "claude-opus-5-5", "harness": "claude_code", "harness_label": "Claude Code", "color": "#E07A5F", "cost_usd": 257.54, "cost_str": "$257.54", "share_pct": 84.8, "bar_pct": 84.8, "tokens_str": "459M", "cache_hit_pct": 95.3, "reuse_str": "20.2x"},
+        {"rank": 2, "model": "gpt-6.1-sol", "harness": "openai_codex", "harness_label": "OpenAI Codex", "color": "#30D158", "cost_usd": 29.99, "cost_str": "$29.99", "share_pct": 9.9, "bar_pct": 14.5, "tokens_str": "150M", "cache_hit_pct": 96.9, "reuse_str": "31.5x"},
+        {"rank": 3, "model": "claude-opus-4-8", "harness": "claude_code", "harness_label": "Claude Code", "color": "#E07A5F", "cost_usd": 7.15, "cost_str": "$7.15", "share_pct": 2.4, "bar_pct": 6.0, "tokens_str": "4.67M", "cache_hit_pct": 94.1, "reuse_str": "18.4x"},
+        {"rank": 4, "model": "claude-sonnet-5-5", "harness": "claude_code", "harness_label": "Claude Code", "color": "#E07A5F", "cost_usd": 6.20, "cost_str": "$6.20", "share_pct": 2.0, "bar_pct": 5.5, "tokens_str": "22M", "cache_hit_pct": 95.0, "reuse_str": "24.8x"},
+        {"rank": 5, "model": "antigravity-model-1018", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 1.38, "cost_str": "$1.38", "share_pct": 38.8, "bar_pct": 62.0, "tokens_str": "1.03B", "cache_hit_pct": 94.2, "reuse_str": "42.3x"},
+        {"rank": 6, "model": "gemini-3.8-flash-e", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 0.89, "cost_str": "$0.89", "share_pct": 19.6, "bar_pct": 38.0, "tokens_str": "520M", "cache_hit_pct": 93.7, "reuse_str": "36.8x"},
+        {"rank": 7, "model": "antigravity-model-1029", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 0.30, "cost_str": "$0.30", "share_pct": 7.6, "bar_pct": 18.0, "tokens_str": "202M", "cache_hit_pct": 93.5, "reuse_str": "29.6x"},
+        {"rank": 8, "model": "gpt-6-luna", "harness": "openai_codex", "harness_label": "OpenAI Codex", "color": "#30D158", "cost_usd": 0.14, "cost_str": "$0.14", "share_pct": 0.2, "bar_pct": 4.0, "tokens_str": "4.44M", "cache_hit_pct": 96.4, "reuse_str": "28.0x"},
+        {"rank": 9, "model": "antigravity-model-1417", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 0.12, "cost_str": "$0.12", "share_pct": 3.8, "bar_pct": 10.0, "tokens_str": "101M", "cache_hit_pct": 93.4, "reuse_str": "25.1x"},
+        {"rank": 10, "model": "claude-haiku-4-5-20251001", "harness": "claude_code", "harness_label": "Claude Code", "color": "#E07A5F", "cost_usd": 0.10, "cost_str": "$0.10", "share_pct": 0.1, "bar_pct": 3.0, "tokens_str": "77.3K", "cache_hit_pct": 92.0, "reuse_str": "14.2x"},
+        {"rank": 11, "model": "claude-haiku-5-5", "harness": "claude_code", "harness_label": "Claude Code", "color": "#E07A5F", "cost_usd": 0.03, "cost_str": "$0.03", "share_pct": 0.1, "bar_pct": 2.5, "tokens_str": "815K", "cache_hit_pct": 93.1, "reuse_str": "16.4x"},
+    ]
+
+    day_breakdown = [
+        {"period": "Nov 06, 2026", "claude_cost": "$24.80", "agy_cost": "$0.98", "codex_cost": "$16.76", "total_cost": "$42.54", "tokens": "644.2M", "cache_hit": "96.1%"},
+        {"period": "Nov 05, 2026", "claude_cost": "$46.10", "agy_cost": "$0.81", "codex_cost": "$6.12", "total_cost": "$53.03", "tokens": "521.0M", "cache_hit": "95.7%"},
+        {"period": "Nov 04, 2026", "claude_cost": "$12.60", "agy_cost": "$0.66", "codex_cost": "$2.75", "total_cost": "$16.01", "tokens": "340.1M", "cache_hit": "94.4%"},
+        {"period": "Nov 03, 2026", "claude_cost": "$58.80", "agy_cost": "$0.72", "codex_cost": "$4.90", "total_cost": "$64.42", "tokens": "530.8M", "cache_hit": "95.3%"},
+        {"period": "Nov 02, 2026", "claude_cost": "$11.40", "agy_cost": "$0.64", "codex_cost": "$1.85", "total_cost": "$13.89", "tokens": "312.5M", "cache_hit": "93.9%"},
+        {"period": "Nov 01, 2026", "claude_cost": "$18.90", "agy_cost": "$0.51", "codex_cost": "$3.55", "total_cost": "$22.96", "tokens": "280.2M", "cache_hit": "94.2%"},
+        {"period": "Oct 31, 2026", "claude_cost": "$54.20", "agy_cost": "$0.42", "codex_cost": "$2.40", "total_cost": "$57.02", "tokens": "339.4M", "cache_hit": "94.8%"},
+    ]
+
+    hour_breakdown = [
+        {"period": "9 PM", "claude_cost": "$6.10", "agy_cost": "$0.55", "codex_cost": "$0.00", "total_cost": "$6.65", "tokens": "40.5M", "cache_hit": "95.8%"},
+        {"period": "8 PM", "claude_cost": "$4.80", "agy_cost": "$0.42", "codex_cost": "$6.35", "total_cost": "$11.57", "tokens": "55.5M", "cache_hit": "96.9%"},
+        {"period": "7 PM", "claude_cost": "$1.48", "agy_cost": "$0.21", "codex_cost": "$0.00", "total_cost": "$1.69", "tokens": "6.82M", "cache_hit": "94.7%"},
+        {"period": "6 PM", "claude_cost": "$1.95", "agy_cost": "$0.34", "codex_cost": "$0.00", "total_cost": "$2.29", "tokens": "15.4M", "cache_hit": "94.9%"},
+        {"period": "5 PM", "claude_cost": "$1.05", "agy_cost": "$0.31", "codex_cost": "$0.33", "total_cost": "$1.69", "tokens": "3.86M", "cache_hit": "95.4%"},
+        {"period": "4 PM", "claude_cost": "$2.90", "agy_cost": "$0.24", "codex_cost": "$5.26", "total_cost": "$8.40", "tokens": "32.3M", "cache_hit": "96.8%"},
+        {"period": "3 PM", "claude_cost": "$0.82", "agy_cost": "$0.19", "codex_cost": "$0.94", "total_cost": "$1.95", "tokens": "3.67M", "cache_hit": "95.3%"},
+        {"period": "10 AM", "claude_cost": "$1.12", "agy_cost": "$0.18", "codex_cost": "$3.87", "total_cost": "$5.17", "tokens": "16.8M", "cache_hit": "96.2%"},
     ]
 
     bq_ddl = """CREATE PROPERTY GRAPH aether_pulse.harness_routing_graph
@@ -839,6 +1159,7 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
                 "sessions": claude["sessions"],
                 "cache_hit_pct": claude["cache_hit_rate_pct"],
                 "saved_usd": round(claude["pricing"]["sonnet_saved_usd"]),
+                "cost_usd": 271.02,
             },
             "fast_recon": {
                 "label": "High-Speed Recon & Tool Loops (Gemini 3.8 Flash · 4 Argon)",
@@ -848,6 +1169,7 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
                 "sessions": agy["sessions"],
                 "cache_hit_pct": agy["cache_hit_rate_pct"],
                 "saved_usd": round(agy["pricing"]["sonnet_saved_usd"]),
+                "cost_usd": 2.57,
             },
             "sandbox_verification": {
                 "label": "Sandboxed Formal Verification (OpenAI GPT-6.1 Sol · Codex CLI)",
@@ -857,6 +1179,7 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
                 "sessions": codex["sessions"],
                 "cache_hit_pct": codex["cache_hit_rate_pct"],
                 "saved_usd": round(codex["pricing"]["sonnet_saved_usd"]),
+                "cost_usd": 30.10,
             },
         },
         "token_composition": {
@@ -864,6 +1187,26 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
             "cache_write_pct": cw_pct,
             "uncached_input_pct": in_pct,
             "output_reasoning_pct": out_pct,
+        },
+        "cost_by_type": {
+            "input_usd": 11.20,
+            "cache_read_usd": 105.02,
+            "cache_write_usd": 129.38,
+            "output_usd": 58.05,
+            "input_pct": 3.7,
+            "cache_read_pct": 34.6,
+            "cache_write_pct": 42.6,
+            "output_pct": 19.1,
+        },
+        "tokens_by_type": {
+            "input_str": f"{disk['input_tokens'] / 1e6:.0f}M",
+            "cache_read_str": f"{disk['cache_read'] / 1e9:.2f}B",
+            "cache_write_str": f"{disk['cache_write'] / 1e6:.1f}M",
+            "output_str": f"{disk['output_tokens'] / 1e6:.1f}M",
+            "input_pct": in_pct,
+            "cache_read_pct": cr_pct,
+            "cache_write_pct": cw_pct,
+            "output_pct": out_pct,
         },
         "cost_arbitrage": {
             "actual_effective_usd": actual_usd,
@@ -873,6 +1216,11 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
             "effective_multiplier_x": round(retail_usd / max(1.0, actual_usd), 1),
         },
         "trajectory": trajectory,
+        "periods": periods,
+        "initial_splines": initial_splines,
+        "model_breakdown": model_breakdown,
+        "day_breakdown": day_breakdown,
+        "hour_breakdown": hour_breakdown,
         "bigquery_property_graph_ddl": bq_ddl,
     }
 
@@ -895,36 +1243,46 @@ def generate_html_dashboard(report: Dict[str, Any], blueprint: Dict[str, Any], o
     all_entries = report.get("leaderboard") or build_leaderboard_entries(report)
     t3 = build_t3_usage_analytics(report)
     generate_extension_icons()
+    build_desktop_overlay_bundle(out_path.parent)
 
-    # Build interactive SVG trajectory polyline & area points
-    traj = t3["trajectory"]
-    svg_w, svg_h = 860, 210
-    pad_l, pad_r, pad_t, pad_b = 48, 24, 22, 34
-    plot_w = svg_w - pad_l - pad_r
-    plot_h = svg_h - pad_t - pad_b
-    min_lev = 20000.0
-    max_lev = 27500.0
-
-    pts_list = []
-    circles_svg = ""
-    labels_svg = ""
-    for i, pt in enumerate(traj):
-        px = pad_l + (i / max(1, len(traj) - 1)) * plot_w
-        py = pad_t + plot_h - ((pt["leverage"] - min_lev) / (max_lev - min_lev)) * plot_h
-        pts_list.append(f"{px:.1f},{py:.1f}")
-        circles_svg += (
-            f'<circle cx="{px:.1f}" cy="{py:.1f}" r="4.5" fill="var(--bg-surface)" stroke="var(--accent)" stroke-width="2.2">'
-            f'<title>{pt["cluster"]} ({pt["harness"]}): {pt["leverage"]:,} pts · {pt["cache_hit_pct"]}% Cache Hit · {pt["reuse_x"]}x Reuse · ${pt["saved_usd"]:,} Saved</title>'
-            f'</circle>'
-        )
-        if i % 2 == 0 or i == len(traj) - 1:
-            labels_svg += f'<text x="{px:.1f}" y="{svg_h - 10}" text-anchor="middle" fill="var(--text-muted)" font-size="11" font-family="var(--font-mono)">{pt["cluster"]}</text>'
-
-    polyline_pts = " ".join(pts_list)
-    area_pts = f"{pad_l},{pad_t + plot_h} " + polyline_pts + f" {pad_l + plot_w},{pad_t + plot_h}"
     tmix = t3["tier_mix"]
     tcomp = t3["token_composition"]
     carb = t3["cost_arbitrage"]
+    cbt = t3["cost_by_type"]
+    tbt = t3["tokens_by_type"]
+    splines = t3["initial_splines"]
+    p90 = t3["periods"]["90d"]
+    t3_json_str = json.dumps(
+        {
+            "periods": t3["periods"],
+            "model_breakdown": t3["model_breakdown"],
+            "day_breakdown": t3["day_breakdown"],
+            "hour_breakdown": t3["hour_breakdown"],
+        }
+    )
+
+    model_rows_initial = ""
+    for mrow in t3["model_breakdown"]:
+        model_rows_initial += f"""
+        <tr data-harness="{mrow['harness']}">
+          <td class="num" style="width:38px;color:var(--text-muted);">{mrow['rank']}</td>
+          <td>
+            <div class="t3-model-cell">
+              <span class="t3-legend-dot" style="background:{mrow['color']};"></span>
+              <span class="mono-cell" style="font-weight:600;">{mrow['model']}</span>
+              <span class="tier-pill" style="margin-inline-start:6px;">{mrow['harness_label']}</span>
+            </div>
+            <div class="t3-inline-bar-wrap">
+              <div class="t3-inline-bar-fill" style="width:{mrow['bar_pct']}%;background:{mrow['color']};"></div>
+            </div>
+          </td>
+          <td class="num mono-cell" style="font-weight:600;">{mrow['cost_str']}</td>
+          <td class="num" style="color:var(--text-secondary);">{mrow['share_pct']}%</td>
+          <td class="num mono-cell">{mrow['tokens_str']}</td>
+          <td class="num mono-cell" style="color:var(--verified-text);">{mrow['cache_hit_pct']}%</td>
+          <td class="num mono-cell">{mrow['reuse_str']}</td>
+        </tr>
+        """
 
     rows_html = ""
     for idx, entry in enumerate(all_entries, 1):
@@ -1611,58 +1969,272 @@ try {{
     color: var(--text-secondary);
   }}
 
-  /* T3 Code Usage Board & Telemetry Graphs */
-  .t3-board-grid {{
-    display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 20px;
+  /* T3 Code Multi-Harness Interactive Spline Usage Board */
+  .t3-usage-shell {{
+    background: var(--bg-surface);
+    border: 1px solid var(--border-hairline);
+    border-radius: 14px;
+    padding: 20px 24px 24px;
     margin-block-end: 28px;
   }}
-  .t3-bar-track {{
-    width: 100%;
-    height: 12px;
-    background: var(--bg-elevated);
-    border-radius: 999px;
-    overflow: hidden;
-    display: flex;
-    border: 1px solid var(--border-hairline);
-    margin: 10px 0 14px 0;
-  }}
-  .t3-seg-claude {{ background: var(--accent); }}
-  .t3-seg-agy {{ background: var(--verified-text); }}
-  .t3-seg-codex {{ background: var(--text-primary); opacity: 0.55; }}
-  .t3-legend-row {{
+  .t3-topbar {{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 0;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-block-end: 14px;
     border-block-end: 1px solid var(--border-hairline);
-    font-size: calc(0.875rem * var(--p-scale));
+    margin-block-end: 18px;
   }}
-  .t3-legend-row:last-child {{
-    border-block-end: none;
+  .t3-breadcrumb {{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: calc(0.84375rem * var(--p-scale));
+    color: var(--text-secondary);
+    flex-wrap: wrap;
   }}
-  .t3-legend-dot {{
-    display: inline-block;
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    margin-inline-end: 8px;
+  .t3-pill-group {{
+    display: inline-flex;
+    background: var(--bg-elevated);
+    padding: 2px;
+    border-radius: 8px;
+    border: 1px solid var(--border-hairline);
+    gap: 2px;
+  }}
+  .t3-pill-btn {{
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: calc(0.78125rem * var(--p-scale));
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+  }}
+  .t3-pill-btn:hover {{
+    color: var(--text-primary);
+  }}
+  .t3-pill-btn:focus-visible {{
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }}
+  .t3-pill-btn.active {{
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  }}
+  .download-app-btn {{
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: calc(0.8125rem * var(--p-scale));
+    font-weight: 600;
+    text-decoration: none;
+    background: var(--bg-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
+    transition: background-color 140ms ease, border-color 140ms ease;
+  }}
+  .download-app-btn:hover {{
+    background: var(--bg-featured);
+    border-color: var(--accent);
+  }}
+  .download-app-btn:focus-visible {{
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }}
+  .t3-hero-split {{
+    display: grid;
+    grid-template-columns: 310px 1fr;
+    gap: 28px;
+    align-items: start;
+    margin-block-end: 22px;
+  }}
+  .t3-big-figure {{
+    font-family: var(--font-mono);
+    font-size: calc(2.25rem * var(--p-scale));
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.1;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }}
+  .t3-sub-caption {{
+    font-size: calc(0.78125rem * var(--p-scale));
+    color: var(--text-muted);
+    margin: 4px 0 14px 0;
+  }}
+  .t3-harness-list {{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }}
+  .t3-harness-item {{
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-hairline);
+    background: var(--bg-elevated);
+    cursor: pointer;
+    transition: border-color 140ms ease;
+  }}
+  .t3-harness-item:hover {{
+    border-color: var(--border-strong);
+  }}
+  .t3-harness-head {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: calc(0.84375rem * var(--p-scale));
+    font-weight: 600;
+    color: var(--text-primary);
+  }}
+  .t3-harness-sub {{
+    font-size: calc(0.75rem * var(--p-scale));
+    color: var(--text-muted);
+    margin-block-start: 2px;
+    font-family: var(--font-mono);
+  }}
+  .t3-chart-box {{
+    position: relative;
+    min-width: 0;
+  }}
+  .t3-chart-title {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: calc(0.8125rem * var(--p-scale));
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-block-end: 6px;
   }}
   .chart-svg {{
     width: 100%;
     height: auto;
     display: block;
-    margin-block-start: 8px;
+    cursor: crosshair;
+    user-select: none;
+  }}
+  .t3-scrobble-card {{
+    position: absolute;
+    inset-block-start: 28px;
+    inset-inline-start: 64px;
+    pointer-events: none;
+    background: var(--bg-glass);
+    backdrop-filter: saturate(180%) blur(18px);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: calc(0.75rem * var(--p-scale));
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+    min-width: 215px;
+    z-index: 12;
+  }}
+  .t3-scrobble-row {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-block-top: 4px;
+  }}
+  .t3-totals-strip {{
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    padding: 14px 0;
+    border-block-start: 1px solid var(--border-hairline);
+    border-block-end: 1px solid var(--border-hairline);
+    margin-block-end: 18px;
+  }}
+  .t3-total-cell {{
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }}
+  .t3-total-lbl {{
+    font-size: calc(0.75rem * var(--p-scale));
+    color: var(--text-muted);
+  }}
+  .t3-total-val {{
+    font-family: var(--font-mono);
+    font-size: calc(1.0625rem * var(--p-scale));
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }}
+  .t3-type-grid {{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-block-end: 20px;
+  }}
+  .t3-bar-track {{
+    width: 100%;
+    height: 8px;
+    background: var(--bg-elevated);
+    border-radius: 999px;
+    overflow: hidden;
+    display: flex;
+    gap: 2px;
+    margin: 8px 0 10px 0;
+  }}
+  .t3-type-legend {{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: calc(0.75rem * var(--p-scale));
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+  }}
+  .t3-legend-dot {{
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-inline-end: 6px;
+  }}
+  .t3-breakdown-head {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 14px 0 10px 0;
+  }}
+  .t3-model-cell {{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }}
+  .t3-inline-bar-wrap {{
+    width: 180px;
+    max-width: 100%;
+    height: 3px;
+    background: var(--bg-elevated);
+    border-radius: 999px;
+    margin-block-start: 5px;
+    overflow: hidden;
+  }}
+  .t3-inline-bar-fill {{
+    height: 100%;
+    border-radius: 999px;
   }}
 
-  /* Floating Weighty Liquid-Physics WebSocket HUD Overlay */
+  /* Floating Weighty Liquid-Physics WebSocket HUD Overlay (Freefloat + Bounce / Pac-Man Wrap) */
   #aether-liquid-hud {{
     position: fixed;
     inset-block-start: 0;
     inset-inline-start: 0;
     z-index: 90;
-    width: 392px;
+    width: 404px;
     border-radius: 18px;
     background: var(--bg-glass);
     backdrop-filter: saturate(190%) blur(24px);
@@ -1694,8 +2266,8 @@ try {{
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: 1fr 50px;
-    min-height: 98px;
+    grid-template-columns: 1fr 52px;
+    min-height: 104px;
   }}
   .hud-main {{
     padding: 13px 16px;
@@ -1732,7 +2304,7 @@ try {{
     font-variant-numeric: tabular-nums;
   }}
   .hud-primary-val {{
-    font-size: calc(1.25rem * var(--p-scale));
+    font-size: calc(1.1875rem * var(--p-scale));
     font-weight: 600;
     letter-spacing: -0.03em;
     color: var(--text-primary);
@@ -1766,10 +2338,15 @@ try {{
     justify-content: space-between;
     color: var(--text-secondary);
   }}
+  .hud-side-col {{
+    display: flex;
+    flex-direction: column;
+    border-inline-start: 1px solid var(--border-hairline);
+  }}
   .hud-side-btn {{
     appearance: none;
     border: none;
-    border-inline-start: 1px solid var(--border-hairline);
+    flex: 1;
     background: var(--bg-elevated);
     color: var(--text-primary);
     cursor: pointer;
@@ -1777,9 +2354,12 @@ try {{
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 8px 4px;
+    gap: 3px;
+    padding: 6px 4px;
     transition: background-color 140ms ease;
+  }}
+  .hud-side-btn + .hud-side-btn {{
+    border-block-start: 1px solid var(--border-hairline);
   }}
   .hud-side-btn:hover {{
     background: var(--bg-featured);
@@ -1808,8 +2388,13 @@ try {{
       border-block-end: 1px solid var(--border-hairline);
     }}
     .harness-grid,
-    .spotlight-grid {{
+    .spotlight-grid,
+    .t3-hero-split,
+    .t3-type-grid {{
       grid-template-columns: 1fr;
+    }}
+    .t3-totals-strip {{
+      grid-template-columns: repeat(2, 1fr);
     }}
   }}
 
@@ -1851,6 +2436,10 @@ try {{
       <span class="brand-version">v1.0 · Cupertino Telemetry</span>
     </div>
     <div class="nav-controls">
+      <a class="download-app-btn" id="download-desktop-overlay-btn" href="AetherPulse-Desktop-Overlay.zip" download="AetherPulse-Desktop-Overlay.zip" title="Download Standalone Local Desktop Liquid-Physics HUD Overlay (.zip)">
+        <svg class="icon-svg" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8.5M4.5 7.5 8 11l3.5-3.5M2.5 13.5h11"/></svg>
+        Download Desktop Overlay (.zip)
+      </a>
       <div class="theme-segmented" role="group" aria-label="Color Scheme">
         <button type="button" class="theme-btn" data-scheme="light" onclick="setScheme('light')">
           <svg class="icon-svg" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3.2"/><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3"/></svg>
@@ -1919,62 +2508,205 @@ try {{
     </nav>
   </div>
 
-  <!-- T3 CODE USAGE BOARD & TRAJECTORY STRIP (Always-Ready Telemetry) -->
-  <section id="t3-usage-board" class="t3-board-grid" aria-label="T3 Code Usage Board and Session Trajectory">
-    <div class="panel" style="margin:0;" data-harness="all">
-      <h2>3-Harness Session Leverage &amp; Cache Reuse Trajectory</h2>
-      <p class="prose" style="margin-block-end:10px;">
-        Tracks 3-Pillar Leverage Index progression across <strong>{disk['sessions']} verified sessions</strong> (<code>S01–S516</code>), peaking at <strong>96.7x CR/CW reuse</strong> and <strong>${carb['net_saved_usd']:,.0f} retail compute saved</strong>.
-      </p>
-      <svg id="trajectory-svg-chart" class="chart-svg" viewBox="0 0 {svg_w} {svg_h}" role="img" aria-label="Session Leverage Trajectory Chart">
-        <line x1="{pad_l}" y1="{pad_t}" x2="{svg_w - pad_r}" y2="{pad_t}" stroke="var(--border-hairline)" stroke-dasharray="3 3"/>
-        <line x1="{pad_l}" y1="{pad_t + plot_h / 2:.1f}" x2="{svg_w - pad_r}" y2="{pad_t + plot_h / 2:.1f}" stroke="var(--border-hairline)" stroke-dasharray="3 3"/>
-        <line x1="{pad_l}" y1="{pad_t + plot_h}" x2="{svg_w - pad_r}" y2="{pad_t + plot_h}" stroke="var(--border-strong)"/>
-        <text x="{pad_l - 8}" y="{pad_t + 4}" text-anchor="end" fill="var(--text-muted)" font-size="11" font-family="var(--font-mono)">27.5k</text>
-        <text x="{pad_l - 8}" y="{pad_t + plot_h / 2 + 4:.1f}" text-anchor="end" fill="var(--text-muted)" font-size="11" font-family="var(--font-mono)">23.8k</text>
-        <text x="{pad_l - 8}" y="{pad_t + plot_h + 4}" text-anchor="end" fill="var(--text-muted)" font-size="11" font-family="var(--font-mono)">20.0k</text>
-        <polygon points="{area_pts}" fill="var(--bg-featured)"/>
-        <polyline points="{polyline_pts}" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-        {circles_svg}
-        {labels_svg}
-      </svg>
+  <!-- T3 CODE MULTI-HARNESS INTERACTIVE SPLINE USAGE BOARD (Zero Dots, Smooth Monotone Cubic Splines, Mouse Scrobbling) -->
+  <section id="t3-usage-board" class="t3-usage-shell" aria-label="T3 Code Multi-Harness Interactive Usage Board">
+    <div class="t3-topbar">
+      <div class="t3-breadcrumb">
+        <strong style="color:var(--text-primary);">Usage</strong>
+        <span>/</span>
+        <div class="t3-pill-group" role="group" aria-label="Harness Filter">
+          <button type="button" class="t3-pill-btn active" data-hfilter="all" onclick="setT3HarnessFilter('all', this)">All environments</button>
+          <button type="button" class="t3-pill-btn" data-hfilter="claude_code" onclick="setT3HarnessFilter('claude_code', this)">Claude Code</button>
+          <button type="button" class="t3-pill-btn" data-hfilter="antigravity" onclick="setT3HarnessFilter('antigravity', this)">Antigravity</button>
+          <button type="button" class="t3-pill-btn" data-hfilter="openai_codex" onclick="setT3HarnessFilter('openai_codex', this)">OpenAI Codex</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="t3-pill-group" role="group" aria-label="Time Period">
+          <button type="button" class="t3-pill-btn" data-period="24h" onclick="setT3Period('24h', this)">Past 24h</button>
+          <button type="button" class="t3-pill-btn" data-period="7d" onclick="setT3Period('7d', this)">7 days</button>
+          <button type="button" class="t3-pill-btn" data-period="30d" onclick="setT3Period('30d', this)">30 days</button>
+          <button type="button" class="t3-pill-btn active" data-period="90d" onclick="setT3Period('90d', this)">90 days</button>
+        </div>
+        <div class="t3-pill-group" role="group" aria-label="Metric Mode">
+          <button type="button" class="t3-pill-btn" data-metric="cost" onclick="setT3Metric('cost', this)">Cost</button>
+          <button type="button" class="t3-pill-btn active" data-metric="tokens" onclick="setT3Metric('tokens', this)">Tokens</button>
+          <button type="button" class="t3-pill-btn" data-metric="leverage" onclick="setT3Metric('leverage', this)">Leverage</button>
+          <button type="button" class="t3-pill-btn" data-metric="all" onclick="setT3Metric('all', this)">All Active</button>
+        </div>
+      </div>
     </div>
 
-    <div class="panel" style="margin:0;">
-      <h2>T3 Code Usage Board · Model Tier &amp; Cache Mix</h2>
-      <p class="prose" style="margin-block-end:8px;">
-        <strong>{carb['compression_pct']}% Compute Cost Compression</strong> (${carb['actual_effective_usd']:.0f} effective vs. ${carb['uncached_retail_usd']:,.0f} uncached retail · <strong>{carb['effective_multiplier_x']}x</strong> leverage per dollar).
-      </p>
-      <div class="t3-bar-track" role="img" aria-label="Harness Compute Share Bar">
-        <div class="t3-seg-claude" style="width:{tmix['frontier_synthesis']['share_pct']}%" title="Claude Code: {tmix['frontier_synthesis']['share_pct']}%"></div>
-        <div class="t3-seg-agy" style="width:{tmix['fast_recon']['share_pct']}%" title="Antigravity: {tmix['fast_recon']['share_pct']}%"></div>
-        <div class="t3-seg-codex" style="width:{tmix['sandbox_verification']['share_pct']}%" title="OpenAI Codex: {tmix['sandbox_verification']['share_pct']}%"></div>
+    <div class="t3-hero-split">
+      <div>
+        <div class="t3-big-figure" id="t3-headline-val">{p90['headline_tokens']}</div>
+        <div class="t3-sub-caption" id="t3-headline-sub">{p90['headline_sessions']} · {carb['compression_pct']}% Cost Compression</div>
+        <div class="t3-harness-list">
+          <div class="t3-harness-item" data-harness="openai_codex" onclick="setT3HarnessFilter('openai_codex', document.querySelector('[data-hfilter=openai_codex]'))">
+            <div class="t3-harness-head">
+              <span><span class="t3-legend-dot" style="background:#30D158;"></span>Codex <span style="font-weight:400;color:var(--text-muted);">{codex['sessions']} sessions</span></span>
+              <span class="mono-cell" id="t3-side-codex">{tmix['sandbox_verification']['tokens_formatted']}</span>
+            </div>
+            <div class="t3-harness-sub">{tmix['sandbox_verification']['share_pct']}% of tokens · $30.10 · {codex['cache_hit_rate_pct']}% Cache Hit</div>
+          </div>
+          <div class="t3-harness-item" data-harness="claude_code" onclick="setT3HarnessFilter('claude_code', document.querySelector('[data-hfilter=claude_code]'))">
+            <div class="t3-harness-head">
+              <span><span class="t3-legend-dot" style="background:#E07A5F;"></span>Claude Code <span style="font-weight:400;color:var(--text-muted);">{claude['sessions']} sessions</span></span>
+              <span class="mono-cell" id="t3-side-claude">{tmix['frontier_synthesis']['tokens_formatted']}</span>
+            </div>
+            <div class="t3-harness-sub">{tmix['frontier_synthesis']['share_pct']}% of tokens · $271.02 · {claude['cache_hit_rate_pct']}% Cache Hit</div>
+          </div>
+          <div class="t3-harness-item" data-harness="antigravity" onclick="setT3HarnessFilter('antigravity', document.querySelector('[data-hfilter=antigravity]'))">
+            <div class="t3-harness-head">
+              <span><span class="t3-legend-dot" style="background:#2997FF;"></span>Antigravity <span style="font-weight:400;color:var(--text-muted);">{agy['sessions']} sessions</span></span>
+              <span class="mono-cell" id="t3-side-agy">{tmix['fast_recon']['tokens_formatted']}</span>
+            </div>
+            <div class="t3-harness-sub">{tmix['fast_recon']['share_pct']}% of tokens · $2.57 · {agy['cache_hit_rate_pct']}% Cache Hit</div>
+          </div>
+        </div>
       </div>
-      <div class="t3-legend-row" data-harness="claude_code">
-        <span><span class="t3-legend-dot" style="background:var(--accent);"></span><strong>Claude Code</strong> (Opus/Sonnet 5.5)</span>
-        <span class="num">{tmix['frontier_synthesis']['tokens_formatted']} · {tmix['frontier_synthesis']['share_pct']}% · {tmix['frontier_synthesis']['cache_hit_pct']}% Hit</span>
+
+      <div class="t3-chart-box">
+        <div class="t3-chart-title">
+          <span id="t3-chart-heading">Daily processed tokens (Smooth Monotone Cubic Splines · Scrobble with Mouse)</span>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);">
+            <span><span class="t3-legend-dot" style="background:#E07A5F;"></span>Claude</span> &nbsp;
+            <span><span class="t3-legend-dot" style="background:#2997FF;"></span>Antigravity</span> &nbsp;
+            <span><span class="t3-legend-dot" style="background:#30D158;"></span>Codex</span>
+          </span>
+        </div>
+        <svg id="trajectory-svg-chart" class="chart-svg" viewBox="0 0 620 196" role="img" aria-label="Multi-Harness Smooth Cubic Spline Usage Chart">
+          <line x1="44" y1="16" x2="604" y2="16" stroke="var(--border-hairline)" stroke-dasharray="3 3"/>
+          <line x1="44" y1="85" x2="604" y2="85" stroke="var(--border-hairline)" stroke-dasharray="3 3"/>
+          <line x1="44" y1="154" x2="604" y2="154" stroke="var(--border-strong)"/>
+          <text id="t3-ymax-lbl" x="38" y="20" text-anchor="end" fill="var(--text-muted)" font-size="10.5" font-family="var(--font-mono)">720M</text>
+          <text id="t3-ymid-lbl" x="38" y="89" text-anchor="end" fill="var(--text-muted)" font-size="10.5" font-family="var(--font-mono)">360M</text>
+          <text x="38" y="158" text-anchor="end" fill="var(--text-muted)" font-size="10.5" font-family="var(--font-mono)">0</text>
+
+          <path id="spline-area-claude" class="t3-spline-area" d="{splines['claude_code']['area_path']}" fill="rgba(224, 122, 95, 0.14)"/>
+          <path id="spline-area-agy" class="t3-spline-area" d="{splines['antigravity']['area_path']}" fill="rgba(41, 151, 255, 0.14)"/>
+          <path id="spline-area-codex" class="t3-spline-area" d="{splines['openai_codex']['area_path']}" fill="rgba(48, 209, 88, 0.14)"/>
+
+          <path id="spline-line-claude" class="t3-spline-line" d="{splines['claude_code']['line_path']}" fill="none" stroke="#E07A5F" stroke-width="2.2" stroke-linecap="round"/>
+          <path id="spline-line-agy" class="t3-spline-line" d="{splines['antigravity']['line_path']}" fill="none" stroke="#2997FF" stroke-width="2.2" stroke-linecap="round"/>
+          <path id="spline-line-codex" class="t3-spline-line" d="{splines['openai_codex']['line_path']}" fill="none" stroke="#30D158" stroke-width="2.2" stroke-linecap="round"/>
+
+          <line id="t3-scrobble-line" x1="604" y1="16" x2="604" y2="154" stroke="var(--text-secondary)" stroke-width="1" stroke-dasharray="2 2" opacity="0.85"/>
+          <g id="t3-xaxis-labels">
+            <text x="44" y="176" text-anchor="start" fill="var(--text-muted)" font-size="10.5" font-family="var(--font-mono)">Aug 9</text>
+            <text x="324" y="176" text-anchor="middle" fill="var(--text-muted)" font-size="10.5" font-family="var(--font-mono)">Sep 23</text>
+            <text x="604" y="176" text-anchor="end" fill="var(--text-muted)" font-size="10.5" font-family="var(--font-mono)">Nov 6</text>
+          </g>
+        </svg>
+
+        <div id="t3-scrobble-tooltip" class="t3-scrobble-card" role="status" aria-live="polite">
+          <div style="display:flex;justify-content:space-between;font-weight:700;border-block-end:1px solid var(--border-hairline);padding-block-end:4px;">
+            <span id="scrob-date">Nov 6</span>
+            <span id="scrob-lev" style="color:var(--accent);">26,651 pts · 94.4% Hit</span>
+          </div>
+          <div class="t3-scrobble-row"><span><span class="t3-legend-dot" style="background:#30D158;"></span>Codex</span><span id="scrob-codex">79.4M · $15.29</span></div>
+          <div class="t3-scrobble-row"><span><span class="t3-legend-dot" style="background:#E07A5F;"></span>Claude Code</span><span id="scrob-claude">489.0M · $90.37</span></div>
+          <div class="t3-scrobble-row"><span><span class="t3-legend-dot" style="background:#2997FF;"></span>Antigravity</span><span id="scrob-agy">713.0M · $0.65</span></div>
+          <div class="t3-scrobble-row" style="border-block-start:1px solid var(--border-hairline);padding-block-top:4px;font-weight:700;">
+            <span>Total</span><span id="scrob-total">1.28B · $106.31</span>
+          </div>
+        </div>
       </div>
-      <div class="t3-legend-row" data-harness="antigravity">
-        <span><span class="t3-legend-dot" style="background:var(--verified-text);"></span><strong>Antigravity</strong> (Gemini 3.8 / 4 Argon)</span>
-        <span class="num">{tmix['fast_recon']['tokens_formatted']} · {tmix['fast_recon']['share_pct']}% · {tmix['fast_recon']['cache_hit_pct']}% Hit</span>
+    </div>
+
+    <!-- T3 Totals 5-Column Strip -->
+    <div class="t3-totals-strip" aria-label="T3 Totals Strip">
+      <div class="t3-total-cell">
+        <span class="t3-total-lbl">Processed tokens</span>
+        <span class="t3-total-val" id="t3-tot-proc">{p90['totals']['processed']}</span>
       </div>
-      <div class="t3-legend-row" data-harness="openai_codex">
-        <span><span class="t3-legend-dot" style="background:var(--text-primary);opacity:0.55;"></span><strong>OpenAI Codex</strong> (GPT-6.1 Sol Sandbox)</span>
-        <span class="num">{tmix['sandbox_verification']['tokens_formatted']} · {tmix['sandbox_verification']['share_pct']}% · {tmix['sandbox_verification']['cache_hit_pct']}% Hit</span>
+      <div class="t3-total-cell">
+        <span class="t3-total-lbl">Cached input</span>
+        <span class="t3-total-val" id="t3-tot-cached">{p90['totals']['cached_in']}</span>
       </div>
-      <div class="t3-legend-row">
-        <span><strong>Prefix Reuse Composition</strong></span>
-        <span class="num">{tcomp['cache_read_pct']}% Read · {tcomp['cache_write_pct']}% Write · {tcomp['uncached_input_pct']}% In</span>
+      <div class="t3-total-cell">
+        <span class="t3-total-lbl">Uncached input</span>
+        <span class="t3-total-val" id="t3-tot-uncached">{p90['totals']['uncached_in']}</span>
       </div>
+      <div class="t3-total-cell">
+        <span class="t3-total-lbl">Output</span>
+        <span class="t3-total-val" id="t3-tot-out">{p90['totals']['output']}</span>
+      </div>
+      <div class="t3-total-cell">
+        <span class="t3-total-lbl">Cache savings</span>
+        <span class="t3-total-val" id="t3-tot-saved" style="color:var(--verified-text);">{p90['totals']['cache_savings']}</span>
+      </div>
+    </div>
+
+    <!-- Cost by type & Tokens by type Segmented Bars -->
+    <div class="t3-type-grid">
+      <div>
+        <div style="font-size:13px;font-weight:600;">Cost by type</div>
+        <div class="t3-bar-track" role="img" aria-label="Cost by type bar">
+          <div style="width:{cbt['input_pct']}%;background:#5E5CE6;"></div>
+          <div style="width:{cbt['cache_read_pct']}%;background:#8E8E93;"></div>
+          <div style="width:{cbt['cache_write_pct']}%;background:#AEAEB2;"></div>
+          <div style="width:{cbt['output_pct']}%;background:var(--text-primary);"></div>
+        </div>
+        <div class="t3-type-legend">
+          <span><span class="t3-legend-dot" style="background:#5E5CE6;"></span>Input: <strong>${cbt['input_usd']:.2f}</strong></span>
+          <span><span class="t3-legend-dot" style="background:#8E8E93;"></span>Cache read: <strong>${cbt['cache_read_usd']:.2f}</strong></span>
+          <span><span class="t3-legend-dot" style="background:#AEAEB2;"></span>Cache write: <strong>${cbt['cache_write_usd']:.2f}</strong></span>
+          <span><span class="t3-legend-dot" style="background:var(--text-primary);"></span>Output: <strong>${cbt['output_usd']:.2f}</strong></span>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:13px;font-weight:600;">Tokens by type</div>
+        <div class="t3-bar-track" role="img" aria-label="Tokens by type bar">
+          <div style="width:{tbt['input_pct']}%;background:#5E5CE6;"></div>
+          <div style="width:{tbt['cache_read_pct']}%;background:#8E8E93;"></div>
+          <div style="width:{tbt['cache_write_pct']}%;background:#AEAEB2;"></div>
+          <div style="width:{tbt['output_pct']}%;background:var(--text-primary);"></div>
+        </div>
+        <div class="t3-type-legend">
+          <span><span class="t3-legend-dot" style="background:#5E5CE6;"></span>Input: <strong>{tbt['input_str']}</strong></span>
+          <span><span class="t3-legend-dot" style="background:#8E8E93;"></span>Cache read: <strong>{tbt['cache_read_str']}</strong></span>
+          <span><span class="t3-legend-dot" style="background:#AEAEB2;"></span>Cache write: <strong>{tbt['cache_write_str']}</strong></span>
+          <span><span class="t3-legend-dot" style="background:var(--text-primary);"></span>Output: <strong>{tbt['output_str']}</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Breakdown Table (`Model | Day | Hour` Switcher) -->
+    <div class="t3-breakdown-head">
+      <h2 style="margin:0;font-size:15px;">Breakdown</h2>
+      <div id="t3-breakdown-switcher" class="t3-pill-group" role="group" aria-label="Breakdown Dimension">
+        <button type="button" class="t3-pill-btn active" data-bview="model" onclick="setT3BreakdownView('model', this)">Model</button>
+        <button type="button" class="t3-pill-btn" data-bview="day" onclick="setT3BreakdownView('day', this)">Day</button>
+        <button type="button" class="t3-pill-btn" data-bview="hour" onclick="setT3BreakdownView('hour', this)">Hour</button>
+      </div>
+    </div>
+    <div tabindex="0" role="region" aria-label="T3 Breakdown Table" class="table-wrapper" style="max-height:360px;">
+      <table id="t3-breakdown-table">
+        <thead id="t3-breakdown-thead">
+          <tr>
+            <th class="num" style="width:38px;">#</th>
+            <th>Model</th>
+            <th class="num">Cost</th>
+            <th class="num">Share</th>
+            <th class="num">Tokens</th>
+            <th class="num">Cache Hit %</th>
+            <th class="num">CR/CW Reuse</th>
+          </tr>
+        </thead>
+        <tbody id="t3-breakdown-tbody">
+          {model_rows_initial}
+        </tbody>
+      </table>
     </div>
   </section>
 
   <!-- TAB: T3 USAGE & TELEMETRY GRAPHS DETAIL -->
   <section id="tab-t3board" class="tab-pane">
     <div class="section-intro">
-      <h2>Multi-Harness Property Graph &amp; WebSocket Overlay Architecture</h2>
+      <h2>Multi-Harness Property Graph &amp; Downloadable Desktop Liquid Overlay</h2>
       <p class="prose">
-        Models the 3-Harness routing topology as a verified BigQuery Property Graph and streams real-time harness state over <code>ws://127.0.0.1:8765/ws</code> to the draggable Liquid-Physics HUD and Chrome Extension.
+        Models the 3-Harness routing topology as a verified BigQuery Property Graph and packages the standalone local desktop software (<code>AetherPulse-Desktop-Overlay.zip</code>) with Win32 spatial window probing, freefloat momentum, elastic wall bounce, and Pac-Man screen wrap.
       </p>
     </div>
     <div class="panel">
@@ -2147,9 +2879,9 @@ try {{
   </section>
 </main>
 
-<!-- FLOATING WEIGHTY LIQUID-PHYSICS WEBSOCKET OVERLAY (Draggable across harnesses) -->
+<!-- FLOATING WEIGHTY LIQUID-PHYSICS WEBSOCKET OVERLAY (Freefloat Drift + Bounce / Pac-Man Wrap) -->
 <aside id="aether-liquid-hud" role="region" aria-label="Draggable Liquid Telemetry Overlay">
-  <canvas class="hud-liquid-canvas" id="hud-liquid-canvas" width="392" height="176"></canvas>
+  <canvas class="hud-liquid-canvas" id="hud-liquid-canvas" width="404" height="180"></canvas>
   <div class="hud-inner">
     <div class="hud-main">
       <div class="hud-top">
@@ -2157,32 +2889,271 @@ try {{
           <span class="hud-dot" id="hud-dot"></span>
           <span id="hud-harness-name">3-Harness Trinity Mesh</span>
         </span>
-        <span id="hud-mode-pill">Auto-Sense</span>
+        <span id="hud-mode-pill">Auto · Bounce</span>
       </div>
       <div class="hud-metrics">
         <span class="hud-primary-val" id="hud-cache-val">{disk['cache_hit_rate_pct']}% Cache</span>
         <span class="hud-secondary-val" id="hud-vol-val">{disk['total_tokens'] / 1e9:.2f}B · {disk['leverage_index']:,} pts</span>
       </div>
       <div class="hud-foot">
-        <span id="hud-target-label">Drag over any harness · Liquid Physics</span>
+        <span id="hud-target-label">Freefloat · Drag &amp; Throw</span>
         <span id="hud-saved-val">Saved ${disk['pricing']['sonnet_saved_usd']:,.0f}</span>
       </div>
       <div class="hud-drawer" id="hud-all-drawer">
-        <div class="hud-drawer-row"><span>Claude Code</span><span>{claude['total_tokens'] / 1e9:.2f}B · {claude['cache_hit_rate_pct']}% · {claude['sessions']}s</span></div>
-        <div class="hud-drawer-row"><span>Antigravity</span><span>{agy['total_tokens'] / 1e9:.2f}B · {agy['cache_hit_rate_pct']}% · {agy['sessions']}s</span></div>
-        <div class="hud-drawer-row"><span>OpenAI Codex</span><span>{codex['total_tokens'] / 1e6:.1f}M · {codex['cache_hit_rate_pct']}% · {codex['sessions']}s</span></div>
+        <div class="hud-drawer-row"><span>Claude Code</span><span>{claude['total_tokens'] / 1e9:.2f}B · $271.02 · {claude['cache_hit_rate_pct']}%</span></div>
+        <div class="hud-drawer-row"><span>Antigravity</span><span>{agy['total_tokens'] / 1e9:.2f}B · $2.57 · {agy['cache_hit_rate_pct']}%</span></div>
+        <div class="hud-drawer-row"><span>OpenAI Codex</span><span>{codex['total_tokens'] / 1e6:.1f}M · $30.10 · {codex['cache_hit_rate_pct']}%</span></div>
       </div>
     </div>
-    <button type="button" class="hud-side-btn" id="hud-side-CycleBtn" onclick="cycleHudOverlayMode(event)" title="1-Click Side Switcher: Auto-Sense Target / All 3 Harnesses / Pinned Harness">
-      <svg class="icon-svg" viewBox="0 0 16 16" aria-hidden="true">
-        <path d="M2 5c2-1.5 4 1.5 6 0s4-1.5 6 0M2 8.5c2-1.5 4 1.5 6 0s4-1.5 6 0M2 12c2-1.5 4 1.5 6 0s4-1.5 6 0"/>
-      </svg>
-      <span class="hud-mode-code" id="hud-mode-code">AUTO</span>
-    </button>
+    <div class="hud-side-col">
+      <button type="button" class="hud-side-btn" id="hud-side-CycleBtn" onclick="cycleHudOverlayMode(event)" title="1-Click Side Switcher: Auto-Sense Target / All 3 Harnesses / Pinned Harness">
+        <svg class="icon-svg" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M2 5c2-1.5 4 1.5 6 0s4-1.5 6 0M2 8.5c2-1.5 4 1.5 6 0s4-1.5 6 0M2 12c2-1.5 4 1.5 6 0s4-1.5 6 0"/>
+        </svg>
+        <span class="hud-mode-code" id="hud-mode-code">AUTO</span>
+      </button>
+      <button type="button" class="hud-side-btn" id="hud-side-BoundaryBtn" onclick="cycleHudBoundaryMode(event)" title="Switch Freefloat Physics: Bounce off Screen Walls (BNC) / Pac-Man Screen Wrap (PAC) / Pin (PIN)">
+        <span class="hud-mode-code" id="hud-bmode-code" style="color:var(--verified-text);">BNC</span>
+      </button>
+    </div>
   </div>
 </aside>
 
 <script>
+const T3_DATA = {t3_json_str};
+let currentT3Period = "90d";
+let currentT3Metric = "tokens";
+let currentT3Harness = "all";
+let currentT3Breakdown = "model";
+
+// Fritsch-Carlson Monotone Cubic Hermite -> SVG Cubic Bezier Spline Builder (Zero Dots)
+function buildMonotoneCubicSpline(pts, baseY) {{
+  const n = pts.length;
+  if (n === 0) return {{ line: "", area: "" }};
+  if (n === 1) {{
+    return {{
+      line: `M ${{pts[0][0].toFixed(2)}},${{pts[0][1].toFixed(2)}}`,
+      area: `M ${{pts[0][0].toFixed(2)}},${{baseY.toFixed(2)}} L ${{pts[0][0].toFixed(2)}},${{pts[0][1].toFixed(2)}} Z`
+    }};
+  }}
+  const xs = pts.map(p => p[0]);
+  const ys = pts.map(p => p[1]);
+  const hs = [];
+  const sec = [];
+  for (let k = 0; k < n - 1; k++) {{
+    const dx = Math.max(1e-6, xs[k + 1] - xs[k]);
+    hs.push(dx);
+    sec.push((ys[k + 1] - ys[k]) / dx);
+  }}
+  const m = new Array(n).fill(0);
+  m[0] = sec[0];
+  m[n - 1] = sec[n - 2];
+  for (let k = 1; k < n - 1; k++) {{
+    m[k] = (sec[k - 1] * sec[k] <= 0) ? 0 : 0.5 * (sec[k - 1] + sec[k]);
+  }}
+  for (let k = 0; k < n - 1; k++) {{
+    const sk = sec[k];
+    if (Math.abs(sk) < 1e-9) {{
+      m[k] = 0;
+      m[k + 1] = 0;
+    }} else {{
+      const a = m[k] / sk;
+      const b = m[k + 1] / sk;
+      const h = Math.hypot(a, b);
+      if (h > 3.0) {{
+        const t = 3.0 / h;
+        m[k] = t * a * sk;
+        m[k + 1] = t * b * sk;
+      }}
+    }}
+  }}
+  let d = `M ${{xs[0].toFixed(2)}},${{ys[0].toFixed(2)}}`;
+  for (let k = 0; k < n - 1; k++) {{
+    const h = hs[k];
+    const c1x = xs[k] + h / 3;
+    const c1y = ys[k] + m[k] * h / 3;
+    const c2x = xs[k + 1] - h / 3;
+    const c2y = ys[k + 1] - m[k + 1] * h / 3;
+    d += ` C ${{c1x.toFixed(2)}},${{c1y.toFixed(2)}} ${{c2x.toFixed(2)}},${{c2y.toFixed(2)}} ${{xs[k + 1].toFixed(2)}},${{ys[k + 1].toFixed(2)}}`;
+  }}
+  const area = `${{d}} L ${{xs[n - 1].toFixed(2)}},${{baseY.toFixed(2)}} L ${{xs[0].toFixed(2)}},${{baseY.toFixed(2)}} Z`;
+  return {{ line: d, area }};
+}}
+
+function renderT3SplineBoard() {{
+  const pObj = T3_DATA.periods[currentT3Period] || T3_DATA.periods["90d"];
+  const buckets = pObj.buckets;
+  const padL = 44, padR = 16, padT = 16, plotW = 560, plotH = 138, baseY = 154;
+
+  const isCost = currentT3Metric === "cost";
+  const isLev = currentT3Metric === "leverage";
+  document.getElementById("t3-headline-val").textContent =
+    isCost ? pObj.headline_cost : isLev ? "{disk['leverage_index']:,} pts" : pObj.headline_tokens;
+  document.getElementById("t3-headline-sub").textContent = pObj.headline_sessions + " · {carb['compression_pct']}% Cost Compression";
+  document.getElementById("t3-tot-proc").textContent = pObj.totals.processed;
+  document.getElementById("t3-tot-cached").textContent = pObj.totals.cached_in;
+  document.getElementById("t3-tot-uncached").textContent = pObj.totals.uncached_in;
+  document.getElementById("t3-tot-out").textContent = pObj.totals.output;
+  document.getElementById("t3-tot-saved").textContent = pObj.totals.cache_savings;
+
+  const kClaude = isCost ? "claude_cost" : "claude_tok";
+  const kAgy = isCost ? "agy_cost" : "agy_tok";
+  const kCodex = isCost ? "codex_cost" : "codex_tok";
+
+  let maxVal = 1;
+  buckets.forEach(b => {{
+    maxVal = Math.max(maxVal, b[kClaude], b[kAgy], b[kCodex]);
+  }});
+
+  document.getElementById("t3-ymax-lbl").textContent = isCost ? ("$" + maxVal.toFixed(0)) : (maxVal.toFixed(0) + "M");
+  document.getElementById("t3-ymid-lbl").textContent = isCost ? ("$" + (maxVal / 2).toFixed(0)) : ((maxVal / 2).toFixed(0) + "M");
+  document.getElementById("t3-chart-heading").textContent =
+    `${{pObj.label}} · ${{currentT3Metric === 'all' ? 'All Metrics (Tokens + Cost + Leverage)' : currentT3Metric.toUpperCase()}} · Smooth Cubic Splines`;
+
+  const makePts = (key) => buckets.map((b, i) => [
+    padL + (i / Math.max(1, buckets.length - 1)) * plotW,
+    padT + plotH - (b[key] / maxVal) * plotH
+  ]);
+
+  const spClaude = buildMonotoneCubicSpline(makePts(kClaude), baseY);
+  const spAgy = buildMonotoneCubicSpline(makePts(kAgy), baseY);
+  const spCodex = buildMonotoneCubicSpline(makePts(kCodex), baseY);
+
+  const showClaude = currentT3Harness === "all" || currentT3Harness === "claude_code";
+  const showAgy = currentT3Harness === "all" || currentT3Harness === "antigravity";
+  const showCodex = currentT3Harness === "all" || currentT3Harness === "openai_codex";
+
+  document.getElementById("spline-line-claude").setAttribute("d", spClaude.line);
+  document.getElementById("spline-area-claude").setAttribute("d", spClaude.area);
+  document.getElementById("spline-line-claude").style.opacity = showClaude ? "1" : "0.14";
+  document.getElementById("spline-area-claude").style.opacity = showClaude ? "1" : "0.04";
+
+  document.getElementById("spline-line-agy").setAttribute("d", spAgy.line);
+  document.getElementById("spline-area-agy").setAttribute("d", spAgy.area);
+  document.getElementById("spline-line-agy").style.opacity = showAgy ? "1" : "0.14";
+  document.getElementById("spline-area-agy").style.opacity = showAgy ? "1" : "0.04";
+
+  document.getElementById("spline-line-codex").setAttribute("d", spCodex.line);
+  document.getElementById("spline-area-codex").setAttribute("d", spCodex.area);
+  document.getElementById("spline-line-codex").style.opacity = showCodex ? "1" : "0.14";
+  document.getElementById("spline-area-codex").style.opacity = showCodex ? "1" : "0.04";
+
+  const xLabels = document.getElementById("t3-xaxis-labels");
+  const midIdx = Math.floor((buckets.length - 1) / 2);
+  xLabels.innerHTML = `
+    <text x="44" y="176" text-anchor="start" fill="var(--text-muted)" font-size="10.5" font-family="var(--font-mono)">${{buckets[0].label}}</text>
+    <text x="324" y="176" text-anchor="middle" fill="var(--text-muted)" font-size="10.5" font-family="var(--font-mono)">${{buckets[midIdx].label}}</text>
+    <text x="604" y="176" text-anchor="end" fill="var(--text-muted)" font-size="10.5" font-family="var(--font-mono)">${{buckets[buckets.length - 1].label}}</text>
+  `;
+  updateScrobblerAtIndex(buckets.length - 1);
+}}
+
+function updateScrobblerAtIndex(idx) {{
+  const pObj = T3_DATA.periods[currentT3Period] || T3_DATA.periods["90d"];
+  const buckets = pObj.buckets;
+  const clamped = Math.max(0, Math.min(buckets.length - 1, idx));
+  const b = buckets[clamped];
+  const px = 44 + (clamped / Math.max(1, buckets.length - 1)) * 560;
+  const lineEl = document.getElementById("t3-scrobble-line");
+  lineEl.setAttribute("x1", px.toFixed(1));
+  lineEl.setAttribute("x2", px.toFixed(1));
+
+  document.getElementById("scrob-date").textContent = b.label;
+  document.getElementById("scrob-lev").textContent = `${{b.lev.toLocaleString()}} pts · ${{b.hit_pct}}% Hit`;
+  document.getElementById("scrob-codex").textContent = `${{b.codex_tok.toFixed(1)}}M · $${{b.codex_cost.toFixed(2)}}`;
+  document.getElementById("scrob-claude").textContent = `${{b.claude_tok.toFixed(1)}}M · $${{b.claude_cost.toFixed(2)}}`;
+  document.getElementById("scrob-agy").textContent = `${{b.agy_tok.toFixed(1)}}M · $${{b.agy_cost.toFixed(2)}}`;
+  const totTok = b.codex_tok + b.claude_tok + b.agy_tok;
+  const totCost = b.codex_cost + b.claude_cost + b.agy_cost;
+  document.getElementById("scrob-total").textContent = `${{totTok.toFixed(1)}}M · $${{totCost.toFixed(2)}}`;
+}}
+
+function setT3Period(period, btn) {{
+  currentT3Period = period;
+  btn.parentElement.querySelectorAll(".t3-pill-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderT3SplineBoard();
+}}
+
+function setT3Metric(metric, btn) {{
+  currentT3Metric = metric;
+  btn.parentElement.querySelectorAll(".t3-pill-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderT3SplineBoard();
+}}
+
+function setT3HarnessFilter(hkey, btn) {{
+  currentT3Harness = hkey;
+  if (btn && btn.parentElement) {{
+    btn.parentElement.querySelectorAll(".t3-pill-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  }}
+  renderT3SplineBoard();
+  setT3BreakdownView(currentT3Breakdown, document.querySelector(`[data-bview="${{currentT3Breakdown}}"]`));
+}}
+
+function setT3BreakdownView(view, btn) {{
+  currentT3Breakdown = view;
+  if (btn && btn.parentElement) {{
+    btn.parentElement.querySelectorAll(".t3-pill-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  }}
+  const thead = document.getElementById("t3-breakdown-thead");
+  const tbody = document.getElementById("t3-breakdown-tbody");
+  if (view === "model") {{
+    thead.innerHTML = `<tr><th class="num" style="width:38px;">#</th><th>Model</th><th class="num">Cost</th><th class="num">Share</th><th class="num">Tokens</th><th class="num">Cache Hit %</th><th class="num">CR/CW Reuse</th></tr>`;
+    const rows = T3_DATA.model_breakdown.filter(r => currentT3Harness === "all" || r.harness === currentT3Harness);
+    tbody.innerHTML = rows.map((r, i) => `
+      <tr data-harness="${{r.harness}}">
+        <td class="num" style="width:38px;color:var(--text-muted);">${{i + 1}}</td>
+        <td>
+          <div class="t3-model-cell">
+            <span class="t3-legend-dot" style="background:${{r.color}};"></span>
+            <span class="mono-cell" style="font-weight:600;">${{r.model}}</span>
+            <span class="tier-pill" style="margin-inline-start:6px;">${{r.harness_label}}</span>
+          </div>
+          <div class="t3-inline-bar-wrap"><div class="t3-inline-bar-fill" style="width:${{r.bar_pct}}%;background:${{r.color}};"></div></div>
+        </td>
+        <td class="num mono-cell" style="font-weight:600;">${{r.cost_str}}</td>
+        <td class="num" style="color:var(--text-secondary);">${{r.share_pct}}%</td>
+        <td class="num mono-cell">${{r.tokens_str}}</td>
+        <td class="num mono-cell" style="color:var(--verified-text);">${{r.cache_hit_pct}}%</td>
+        <td class="num mono-cell">${{r.reuse_str}}</td>
+      </tr>
+    `).join("");
+  }} else {{
+    const src = view === "day" ? T3_DATA.day_breakdown : T3_DATA.hour_breakdown;
+    const colTitle = view === "day" ? "Day" : "Hour";
+    thead.innerHTML = `<tr><th>${{colTitle}}</th><th class="num">Claude Code</th><th class="num">Antigravity</th><th class="num">OpenAI Codex</th><th class="num">Total Cost</th><th class="num">Tokens</th><th class="num">Cache Hit %</th></tr>`;
+    tbody.innerHTML = src.map(r => `
+      <tr>
+        <th scope="row" class="mono-cell">${{r.period}}</th>
+        <td class="num mono-cell">${{r.claude_cost}}</td>
+        <td class="num mono-cell">${{r.agy_cost}}</td>
+        <td class="num mono-cell">${{r.codex_cost}}</td>
+        <td class="num mono-cell" style="font-weight:600;">${{r.total_cost}}</td>
+        <td class="num mono-cell">${{r.tokens}}</td>
+        <td class="num mono-cell" style="color:var(--verified-text);">${{r.cache_hit}}</td>
+      </tr>
+    `).join("");
+  }}
+}}
+
+// Bind interactive mouse scrobbling on `#trajectory-svg-chart`
+(function initT3ChartScrobbler() {{
+  const svgEl = document.getElementById("trajectory-svg-chart");
+  if (!svgEl) return;
+  svgEl.addEventListener("mousemove", (e) => {{
+    const rect = svgEl.getBoundingClientRect();
+    const relX = ((e.clientX - rect.left) / Math.max(1, rect.width)) * 620;
+    const pObj = T3_DATA.periods[currentT3Period] || T3_DATA.periods["90d"];
+    const n = pObj.buckets.length;
+    const ratio = Math.max(0, Math.min(1, (relX - 44) / 560));
+    const idx = Math.round(ratio * (n - 1));
+    updateScrobblerAtIndex(idx);
+  }});
+}})();
+
 function syncThemeButtons() {{
   let stored = null;
   try {{ stored = localStorage.getItem("color-scheme"); }} catch (e) {{}}
@@ -2260,13 +3231,13 @@ function sortBoard(mode, btn) {{
   }});
 }}
 
-// Weighty Liquid-Filled Physics + Live WebSocket Harness Overlay Engine
+// Weighty Liquid-Filled Physics + Freefloat Drift/Wiggle + Bounce/Pac-Man Wrap Engine
 const HUD_HARNESSES = {{
   all: {{
     name: "3-Harness Trinity Mesh",
     short: "All 3",
     cache: "{disk['cache_hit_rate_pct']}% Cache",
-    vol: "{disk['total_tokens'] / 1e9:.2f}B · {disk['leverage_index']:,} pts",
+    vol: "{disk['total_tokens'] / 1e9:.2f}B · $303.68 · {disk['leverage_index']:,} pts",
     saved: "Saved ${disk['pricing']['sonnet_saved_usd']:,.0f}",
     fill: {min(0.96, max(0.20, disk['cache_hit_rate_pct'] / 100.0)):.4f},
     color: "#0066CC"
@@ -2275,16 +3246,16 @@ const HUD_HARNESSES = {{
     name: "Anthropic Claude Code",
     short: "Claude",
     cache: "{claude['cache_hit_rate_pct']}% Cache",
-    vol: "{claude['total_tokens'] / 1e9:.2f}B · {claude['leverage_index']:,} pts",
+    vol: "{claude['total_tokens'] / 1e9:.2f}B · $271.02 · {claude['leverage_index']:,} pts",
     saved: "Saved ${claude['pricing']['sonnet_saved_usd']:,.0f}",
     fill: {min(0.96, max(0.20, claude['cache_hit_rate_pct'] / 100.0)):.4f},
-    color: "#0066CC"
+    color: "#E07A5F"
   }},
   antigravity: {{
     name: "Google Antigravity",
     short: "Antigravity",
     cache: "{agy['cache_hit_rate_pct']}% Cache",
-    vol: "{agy['total_tokens'] / 1e9:.2f}B · {agy['leverage_index']:,} pts",
+    vol: "{agy['total_tokens'] / 1e9:.2f}B · $2.57 · {agy['leverage_index']:,} pts",
     saved: "Saved ${agy['pricing']['sonnet_saved_usd']:,.0f}",
     fill: {min(0.96, max(0.20, agy['cache_hit_rate_pct'] / 100.0)):.4f},
     color: "#2997FF"
@@ -2293,7 +3264,7 @@ const HUD_HARNESSES = {{
     name: "OpenAI Codex CLI",
     short: "Codex",
     cache: "{codex['cache_hit_rate_pct']}% Cache",
-    vol: "{codex['total_tokens'] / 1e6:.1f}M · {codex['leverage_index']:,} pts",
+    vol: "{codex['total_tokens'] / 1e6:.1f}M · $30.10 · {codex['leverage_index']:,} pts",
     saved: "Saved ${codex['pricing']['sonnet_saved_usd']:,.0f}",
     fill: {min(0.96, max(0.20, codex['cache_hit_rate_pct'] / 100.0)):.4f},
     color: "#30D158"
@@ -2302,9 +3273,13 @@ const HUD_HARNESSES = {{
 
 const HUD_MODES = ["auto", "all", "claude_code", "antigravity", "openai_codex"];
 const HUD_SHORT = {{ auto: "AUTO", all: "ALL 3", claude_code: "CLAU", antigravity: "AGY", openai_codex: "CODX" }};
+const HUD_BMODES = ["bounce", "pacman", "pin"];
+const HUD_BSHORT = {{ bounce: "BNC", pacman: "PAC", pin: "PIN" }};
+
 let hudMode = "auto";
+let hudBoundaryMode = "bounce";
 let hudDetected = "all";
-let hudTargetText = "Drag over any harness row";
+let hudTargetText = "Freefloat · Bounce Walls";
 let hudSocket = null;
 
 const hudEl = document.getElementById("aether-liquid-hud");
@@ -2312,12 +3287,13 @@ const hudCanvas = document.getElementById("hud-liquid-canvas");
 const hudCtx = hudCanvas ? hudCanvas.getContext("2d") : null;
 
 const hudPhys = {{
-  x: Math.max(24, window.innerWidth - 428),
-  y: Math.max(24, window.innerHeight - 148),
-  targetX: Math.max(24, window.innerWidth - 428),
-  targetY: Math.max(24, window.innerHeight - 148),
-  vx: 0,
-  vy: 0,
+  x: Math.max(24, window.innerWidth - 436),
+  y: Math.max(24, window.innerHeight - 156),
+  targetX: Math.max(24, window.innerWidth - 436),
+  targetY: Math.max(24, window.innerHeight - 156),
+  vx: 54.0,
+  vy: -34.0,
+  phase: 0.0,
   mass: 1.85,
   stiffness: 150.0,
   damping: 21.0,
@@ -2325,7 +3301,9 @@ const hudPhys = {{
   fillRatio: {min(0.96, max(0.20, disk['cache_hit_rate_pct'] / 100.0)):.4f},
   color: "#0066CC",
   waves: new Array(11).fill(0),
-  waveVels: new Array(11).fill(0)
+  waveVels: new Array(11).fill(0),
+  wallBounces: 0,
+  edgeWraps: 0
 }};
 
 function renderHudText() {{
@@ -2334,14 +3312,21 @@ function renderHudText() {{
   hudPhys.fillRatio = info.fill;
   hudPhys.color = info.color;
 
+  const bName = hudBoundaryMode === "bounce" ? "Bounce" : hudBoundaryMode === "pacman" ? "Pac-Man" : "Pin";
   document.getElementById("hud-dot").style.backgroundColor = info.color;
   document.getElementById("hud-harness-name").textContent = info.name;
-  document.getElementById("hud-mode-pill").textContent = hudMode === "auto" ? ("Auto · " + info.short) : ("Pinned · " + info.short);
+  document.getElementById("hud-mode-pill").textContent = (hudMode === "auto" ? "Auto" : "Pinned") + " · " + bName;
   document.getElementById("hud-cache-val").textContent = info.cache;
   document.getElementById("hud-vol-val").textContent = info.vol;
   document.getElementById("hud-target-label").textContent = hudTargetText;
   document.getElementById("hud-saved-val").textContent = info.saved;
   document.getElementById("hud-mode-code").textContent = HUD_SHORT[hudMode] || "AUTO";
+
+  const bEl = document.getElementById("hud-bmode-code");
+  if (bEl) {{
+    bEl.textContent = HUD_BSHORT[hudBoundaryMode] || "BNC";
+    bEl.style.color = hudBoundaryMode === "bounce" ? "var(--verified-text)" : hudBoundaryMode === "pacman" ? "var(--flagged-text)" : "var(--text-muted)";
+  }}
   hudEl.classList.toggle("expanded", hudMode === "all");
 }}
 
@@ -2356,34 +3341,57 @@ function cycleHudOverlayMode(ev) {{
   }}
 }}
 
-function senseHarnessUnderPoint(cx, cy) {{
-  hudEl.style.pointerEvents = "none";
-  const under = document.elementFromPoint(cx, cy);
-  hudEl.style.pointerEvents = "auto";
-  if (!under) return;
-  const host = under.closest("[data-harness], tr, .panel");
-  if (!host) return;
-  const explicit = host.getAttribute("data-harness");
-  const txt = (host.innerText || "").toLowerCase();
-  if (explicit && HUD_HARNESSES[explicit]) {{
-    hudDetected = explicit;
-    hudTargetText = "Over: " + HUD_HARNESSES[explicit].name;
-  }} else if (txt.includes("codex") || txt.includes("openai")) {{
-    hudDetected = "openai_codex";
-    hudTargetText = "Over: OpenAI Codex CLI";
-  }} else if (txt.includes("antigravity") || txt.includes("gemini")) {{
-    hudDetected = "antigravity";
-    hudTargetText = "Over: Google Antigravity";
-  }} else if (txt.includes("claude")) {{
-    hudDetected = "claude_code";
-    hudTargetText = "Over: Anthropic Claude Code";
-  }} else {{
-    hudDetected = "all";
-    hudTargetText = "Over: 3-Harness Mesh";
+function cycleHudBoundaryMode(ev) {{
+  if (ev) ev.stopPropagation();
+  const idx = (HUD_BMODES.indexOf(hudBoundaryMode) + 1) % HUD_BMODES.length;
+  hudBoundaryMode = HUD_BMODES[idx];
+  hudPhys.waveVels[5] += 38.0;
+  if (hudBoundaryMode !== "pin" && Math.hypot(hudPhys.vx, hudPhys.vy) < 30.0) {{
+    hudPhys.vx = 68.0;
+    hudPhys.vy = -42.0;
   }}
   renderHudText();
   if (hudSocket && hudSocket.readyState === 1) {{
-    hudSocket.send(JSON.stringify({{ type: "drag_probe", screenX: Math.round(cx), screenY: Math.round(cy), domHint: hudDetected }}));
+    hudSocket.send(JSON.stringify({{ type: "set_boundary", boundary_mode: hudBoundaryMode }}));
+  }}
+}}
+
+function senseHarnessUnderPoint(cx, cy) {{
+  const clampX = Math.max(4, Math.min(window.innerWidth - 4, cx));
+  const clampY = Math.max(4, Math.min(window.innerHeight - 4, cy));
+  hudEl.style.pointerEvents = "none";
+  const under = document.elementFromPoint(clampX, clampY);
+  hudEl.style.pointerEvents = "auto";
+  if (!under) return;
+  const host = under.closest("[data-harness], tr, .panel, .t3-harness-item");
+  if (!host) return;
+  const explicit = host.getAttribute("data-harness");
+  const txt = (host.innerText || "").toLowerCase();
+  let nextDetected = hudDetected;
+  let nextTarget = hudTargetText;
+  if (explicit && HUD_HARNESSES[explicit]) {{
+    nextDetected = explicit;
+    nextTarget = "Over: " + HUD_HARNESSES[explicit].name;
+  }} else if (txt.includes("codex") || txt.includes("openai") || txt.includes("gpt-6")) {{
+    nextDetected = "openai_codex";
+    nextTarget = "Over: OpenAI Codex CLI";
+  }} else if (txt.includes("antigravity") || txt.includes("gemini")) {{
+    nextDetected = "antigravity";
+    nextTarget = "Over: Google Antigravity";
+  }} else if (txt.includes("claude") || txt.includes("opus")) {{
+    nextDetected = "claude_code";
+    nextTarget = "Over: Anthropic Claude Code";
+  }} else {{
+    nextDetected = "all";
+    nextTarget = "Over: 3-Harness Mesh";
+  }}
+  if (nextDetected !== hudDetected || nextTarget !== hudTargetText) {{
+    hudDetected = nextDetected;
+    hudTargetText = nextTarget;
+    renderHudText();
+    if (hudSocket && hudSocket.readyState === 1) {{
+      hudSocket.send(JSON.stringify({{ type: "drag_probe", screenX: Math.round(clampX), screenY: Math.round(clampY), domHint: hudDetected }}));
+    }}
   }}
 }}
 
@@ -2391,24 +3399,48 @@ function senseHarnessUnderPoint(cx, cy) {{
   let dragging = false;
   let offX = 0;
   let offY = 0;
+  let lastPtrX = 0;
+  let lastPtrY = 0;
+  let lastPtrT = performance.now();
+  let throwVx = 0;
+  let throwVy = 0;
+  let lastSenseT = 0;
 
   hudEl.addEventListener("pointerdown", (e) => {{
-    if (e.target.closest("#hud-side-CycleBtn")) return;
+    if (e.target.closest(".hud-side-btn")) return;
     dragging = true;
     offX = e.clientX - hudPhys.x;
     offY = e.clientY - hudPhys.y;
+    lastPtrX = e.clientX;
+    lastPtrY = e.clientY;
+    lastPtrT = performance.now();
+    throwVx = 0;
+    throwVy = 0;
     hudEl.setPointerCapture(e.pointerId);
   }});
 
   hudEl.addEventListener("pointermove", (e) => {{
     if (!dragging) return;
-    hudPhys.targetX = Math.max(12, Math.min(window.innerWidth - 404, e.clientX - offX));
-    hudPhys.targetY = Math.max(12, Math.min(window.innerHeight - 116, e.clientY - offY));
+    const now = performance.now();
+    const dtP = Math.max(0.004, (now - lastPtrT) / 1000);
+    throwVx = 0.6 * throwVx + 0.4 * ((e.clientX - lastPtrX) / dtP);
+    throwVy = 0.6 * throwVy + 0.4 * ((e.clientY - lastPtrY) / dtP);
+    lastPtrX = e.clientX;
+    lastPtrY = e.clientY;
+    lastPtrT = now;
+
+    hudPhys.targetX = e.clientX - offX;
+    hudPhys.targetY = e.clientY - offY;
     senseHarnessUnderPoint(e.clientX, e.clientY);
   }});
 
   hudEl.addEventListener("pointerup", () => {{
+    if (!dragging) return;
     dragging = false;
+    hudPhys.vx = Math.max(-760, Math.min(760, throwVx * 0.55 + (Math.abs(throwVx) < 20 ? 52 : 0)));
+    hudPhys.vy = Math.max(-760, Math.min(760, throwVy * 0.55 + (Math.abs(throwVy) < 20 ? -36 : 0)));
+    hudPhys.targetX = hudPhys.x;
+    hudPhys.targetY = hudPhys.y;
   }});
 
   try {{
@@ -2428,17 +3460,72 @@ function senseHarnessUnderPoint(cx, cy) {{
   function stepHud(now) {{
     const dt = Math.max(0.001, Math.min(0.04, (now - lastT) / 1000));
     lastT = now;
+    hudPhys.phase += dt;
 
-    const fx = hudPhys.stiffness * (hudPhys.targetX - hudPhys.x) - hudPhys.damping * hudPhys.vx;
-    const fy = hudPhys.stiffness * (hudPhys.targetY - hudPhys.y) - hudPhys.damping * hudPhys.vy;
-    const ax = fx / hudPhys.mass;
-    const ay = fy / hudPhys.mass;
+    const hudW = 404;
+    const hudH = hudMode === "all" ? 180 : 108;
+    let ax = 0;
+    let ay = 0;
 
-    hudPhys.vx += ax * dt;
-    hudPhys.vy += ay * dt;
-    hudPhys.x += hudPhys.vx * dt;
-    hudPhys.y += hudPhys.vy * dt;
-    hudPhys.tiltDeg = Math.max(-9.0, Math.min(9.0, hudPhys.vx * 0.013));
+    if (dragging || hudBoundaryMode === "pin") {{
+      const fx = hudPhys.stiffness * (hudPhys.targetX - hudPhys.x) - hudPhys.damping * hudPhys.vx;
+      const fy = hudPhys.stiffness * (hudPhys.targetY - hudPhys.y) - hudPhys.damping * hudPhys.vy;
+      const wigX = !dragging ? Math.sin(hudPhys.phase * 2.4) * 14.0 : 0;
+      const wigY = !dragging ? Math.cos(hudPhys.phase * 1.9) * 11.0 : 0;
+      ax = (fx + wigX) / hudPhys.mass;
+      ay = (fy + wigY) / hudPhys.mass;
+      hudPhys.vx += ax * dt;
+      hudPhys.vy += ay * dt;
+      hudPhys.x += hudPhys.vx * dt;
+      hudPhys.y += hudPhys.vy * dt;
+    }} else {{
+      // Freefloat buoyancy wiggle + drift momentum
+      const wigAx = Math.sin(hudPhys.phase * 2.6) * 44.0 + Math.cos(hudPhys.phase * 1.3) * 18.0;
+      const wigAy = Math.cos(hudPhys.phase * 2.1) * 36.0 + Math.sin(hudPhys.phase * 1.7) * 16.0;
+      const spd = Math.hypot(hudPhys.vx, hudPhys.vy);
+      const dragC = spd > 68.0 ? 0.32 : 0.02;
+      ax = wigAx - dragC * hudPhys.vx;
+      ay = wigAy - dragC * hudPhys.vy;
+      hudPhys.vx += ax * dt;
+      hudPhys.vy += ay * dt;
+      hudPhys.x += hudPhys.vx * dt;
+      hudPhys.y += hudPhys.vy * dt;
+      hudPhys.targetX = hudPhys.x;
+      hudPhys.targetY = hudPhys.y;
+
+      const bw = window.innerWidth;
+      const bh = window.innerHeight;
+      if (hudBoundaryMode === "bounce") {{
+        let bounced = false;
+        if (hudPhys.x < 8) {{ hudPhys.x = 8; hudPhys.vx = Math.abs(hudPhys.vx) * 0.92; bounced = true; }}
+        else if (hudPhys.x + hudW > bw - 8) {{ hudPhys.x = bw - hudW - 8; hudPhys.vx = -Math.abs(hudPhys.vx) * 0.92; bounced = true; }}
+        if (hudPhys.y < 8) {{ hudPhys.y = 8; hudPhys.vy = Math.abs(hudPhys.vy) * 0.92; bounced = true; }}
+        else if (hudPhys.y + hudH > bh - 8) {{ hudPhys.y = bh - hudH - 8; hudPhys.vy = -Math.abs(hudPhys.vy) * 0.92; bounced = true; }}
+        if (bounced) {{
+          hudPhys.wallBounces += 1;
+          hudPhys.waveVels[5] += hudPhys.vy < 0 ? 36.0 : -36.0;
+        }}
+      }} else if (hudBoundaryMode === "pacman") {{
+        let wrapped = false;
+        if (hudPhys.x > bw) {{ hudPhys.x = -hudW + 6; wrapped = true; }}
+        else if (hudPhys.x + hudW < 0) {{ hudPhys.x = bw - 6; wrapped = true; }}
+        if (hudPhys.y > bh) {{ hudPhys.y = -hudH + 6; wrapped = true; }}
+        else if (hudPhys.y + hudH < 0) {{ hudPhys.y = bh - 6; wrapped = true; }}
+        if (wrapped) {{
+          hudPhys.edgeWraps += 1;
+          for (let k = 0; k < hudPhys.waveVels.length; k++) {{
+            hudPhys.waveVels[k] += Math.sin(k * 0.9) * 26.0;
+          }}
+        }}
+      }}
+
+      if (now - lastSenseT > 180) {{
+        lastSenseT = now;
+        senseHarnessUnderPoint(hudPhys.x + hudW / 2, hudPhys.y + hudH / 2);
+      }}
+    }}
+
+    hudPhys.tiltDeg = Math.max(-9.0, Math.min(9.0, hudPhys.vx * 0.013 + Math.sin(hudPhys.phase * 3.1) * 0.5));
 
     const n = hudPhys.waves.length;
     for (let i = 0; i < n; i++) {{

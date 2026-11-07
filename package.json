@@ -4,7 +4,7 @@
   "description": "Universal Plop-In AI Token Efficiency Leaderboard, Liquid-Physics WebSocket HUD, Cache Doctor MCP Server, and Architect Loadout Platform for Claude Code, Google Antigravity, and OpenAI Codex CLI.",
   "main": "bin/aether-pulse.js",
   "bin": {
-    "aether-pulse": "./bin/aether-pulse.js"
+    "aether-pulse": "bin/aether-pulse.js"
   },
   "files": [
     "bin/",
@@ -21,7 +21,10 @@
     "cloud/",
     "README.md",
     "PRODUCT.md",
-    "DESIGN.md"
+    "DESIGN.md",
+    "aether_liquid_overlay.pyw",
+    "Launch-Aether-Overlay.bat",
+    "README-DESKTOP-OVERLAY.md"
   ],
   "scripts": {
     "start": "node bin/aether-pulse.js",
