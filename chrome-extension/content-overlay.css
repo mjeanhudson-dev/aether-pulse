@@ -1,0 +1,163 @@
+/* Aether Pulse Cupertino Liquid Telemetry Overlay CSS */
+#aether-ext-liquid-vessel {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  z-index: 2147483646;
+  width: 386px;
+  border-radius: 18px;
+  background: rgba(20, 20, 22, 0.88);
+  backdrop-filter: saturate(190%) blur(24px);
+  -webkit-backdrop-filter: saturate(190%) blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.34), 0 2px 8px rgba(0, 0, 0, 0.22);
+  color: #F5F5F7;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+  user-select: none;
+  cursor: grab;
+  overflow: hidden;
+  will-change: transform;
+  touch-action: none;
+  transition: height 220ms cubic-bezier(0.22, 1, 0.36, 1), border-color 180ms ease;
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+#aether-ext-liquid-vessel:active {
+  cursor: grabbing;
+}
+
+#aether-ext-liquid-vessel .aether-liquid-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.85;
+}
+
+#aether-ext-liquid-vessel .aether-vessel-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 48px;
+  min-height: 98px;
+}
+
+#aether-ext-liquid-vessel .aether-vessel-body {
+  padding: 13px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+#aether-ext-liquid-vessel .aether-vessel-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #A1A1A6;
+}
+
+#aether-ext-liquid-vessel .aether-harness-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #F5F5F7;
+}
+
+#aether-ext-liquid-vessel .aether-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2997FF;
+}
+
+#aether-ext-liquid-vessel .aether-metrics-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+#aether-ext-liquid-vessel .aether-metric-big {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #FFFFFF;
+}
+
+#aether-ext-liquid-vessel .aether-metric-sub {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #E5E5EA;
+}
+
+#aether-ext-liquid-vessel .aether-vessel-foot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #98989F;
+}
+
+#aether-ext-liquid-vessel .aether-all-drawer {
+  display: none;
+  margin-block-start: 8px;
+  padding-block-start: 8px;
+  border-block-start: 1px solid rgba(255, 255, 255, 0.10);
+  font-family: "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11.5px;
+  gap: 5px;
+  flex-direction: column;
+}
+
+#aether-ext-liquid-vessel.expanded .aether-all-drawer {
+  display: flex;
+}
+
+#aether-ext-liquid-vessel .aether-drawer-item {
+  display: flex;
+  justify-content: space-between;
+  color: #E5E5EA;
+}
+
+#aether-ext-liquid-vessel .aether-side-btn {
+  appearance: none;
+  border: none;
+  border-inline-start: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  color: #F5F5F7;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  transition: background-color 140ms ease;
+}
+
+#aether-ext-liquid-vessel .aether-side-btn:hover {
+  background: rgba(41, 151, 255, 0.16);
+}
+
+#aether-ext-liquid-vessel .aether-side-btn:focus-visible {
+  outline: 2px solid #2997FF;
+  outline-offset: -2px;
+}
+
+#aether-ext-liquid-vessel .aether-side-mode-tag {
+  font-family: "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #98989F;
+  text-transform: uppercase;
+}

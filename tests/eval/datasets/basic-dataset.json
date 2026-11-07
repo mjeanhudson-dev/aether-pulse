@@ -1,0 +1,26 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "verify_3_harness_efficiency_rank",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Call get_my_efficiency_rank and summarize Eloquent's 3-Pillar Leverage Index and Cache Hit % across Claude Code, Antigravity, and OpenAI Codex CLI."
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "diagnose_cold_cache_spikes",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "Call diagnose_cache_leaks and identify the top cold-cache write spike session."
+          }
+        ]
+      }
+    }
+  ]
+}

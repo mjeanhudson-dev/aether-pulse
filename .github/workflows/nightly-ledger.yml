@@ -1,0 +1,31 @@
+name: Nightly Aether Pulse Public Ledger Snapshot
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # Every night at 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot-ledger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch Top Weight-Class Leaderboards from Edge Worker
+        env:
+          AETHER_PULSE_API_URL: ${{ vars.AETHER_PULSE_API_URL || 'https://aether-pulse.pages.dev/api/v1/leaderboard' }}
+        run: |
+          mkdir -p ledger
+          curl -fsSL "$AETHER_PULSE_API_URL" -o ledger/global_leaderboard_snapshot.json || echo '{"status":"offline_bootstrap"}' > ledger/global_leaderboard_snapshot.json
+
+      - name: Commit & Push Public Audit Ledger
+        run: |
+          git config user.name "aether-pulse-bot"
+          git config user.email "bot@aether-pulse.dev"
+          git add ledger/global_leaderboard_snapshot.json
+          git diff --staged --quiet || git commit -m "chore(ledger): nightly Proof-of-Burn leaderboard snapshot [skip ci]"
+          git push

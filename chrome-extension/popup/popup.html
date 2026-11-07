@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light dark">
+<title>Aether Pulse Overlay Controls</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: light-dark(#F5F5F7, #141416);
+    --surface: light-dark(#FFFFFF, #1C1C1E);
+    --ink: light-dark(#1D1D1F, #F5F5F7);
+    --muted: light-dark(#56565B, #98989F);
+    --border: light-dark(rgba(0,0,0,0.08), rgba(255,255,255,0.12));
+    --accent: light-dark(#0066CC, #2997FF);
+  }
+  body {
+    width: 310px;
+    margin: 0;
+    padding: 16px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", system-ui, sans-serif;
+    font-size: 13px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-block-end: 12px;
+  }
+  .title {
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .status {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-block-end: 12px;
+  }
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-block-start: 8px;
+  }
+  button {
+    appearance: none;
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  button.active {
+    background: var(--accent);
+    color: #FFFFFF;
+    border-color: var(--accent);
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <span class="title">Aether Pulse HUD</span>
+    <span class="status" id="daemon-status">Checking...</span>
+  </div>
+  <div class="card">
+    <div><strong>Overlay Display Mode</strong></div>
+    <div class="mode-grid" id="mode-buttons">
+      <button type="button" data-mode="auto">Auto-Sense</button>
+      <button type="button" data-mode="all">All 3 Harnesses</button>
+      <button type="button" data-mode="claude_code">Claude Code</button>
+      <button type="button" data-mode="antigravity">Antigravity</button>
+      <button type="button" data-mode="openai_codex">Codex CLI</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

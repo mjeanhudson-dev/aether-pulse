@@ -1,0 +1,9 @@
+name = "aether-pulse-edge"
+main = "cloud/worker.ts"
+compatibility_date = "2026-11-01"
+
+# $0/mo Cloudflare Free Tier D1 SQLite Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "aether-pulse-leaderboard"
+database_id = "00000000-0000-0000-0000-000000000000"

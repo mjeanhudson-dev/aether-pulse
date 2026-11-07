@@ -1,0 +1,2094 @@
+{
+  "meta": {
+    "generatedAt": "2026-11-07T00:12:27.070046800+00:00",
+    "version": "4.21.0",
+    "dateRange": {
+      "start": "2026-09-24",
+      "end": "2026-11-06"
+    }
+  },
+  "summary": {
+    "totalTokens": 2674270722,
+    "totalCost": 754.7668999994996,
+    "totalDays": 20,
+    "activeDays": 20,
+    "averagePerDay": 37.738344999974984,
+    "maxCostInSingleDay": 112.71630619499973,
+    "clients": [
+      "antigravity",
+      "antigravity-extension",
+      "claude",
+      "codex",
+      "hermes"
+    ],
+    "models": [
+      "claude-haiku-4-5",
+      "claude-haiku-5-5",
+      "claude-opus-4-6",
+      "claude-opus-4-8",
+      "claude-opus-5-5",
+      "claude-sonnet-5-5",
+      "gemini-3.1-pro",
+      "gemini-3.8-flash",
+      "gemini-3.8-flash-n",
+      "gemini-3.8-flash-tiered",
+      "gemini-4-argon",
+      "gemini-4-argon-trial",
+      "gpt-4o",
+      "gpt-4o-2024-11-20",
+      "gpt-6-luna",
+      "gpt-6.1-sol",
+      "meituan/longcat-2.5-preview:free",
+      "unknown",
+      "upstage/solar-mini4:free"
+    ],
+    "costProvenance": {
+      "kind": "mixed",
+      "estimateSource": "catalog"
+    }
+  },
+  "years": [
+    {
+      "year": "2026",
+      "totalTokens": 2674270722,
+      "totalCost": 754.7668999994996,
+      "range": {
+        "start": "2026-09-24",
+        "end": "2026-11-06"
+      },
+      "costProvenance": {
+        "kind": "mixed",
+        "estimateSource": "catalog"
+      }
+    }
+  ],
+  "contributions": [
+    {
+      "date": "2026-09-24",
+      "totals": {
+        "tokens": 293017,
+        "cost": 0.46895204000000007,
+        "messages": 8,
+        "costProvenance": {
+          "kind": "estimated",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 1,
+      "tokenBreakdown": {
+        "input": 176195,
+        "output": 7427,
+        "cacheRead": 103632,
+        "cacheWrite": 0,
+        "reasoning": 5763
+      },
+      "clients": [
+        {
+          "client": "antigravity",
+          "modelId": "claude-opus-4-6",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 46236,
+            "output": 571,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.24545500000000003,
+          "messages": 1,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash",
+          "providerId": "google",
+          "tokens": {
+            "input": 98652,
+            "output": 5562,
+            "cacheRead": 103632,
+            "cacheWrite": 0,
+            "reasoning": 4658
+          },
+          "cost": 0.13209504,
+          "messages": 6,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.1-pro",
+          "providerId": "google",
+          "tokens": {
+            "input": 31307,
+            "output": 1294,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 1105
+          },
+          "cost": 0.09140200000000001,
+          "messages": 1,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 150434
+    },
+    {
+      "date": "2026-10-14",
+      "totals": {
+        "tokens": 6145410,
+        "cost": 2.6107949,
+        "messages": 126,
+        "costProvenance": {
+          "kind": "mixed",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 1,
+      "tokenBreakdown": {
+        "input": 716277,
+        "output": 47436,
+        "cacheRead": 5381697,
+        "cacheWrite": 0,
+        "reasoning": 0
+      },
+      "clients": [
+        {
+          "client": "antigravity",
+          "modelId": "claude-sonnet-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 505288,
+            "output": 46555,
+            "cacheRead": 5366785,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 2.012804499999999,
+          "messages": 62,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "unknown",
+          "providerId": "antigravity",
+          "tokens": {
+            "input": 62391,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.0,
+          "messages": 45,
+          "costProvenance": {
+            "kind": "unknown"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "gemini-4-argon-trial",
+          "providerId": "google",
+          "tokens": {
+            "input": 8502,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.017004,
+          "messages": 6,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 123272,
+            "output": 881,
+            "cacheRead": 14912,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.5136904,
+          "messages": 1,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 16824,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.06729600000000001,
+          "messages": 12,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 2098859
+    },
+    {
+      "date": "2026-10-15",
+      "totals": {
+        "tokens": 364023053,
+        "cost": 55.82287450499991,
+        "messages": 3016,
+        "costProvenance": {
+          "kind": "mixed",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 2,
+      "tokenBreakdown": {
+        "input": 19921181,
+        "output": 1899165,
+        "cacheRead": 340647193,
+        "cacheWrite": 0,
+        "reasoning": 1555514
+      },
+      "clients": [
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-tiered",
+          "providerId": "google",
+          "tokens": {
+            "input": 28355,
+            "output": 650,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 402
+          },
+          "cost": 0.027732375,
+          "messages": 1,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "gemini-4-argon-trial",
+          "providerId": "google",
+          "tokens": {
+            "input": 4251,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.008502,
+          "messages": 3,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-4-argon-trial",
+          "providerId": "google",
+          "tokens": {
+            "input": 1638913,
+            "output": 229482,
+            "cacheRead": 21872820,
+            "cacheWrite": 0,
+            "reasoning": 120767
+          },
+          "cost": 8.967598000000004,
+          "messages": 159,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "codex",
+          "modelId": "gpt-6-luna",
+          "providerId": "openai",
+          "tokens": {
+            "input": 2693647,
+            "output": 151759,
+            "cacheRead": 68462976,
+            "cacheWrite": 0,
+            "reasoning": 486638
+          },
+          "cost": 1.2731929600000007,
+          "messages": 496,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "unknown",
+          "providerId": "antigravity",
+          "tokens": {
+            "input": 18125,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.0,
+          "messages": 13,
+          "costProvenance": {
+            "kind": "unknown"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 15188866,
+            "output": 1480826,
+            "cacheRead": 248425526,
+            "cacheWrite": 0,
+            "reasoning": 947707
+          },
+          "cost": 43.04361897000002,
+          "messages": 2331,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 349024,
+            "output": 36448,
+            "cacheRead": 1885871,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 2.5022302,
+          "messages": 13,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 54825952
+    },
+    {
+      "date": "2026-10-16",
+      "totals": {
+        "tokens": 685626468,
+        "cost": 112.71630619499973,
+        "messages": 5998,
+        "costProvenance": {
+          "kind": "mixed",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 4,
+      "tokenBreakdown": {
+        "input": 39540467,
+        "output": 4120601,
+        "cacheRead": 639473514,
+        "cacheWrite": 0,
+        "reasoning": 2491886
+      },
+      "clients": [
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-tiered",
+          "providerId": "google",
+          "tokens": {
+            "input": 7571795,
+            "output": 804963,
+            "cacheRead": 73163773,
+            "cacheWrite": 0,
+            "reasoning": 399229
+          },
+          "cost": 17.250034147499996,
+          "messages": 1084,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-4-argon-trial",
+          "providerId": "google",
+          "tokens": {
+            "input": 157092,
+            "output": 8305,
+            "cacheRead": 582998,
+            "cacheWrite": 0,
+            "reasoning": 4644
+          },
+          "cost": 0.5019738,
+          "messages": 5,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "gemini-3.8-flash-tiered",
+          "providerId": "google",
+          "tokens": {
+            "input": 743224,
+            "output": 16225,
+            "cacheRead": 6135224,
+            "cacheWrite": 0,
+            "reasoning": 15532
+          },
+          "cost": 1.2503134050000002,
+          "messages": 132,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "unknown",
+          "providerId": "antigravity",
+          "tokens": {
+            "input": 252744,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.0,
+          "messages": 182,
+          "costProvenance": {
+            "kind": "unknown"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 6790,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.00560175,
+          "messages": 5,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 30808822,
+            "output": 3291108,
+            "cacheRead": 559591519,
+            "cacheWrite": 0,
+            "reasoning": 2072481
+          },
+          "cost": 93.70838309249991,
+          "messages": 4590,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 67193141
+    },
+    {
+      "date": "2026-10-17",
+      "totals": {
+        "tokens": 28195595,
+        "cost": 10.590948475,
+        "messages": 195,
+        "costProvenance": {
+          "kind": "estimated",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 1,
+      "tokenBreakdown": {
+        "input": 2300718,
+        "output": 230720,
+        "cacheRead": 25547347,
+        "cacheWrite": 0,
+        "reasoning": 116810
+      },
+      "clients": [
+        {
+          "client": "antigravity",
+          "modelId": "gemini-4-argon-trial",
+          "providerId": "google",
+          "tokens": {
+            "input": 2271621,
+            "output": 230033,
+            "cacheRead": 25547347,
+            "cacheWrite": 0,
+            "reasoning": 116419
+          },
+          "cost": 10.562496700000002,
+          "messages": 194,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-tiered",
+          "providerId": "google",
+          "tokens": {
+            "input": 29097,
+            "output": 687,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 391
+          },
+          "cost": 0.028451775000000002,
+          "messages": 1,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 4078396
+    },
+    {
+      "date": "2026-10-18",
+      "totals": {
+        "tokens": 29202584,
+        "cost": 7.9517311474999985,
+        "messages": 243,
+        "costProvenance": {
+          "kind": "mixed",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 1,
+      "tokenBreakdown": {
+        "input": 2551580,
+        "output": 199471,
+        "cacheRead": 26394570,
+        "cacheWrite": 0,
+        "reasoning": 56963
+      },
+      "clients": [
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-tiered",
+          "providerId": "google",
+          "tokens": {
+            "input": 29102,
+            "output": 585,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 331
+          },
+          "cost": 0.02778765,
+          "messages": 1,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-4-argon-trial",
+          "providerId": "google",
+          "tokens": {
+            "input": 1476337,
+            "output": 104064,
+            "cacheRead": 7619667,
+            "cacheWrite": 0,
+            "reasoning": 26838
+          },
+          "cost": 5.0236607,
+          "messages": 63,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "unknown",
+          "providerId": "antigravity",
+          "tokens": {
+            "input": 31217,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.0,
+          "messages": 23,
+          "costProvenance": {
+            "kind": "unknown"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 1014924,
+            "output": 94822,
+            "cacheRead": 18774903,
+            "cacheWrite": 0,
+            "reasoning": 29794
+          },
+          "cost": 2.9002827975000005,
+          "messages": 156,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 3065684
+    },
+    {
+      "date": "2026-10-19",
+      "totals": {
+        "tokens": 15405341,
+        "cost": 2.87939223,
+        "messages": 196,
+        "costProvenance": {
+          "kind": "estimated",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 1,
+      "tokenBreakdown": {
+        "input": 1366514,
+        "output": 100448,
+        "cacheRead": 13891934,
+        "cacheWrite": 0,
+        "reasoning": 46445
+      },
+      "clients": [
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 1366514,
+            "output": 100448,
+            "cacheRead": 13891934,
+            "cacheWrite": 0,
+            "reasoning": 46445
+          },
+          "cost": 2.87939223,
+          "messages": 196,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 1592045
+    },
+    {
+      "date": "2026-10-20",
+      "totals": {
+        "tokens": 316447201,
+        "cost": 97.16990382450005,
+        "messages": 2566,
+        "costProvenance": {
+          "kind": "mixed",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 4,
+      "tokenBreakdown": {
+        "input": 14348153,
+        "output": 1787825,
+        "cacheRead": 295838832,
+        "cacheWrite": 3997625,
+        "reasoning": 474766
+      },
+      "clients": [
+        {
+          "client": "claude",
+          "modelId": "claude-haiku-4-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 10,
+            "output": 375,
+            "cacheRead": 0,
+            "cacheWrite": 76951,
+            "reasoning": 0
+          },
+          "cost": 0.15578699999999998,
+          "messages": 1,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "hermes",
+          "modelId": "upstage/solar-mini4:free",
+          "providerId": "nous",
+          "tokens": {
+            "input": 2063624,
+            "output": 13508,
+            "cacheRead": 4312000,
+            "cacheWrite": 0,
+            "reasoning": 65662
+          },
+          "cost": 0.0,
+          "messages": 0,
+          "costProvenance": {
+            "kind": "unknown"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "unknown",
+          "providerId": "antigravity",
+          "tokens": {
+            "input": 1417,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.0,
+          "messages": 1,
+          "costProvenance": {
+            "kind": "unknown"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-4-argon-trial",
+          "providerId": "google",
+          "tokens": {
+            "input": 125285,
+            "output": 558,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 430
+          },
+          "cost": 0.26045,
+          "messages": 1,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-haiku-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 6,
+            "output": 1846,
+            "cacheRead": 198542,
+            "cacheWrite": 87739,
+            "reasoning": 0
+          },
+          "cost": 0.02045682,
+          "messages": 3,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "hermes",
+          "modelId": "meituan/longcat-2.5-preview:free",
+          "providerId": "hermes, nous",
+          "tokens": {
+            "input": 214476,
+            "output": 19549,
+            "cacheRead": 5439872,
+            "cacheWrite": 0,
+            "reasoning": 19290
+          },
+          "cost": 0.143588832,
+          "messages": 0,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 5275,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.004351875,
+          "messages": 4,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 1072,
+            "output": 932535,
+            "cacheRead": 123694756,
+            "cacheWrite": 3536037,
+            "reasoning": 0
+          },
+          "cost": 66.90372119999999,
+          "messages": 533,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-sonnet-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 124,
+            "output": 18967,
+            "cacheRead": 7179819,
+            "cacheWrite": 296898,
+            "reasoning": 0
+          },
+          "cost": 2.0954918999999994,
+          "messages": 58,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "codex",
+          "modelId": "gpt-6-luna",
+          "providerId": "openai",
+          "tokens": {
+            "input": 43330,
+            "output": 766,
+            "cacheRead": 225152,
+            "cacheWrite": 0,
+            "reasoning": 1233
+          },
+          "cost": 0.0075840199999999995,
+          "messages": 7,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "hermes",
+          "modelId": "gpt-4o",
+          "providerId": "copilot",
+          "tokens": {
+            "input": 24031,
+            "output": 132,
+            "cacheRead": 46464,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.11947750000000001,
+          "messages": 7,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 11868966,
+            "output": 799573,
+            "cacheRead": 154742227,
+            "cacheWrite": 0,
+            "reasoning": 388151
+          },
+          "cost": 27.457492177499958,
+          "messages": 1951,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "hermes",
+          "modelId": "gpt-4o-2024-11-20",
+          "providerId": "copilot",
+          "tokens": {
+            "input": 537,
+            "output": 16,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.0015025000000000004,
+          "messages": 0,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 25607716
+    },
+    {
+      "date": "2026-10-21",
+      "totals": {
+        "tokens": 15508021,
+        "cost": 2.2784803224999997,
+        "messages": 280,
+        "costProvenance": {
+          "kind": "mixed",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 1,
+      "tokenBreakdown": {
+        "input": 2276800,
+        "output": 199345,
+        "cacheRead": 12805871,
+        "cacheWrite": 60347,
+        "reasoning": 165658
+      },
+      "clients": [
+        {
+          "client": "hermes",
+          "modelId": "upstage/solar-mini4:free",
+          "providerId": "nous",
+          "tokens": {
+            "input": 1583627,
+            "output": 16680,
+            "cacheRead": 5985600,
+            "cacheWrite": 0,
+            "reasoning": 81075
+          },
+          "cost": 0.0,
+          "messages": 0,
+          "costProvenance": {
+            "kind": "unknown"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-haiku-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 10,
+            "output": 2290,
+            "cacheRead": 464008,
+            "cacheWrite": 60347,
+            "reasoning": 0
+          },
+          "cost": 0.0892774,
+          "messages": 5,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 691845,
+            "output": 180375,
+            "cacheRead": 6356263,
+            "cacheWrite": 0,
+            "reasoning": 84583
+          },
+          "cost": 2.1881155725,
+          "messages": 274,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 1318,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.00108735,
+          "messages": 1,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 3413951
+    },
+    {
+      "date": "2026-10-22",
+      "totals": {
+        "tokens": 14472800,
+        "cost": 16.909670999999996,
+        "messages": 55,
+        "costProvenance": {
+          "kind": "estimated",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 1,
+      "tokenBreakdown": {
+        "input": 112,
+        "output": 38975,
+        "cacheRead": 12735895,
+        "cacheWrite": 1697818,
+        "reasoning": 0
+      },
+      "clients": [
+        {
+          "client": "claude",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 112,
+            "output": 38975,
+            "cacheRead": 12735895,
+            "cacheWrite": 1697818,
+            "reasoning": 0
+          },
+          "cost": 16.909670999999996,
+          "messages": 55,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 1326130
+    },
+    {
+      "date": "2026-10-23",
+      "totals": {
+        "tokens": 3298647,
+        "cost": 2.3022264,
+        "messages": 30,
+        "costProvenance": {
+          "kind": "estimated",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 1,
+      "tokenBreakdown": {
+        "input": 56418,
+        "output": 9902,
+        "cacheRead": 3074372,
+        "cacheWrite": 157955,
+        "reasoning": 0
+      },
+      "clients": [
+        {
+          "client": "antigravity",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 56378,
+            "output": 3384,
+            "cacheRead": 443318,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.3818556000000001,
+          "messages": 10,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 40,
+            "output": 6518,
+            "cacheRead": 2631054,
+            "cacheWrite": 157955,
+            "reasoning": 0
+          },
+          "cost": 1.9203707999999995,
+          "messages": 20,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 677790
+    },
+    {
+      "date": "2026-10-24",
+      "totals": {
+        "tokens": 7284331,
+        "cost": 3.8936614000000014,
+        "messages": 44,
+        "costProvenance": {
+          "kind": "estimated",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 1,
+      "tokenBreakdown": {
+        "input": 88,
+        "output": 42283,
+        "cacheRead": 7036927,
+        "cacheWrite": 205033,
+        "reasoning": 0
+      },
+      "clients": [
+        {
+          "client": "claude",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 88,
+            "output": 42283,
+            "cacheRead": 7036927,
+            "cacheWrite": 205033,
+            "reasoning": 0
+          },
+          "cost": 3.8936614000000014,
+          "messages": 44,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 824760
+    },
+    {
+      "date": "2026-10-30",
+      "totals": {
+        "tokens": 129407229,
+        "cost": 85.02779908047422,
+        "messages": 1040,
+        "costProvenance": {
+          "kind": "mixed",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 4,
+      "tokenBreakdown": {
+        "input": 6048550,
+        "output": 1125812,
+        "cacheRead": 116762283,
+        "cacheWrite": 5310835,
+        "reasoning": 159749
+      },
+      "clients": [
+        {
+          "client": "hermes",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 138,
+            "output": 296029,
+            "cacheRead": 14617417,
+            "cacheWrite": 2627253,
+            "reasoning": 0
+          },
+          "cost": 24.9434646804743,
+          "messages": 281,
+          "costProvenance": {
+            "kind": "unknown"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 1416130,
+            "output": 32652,
+            "cacheRead": 12592920,
+            "cacheWrite": 0,
+            "reasoning": 12670
+          },
+          "cost": 2.3941763999999996,
+          "messages": 70,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "gemini-4-argon-trial",
+          "providerId": "google",
+          "tokens": {
+            "input": 9919,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.019837999999999998,
+          "messages": 7,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 577,
+            "output": 263551,
+            "cacheRead": 58252216,
+            "cacheWrite": 2683582,
+            "reasoning": 0
+          },
+          "cost": 36.38748519999998,
+          "messages": 286,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-4-argon-trial",
+          "providerId": "google",
+          "tokens": {
+            "input": 3919914,
+            "output": 501161,
+            "cacheRead": 25056432,
+            "cacheWrite": 0,
+            "reasoning": 147079
+          },
+          "cost": 16.8278712,
+          "messages": 291,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 624059,
+            "output": 32419,
+            "cacheRead": 6243298,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 4.393275600000001,
+          "messages": 49,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "unknown",
+          "providerId": "antigravity",
+          "tokens": {
+            "input": 62391,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.0,
+          "messages": 45,
+          "costProvenance": {
+            "kind": "unknown"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 15422,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.061688000000000014,
+          "messages": 11,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 23904601
+    },
+    {
+      "date": "2026-10-31",
+      "totals": {
+        "tokens": 258769073,
+        "cost": 102.69784126452568,
+        "messages": 2026,
+        "costProvenance": {
+          "kind": "mixed",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 4,
+      "tokenBreakdown": {
+        "input": 11448340,
+        "output": 1709705,
+        "cacheRead": 238583714,
+        "cacheWrite": 6637666,
+        "reasoning": 389648
+      },
+      "clients": [
+        {
+          "client": "antigravity-extension",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 6590,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.00543675,
+          "messages": 5,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 11163456,
+            "output": 688327,
+            "cacheRead": 150382776,
+            "cacheWrite": 0,
+            "reasoning": 389648
+          },
+          "cost": 26.063077095000022,
+          "messages": 1436,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-sonnet-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 156,
+            "output": 90696,
+            "cacheRead": 12454549,
+            "cacheWrite": 414368,
+            "reasoning": 0
+          },
+          "cost": 3.188646900000002,
+          "messages": 78,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "hermes",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 42,
+            "output": 155626,
+            "cacheRead": 3165770,
+            "cacheWrite": 1131912,
+            "reasoning": 0
+          },
+          "cost": 6.442817719525692,
+          "messages": 32,
+          "costProvenance": {
+            "kind": "unknown"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 131035,
+            "output": 774689,
+            "cacheRead": 72572737,
+            "cacheWrite": 5091386,
+            "reasoning": 0
+          },
+          "cost": 66.40070240000001,
+          "messages": 474,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 147061,
+            "output": 367,
+            "cacheRead": 7882,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.5971604,
+          "messages": 1,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 26246172
+    },
+    {
+      "date": "2026-11-01",
+      "totals": {
+        "tokens": 421239598,
+        "cost": 64.88103047250011,
+        "messages": 3933,
+        "costProvenance": {
+          "kind": "estimated",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 3,
+      "tokenBreakdown": {
+        "input": 23731450,
+        "output": 2063600,
+        "cacheRead": 394413983,
+        "cacheWrite": 0,
+        "reasoning": 1030565
+      },
+      "clients": [
+        {
+          "client": "antigravity-extension",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 6590,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.00543675,
+          "messages": 5,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-tiered",
+          "providerId": "google",
+          "tokens": {
+            "input": 5632594,
+            "output": 729010,
+            "cacheRead": 118102079,
+            "cacheWrite": 0,
+            "reasoning": 278930
+          },
+          "cost": 18.54806406750002,
+          "messages": 1217,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 16903937,
+            "output": 1316393,
+            "cacheRead": 255625955,
+            "cacheWrite": 0,
+            "reasoning": 729605
+          },
+          "cost": 43.47463106250001,
+          "messages": 2528,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "gemini-3.8-flash-tiered",
+          "providerId": "google",
+          "tokens": {
+            "input": 1188329,
+            "output": 18197,
+            "cacheRead": 20685949,
+            "cacheWrite": 0,
+            "reasoning": 22030
+          },
+          "cost": 2.8528985925000003,
+          "messages": 183,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 64989510
+    },
+    {
+      "date": "2026-11-02",
+      "totals": {
+        "tokens": 24254984,
+        "cost": 13.32738142750001,
+        "messages": 99,
+        "costProvenance": {
+          "kind": "estimated",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 1,
+      "tokenBreakdown": {
+        "input": 611278,
+        "output": 181558,
+        "cacheRead": 22700497,
+        "cacheWrite": 751041,
+        "reasoning": 10610
+      },
+      "clients": [
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 239162,
+            "output": 10566,
+            "cacheRead": 2344227,
+            "cacheWrite": 0,
+            "reasoning": 3164
+          },
+          "cost": 0.4473436275,
+          "messages": 19,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-4-argon",
+          "providerId": "google",
+          "tokens": {
+            "input": 371992,
+            "output": 46232,
+            "cacheRead": 3015262,
+            "cacheWrite": 0,
+            "reasoning": 7446
+          },
+          "cost": 1.5822901999999999,
+          "messages": 24,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-sonnet-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 4,
+            "output": 841,
+            "cacheRead": 0,
+            "cacheWrite": 166515,
+            "reasoning": 0
+          },
+          "cost": 0.6744779999999999,
+          "messages": 2,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 120,
+            "output": 123919,
+            "cacheRead": 17341008,
+            "cacheWrite": 584526,
+            "reasoning": 0
+          },
+          "cost": 10.623269600000004,
+          "messages": 54,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 2121964
+    },
+    {
+      "date": "2026-11-03",
+      "totals": {
+        "tokens": 117925478,
+        "cost": 53.77132451250001,
+        "messages": 489,
+        "costProvenance": {
+          "kind": "estimated",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 2,
+      "tokenBreakdown": {
+        "input": 1908429,
+        "output": 578184,
+        "cacheRead": 112571833,
+        "cacheWrite": 2821380,
+        "reasoning": 45652
+      },
+      "clients": [
+        {
+          "client": "claude",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 564,
+            "output": 448777,
+            "cacheRead": 90546428,
+            "cacheWrite": 2821380,
+            "reasoning": 0
+          },
+          "cost": 49.65812160000001,
+          "messages": 269,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 1907865,
+            "output": 129407,
+            "cacheRead": 22025405,
+            "cacheWrite": 0,
+            "reasoning": 45652
+          },
+          "cost": 4.1132029124999985,
+          "messages": 220,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 10747085
+    },
+    {
+      "date": "2026-11-04",
+      "totals": {
+        "tokens": 87649833,
+        "cost": 73.69388060000004,
+        "messages": 711,
+        "costProvenance": {
+          "kind": "estimated",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 3,
+      "tokenBreakdown": {
+        "input": 1936693,
+        "output": 952127,
+        "cacheRead": 79005491,
+        "cacheWrite": 5546525,
+        "reasoning": 208997
+      },
+      "clients": [
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-tiered",
+          "providerId": "google",
+          "tokens": {
+            "input": 753022,
+            "output": 129161,
+            "cacheRead": 18606629,
+            "cacheWrite": 0,
+            "reasoning": 70497
+          },
+          "cost": 2.9798792925000006,
+          "messages": 210,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "codex",
+          "modelId": "gpt-6-luna",
+          "providerId": "openai",
+          "tokens": {
+            "input": 409349,
+            "output": 36879,
+            "cacheRead": 3907328,
+            "cacheWrite": 0,
+            "reasoning": 82397
+          },
+          "cost": 0.13964618000000006,
+          "messages": 61,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 456,
+            "output": 652965,
+            "cacheRead": 38139150,
+            "cacheWrite": 4542054,
+            "reasoning": 0
+          },
+          "cost": 57.025385999999976,
+          "messages": 222,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-opus-4-8",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 54,
+            "output": 30267,
+            "cacheRead": 3925895,
+            "cacheWrite": 709013,
+            "reasoning": 0
+          },
+          "cost": 9.810022500000002,
+          "messages": 27,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 771158,
+            "output": 93553,
+            "cacheRead": 13388647,
+            "cacheWrite": 0,
+            "reasoning": 56103
+          },
+          "cost": 2.3580997275,
+          "messages": 180,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-sonnet-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 18,
+            "output": 9302,
+            "cacheRead": 1037842,
+            "cacheWrite": 295458,
+            "reasoning": 0
+          },
+          "cost": 1.3786722,
+          "messages": 9,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity-extension",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 2636,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "reasoning": 0
+          },
+          "cost": 0.0021747,
+          "messages": 2,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 15634820
+    },
+    {
+      "date": "2026-11-05",
+      "totals": {
+        "tokens": 86985276,
+        "cost": 29.93452021499999,
+        "messages": 561,
+        "costProvenance": {
+          "kind": "estimated",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 2,
+      "tokenBreakdown": {
+        "input": 3097405,
+        "output": 297208,
+        "cacheRead": 82359515,
+        "cacheWrite": 1061179,
+        "reasoning": 169969
+      },
+      "clients": [
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 1161687,
+            "output": 69453,
+            "cacheRead": 11613022,
+            "cacheWrite": 0,
+            "reasoning": 45460
+          },
+          "cost": 2.390482215,
+          "messages": 170,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "codex",
+          "modelId": "gpt-6.1-sol",
+          "providerId": "openai",
+          "tokens": {
+            "input": 1935636,
+            "output": 180386,
+            "cacheRead": 63439872,
+            "cacheWrite": 0,
+            "reasoning": 124509
+          },
+          "cost": 16.645573800000008,
+          "messages": 350,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "claude",
+          "modelId": "claude-opus-5-5",
+          "providerId": "anthropic",
+          "tokens": {
+            "input": 82,
+            "output": 47369,
+            "cacheRead": 7306621,
+            "cacheWrite": 1061179,
+            "reasoning": 0
+          },
+          "cost": 10.898464199999996,
+          "messages": 41,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 13052700
+    },
+    {
+      "date": "2026-11-06",
+      "totals": {
+        "tokens": 62136783,
+        "cost": 15.838179987500006,
+        "messages": 331,
+        "costProvenance": {
+          "kind": "estimated",
+          "estimateSource": "catalog"
+        }
+      },
+      "intensity": 1,
+      "tokenBreakdown": {
+        "input": 2096461,
+        "output": 177551,
+        "cacheRead": 59725769,
+        "cacheWrite": 0,
+        "reasoning": 137002
+      },
+      "clients": [
+        {
+          "client": "antigravity-extension",
+          "modelId": "gemini-4-argon-trial",
+          "providerId": "google",
+          "tokens": {
+            "input": 34750,
+            "output": 3146,
+            "cacheRead": 1279694,
+            "cacheWrite": 0,
+            "reasoning": 5370
+          },
+          "cost": 0.2826294,
+          "messages": 7,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-3.8-flash-n",
+          "providerId": "google",
+          "tokens": {
+            "input": 314345,
+            "output": 23947,
+            "cacheRead": 4093085,
+            "cacheWrite": 0,
+            "reasoning": 7255
+          },
+          "cost": 0.7257223875000002,
+          "messages": 59,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "antigravity",
+          "modelId": "gemini-4-argon-trial",
+          "providerId": "google",
+          "tokens": {
+            "input": 308622,
+            "output": 28180,
+            "cacheRead": 2344030,
+            "cacheWrite": 0,
+            "reasoning": 10520
+          },
+          "cost": 1.2386470000000003,
+          "messages": 20,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        },
+        {
+          "client": "codex",
+          "modelId": "gpt-6.1-sol",
+          "providerId": "openai",
+          "tokens": {
+            "input": 1438744,
+            "output": 122278,
+            "cacheRead": 52008960,
+            "cacheWrite": 0,
+            "reasoning": 113857
+          },
+          "cost": 13.591181200000003,
+          "messages": 245,
+          "costProvenance": {
+            "kind": "estimated",
+            "estimateSource": "catalog"
+          }
+        }
+      ],
+      "activeTimeMs": 8247808
+    }
+  ],
+  "timeMetrics": {
+    "totalActiveTimeMs": 329799519,
+    "longestContinuousMs": 12055488,
+    "maxConcurrentSessions": 9,
+    "sessionCount": 1144
+  },
+  "mcpServers": [
+    "colab-mcp",
+    "rea",
+    "sentry"
+  ]
+}

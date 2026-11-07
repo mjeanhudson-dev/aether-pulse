@@ -1,0 +1,52 @@
+{
+  "name": "aether-pulse",
+  "version": "1.0.0",
+  "description": "Universal Plop-In AI Token Efficiency Leaderboard, Liquid-Physics WebSocket HUD, Cache Doctor MCP Server, and Architect Loadout Platform for Claude Code, Google Antigravity, and OpenAI Codex CLI.",
+  "main": "bin/aether-pulse.js",
+  "bin": {
+    "aether-pulse": "./bin/aether-pulse.js"
+  },
+  "files": [
+    "bin/",
+    "aether_pulse.py",
+    "aether_pulse_mcp.py",
+    "aether_pulse_ws.py",
+    "aether_liquid_overlay.py",
+    "install_aether_pulse.py",
+    "aether_pulse_leaderboard.html",
+    "aether_pulse_badge.svg",
+    "aether_loadout_blueprint.json",
+    "AETHER_LOADOUT.md",
+    "chrome-extension/",
+    "cloud/",
+    "README.md",
+    "PRODUCT.md",
+    "DESIGN.md"
+  ],
+  "scripts": {
+    "start": "node bin/aether-pulse.js",
+    "ws": "node bin/aether-pulse.js --ws",
+    "overlay": "node bin/aether-pulse.js --overlay",
+    "mcp:test": "python aether_pulse_mcp.py --self-test",
+    "ws:test": "python aether_pulse_ws.py --self-test",
+    "test": "python -m unittest discover -s tests -v",
+    "install:harnesses": "python install_aether_pulse.py --dry-run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mjeanhudson-dev/aether-pulse.git"
+  },
+  "homepage": "https://mjeanhudson-dev.github.io/aether-pulse/",
+  "keywords": [
+    "ai-leaderboard",
+    "token-efficiency",
+    "prompt-caching",
+    "mcp-server",
+    "claude-code",
+    "antigravity",
+    "openai-codex",
+    "liquid-overlay"
+  ],
+  "author": "Eloquent (@mjeanhudson-dev)",
+  "license": "MIT"
+}

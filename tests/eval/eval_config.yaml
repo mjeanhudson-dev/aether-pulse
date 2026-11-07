@@ -1,0 +1,18 @@
+metrics_to_run:
+  - leverage_index_grounding
+  - public_identity_sanitization
+
+custom_metrics:
+  - name: leverage_index_grounding
+    custom_function: |
+      def evaluate(instance):
+          resp = ((instance.get("response") or {}).get("parts") or [{}])[0].get("text", "")
+          has_leverage = "26," in resp or "leverage_index" in resp
+          has_cache = "94." in resp or "cache_hit_rate_pct" in resp
+          return {"score": 1.0 if (has_leverage and has_cache) else 0.0}
+
+  - name: public_identity_sanitization
+    custom_function: |
+      def evaluate(instance):
+          resp = ((instance.get("response") or {}).get("parts") or [{}])[0].get("text", "")
+          return {"score": 1.0 if "Eloquent" in resp else 0.0}
