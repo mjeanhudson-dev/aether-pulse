@@ -41,6 +41,20 @@ from typing import Any, Dict, List, Optional, Tuple
 import aether_pulse
 import aether_pulse_ws
 
+# Enable native Per-Monitor High DPI V2 awareness on Windows
+if sys.platform == "win32":
+    try:
+        ctypes.windll.user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
+    except Exception:
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)
+        except Exception:
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except Exception:
+                pass
+
+
 try:
     import pystray
     from PIL import Image
@@ -121,25 +135,25 @@ THEME_PALETTES: Dict[str, Dict[str, Any]] = {
         "name": "Obsidian Dark",
         "is_dark": True,
         "mask_bg": "#010101",
-        "pill_bg": "#121214",
-        "pill_shadow": "#08080A",
-        "border": "#2C2C2E",
-        "border_highlight": "#3A3A3D",
-        "header": "#F5F5F7",
-        "primary_text": "#FFFFFF",
-        "secondary_text": "#A1A1A6",
-        "subtle_text": "#6E6E73",
-        "divider": "#2C2C2E",
-        "button_bg": "#1A1A1D",
-        "button_border": "#36363A",
-        "button_highlight": "#44444A",
-        "button_hover": "#26262B",
-        "fluid_deep": "#08121C",
-        "fluid_surface": "#0E243B",
-        "caustic_color": "#2C5D88",
-        "bubble_color": "#4A90E2",
-        "particle_color": "#E5E5EA",
-        "ao_shadow": "#020408",
+        "pill_bg": "#0E0F12",
+        "pill_shadow": "#050608",
+        "border": "#22242B",
+        "border_highlight": "#32353F",
+        "header": "#E8E9ED",
+        "primary_text": "#F2F3F7",
+        "secondary_text": "#828692",
+        "subtle_text": "#545762",
+        "divider": "#1E2026",
+        "button_bg": "#15161B",
+        "button_border": "#282A33",
+        "button_highlight": "#383B47",
+        "button_hover": "#1F2128",
+        "fluid_deep": "#081320",
+        "fluid_surface": "#10253D",
+        "caustic_color": "#28608F",
+        "bubble_color": "#3B7BAE",
+        "particle_color": "#D2D4DC",
+        "ao_shadow": "#020407",
     },
     "light": {
         "name": "Cupertino Light",
@@ -383,7 +397,7 @@ class FizzBubble:
         return False
 
 
-def evaluate_catmull_rom(nodes: List[Tuple[float, float]], steps_per_segment: int = 10) -> List[Tuple[float, float]]:
+def evaluate_catmull_rom(nodes: List[Tuple[float, float]], steps_per_segment: int = 18) -> List[Tuple[float, float]]:
     """Evaluates smooth C1 Catmull-Rom cubic splines at 470+ points across wave nodes."""
     n = len(nodes)
     if n < 2:
@@ -439,7 +453,7 @@ def build_liquid_mesh_polygon(
     y_floor: float,
     corner_r_left: float = 23.0,
     corner_r_right: float = 3.0,
-    corner_steps: int = 12,
+    corner_steps: int = 32,
 ) -> List[float]:
     """
     Constructs a true physically-conforming liquid container polygon flush with the vessel:
@@ -1218,15 +1232,16 @@ class AetherLiquidDesktopOverlay:
         )
 
         now = time.perf_counter()
-        pulse_alpha = 0.5 + 0.5 * math.sin(now * 7.5) if is_quota_flashing else 1.0
+        # Subdued breathing cycle (f = 0.32 Hz, period = 3.1s) instead of jarring high-frequency strobe
+        pulse_alpha = 0.45 + 0.55 * (0.5 + 0.5 * math.sin(now * 2.0)) if is_quota_flashing else 1.0
 
         if is_lava_mode:
-            # Whole liquid mesh is incandescent molten volcanic magma
-            active_deep = "#4A0800" if pulse_alpha > 0.5 else "#360600"
-            active_surf = "#FF3700" if pulse_alpha > 0.5 else "#E62800"
-            active_caust = "#FFDD33"
-            active_accent = "#FFAA00" if not is_quota_flashing else ("#FF1744" if pulse_alpha > 0.5 else "#FFD600")
-            active_bubble = "#FF9100"
+            # Subdued warm volcanic magma with rich copper-ember undertones
+            active_deep = "#2A0903" if pulse_alpha > 0.5 else "#200602"
+            active_surf = "#9E340B" if pulse_alpha > 0.5 else "#852B08"
+            active_caust = "#D97B1A"
+            active_accent = "#D65A20" if not is_quota_flashing else ("#C94A18" if pulse_alpha > 0.5 else "#DE8222")
+            active_bubble = "#CC6618"
         else:
             active_deep = palette["fluid_deep"]
             active_surf = palette["fluid_surface"]
@@ -1239,16 +1254,16 @@ class AetherLiquidDesktopOverlay:
         # 1. Multi-Pass Optical Subpixel Anti-Aliasing on Outer Capsule Perimeter
         # Layer 1: Ambient feather fringe against #010101 mask
         r_out = self.capsule_radius + 2.0
-        fringe_pts = rounded_rect_polygon(3.5, 3.5, self.width - 3.5, self.height - 3.5, r_out, steps=24)
+        fringe_pts = rounded_rect_polygon(3.5, 3.5, self.width - 3.5, self.height - 3.5, r_out, steps=64)
         fringe_color = "#0A0A0C" if palette.get("is_dark", True) else "#E8E8EC"
         self.canvas.create_polygon(fringe_pts, smooth=False, fill=fringe_color, outline="")
 
         # Layer 2: Main outer shadow
-        shadow_pts = rounded_rect_polygon(4.5, 4.5, self.width - 4.5, self.height - 4.5, self.capsule_radius + 1.0, steps=24)
+        shadow_pts = rounded_rect_polygon(4.5, 4.5, self.width - 4.5, self.height - 4.5, self.capsule_radius + 1.0, steps=64)
         self.canvas.create_polygon(shadow_pts, smooth=False, fill=palette["pill_shadow"], outline="")
 
         # Layer 3: Solid capsule body
-        body_pts = rounded_rect_polygon(6.0, 6.0, self.width - 6.0, self.height - 6.0, self.capsule_radius, steps=24)
+        body_pts = rounded_rect_polygon(6.0, 6.0, self.width - 6.0, self.height - 6.0, self.capsule_radius, steps=64)
         self.canvas.create_polygon(body_pts, smooth=False, fill=palette["pill_bg"], outline=palette["border"], width=1)
 
         # Layer 4: Specular top highlight curve
@@ -1280,9 +1295,9 @@ class AetherLiquidDesktopOverlay:
             py_caust = max(16.0, min(y_floor - 6.0, base_y + 12.0 + caust_h))
             caustic_nodes.append((px, py_caust))
 
-        surf_spline = evaluate_catmull_rom(surface_nodes, steps_per_segment=10)
-        deep_spline = evaluate_catmull_rom(deep_nodes, steps_per_segment=8)
-        caust_spline = evaluate_catmull_rom(caustic_nodes, steps_per_segment=6)
+        surf_spline = evaluate_catmull_rom(surface_nodes, steps_per_segment=18)
+        deep_spline = evaluate_catmull_rom(deep_nodes, steps_per_segment=14)
+        caust_spline = evaluate_catmull_rom(caustic_nodes, steps_per_segment=12)
 
         # 3. Layer 1: Deep Volumetric Undercurrent (Flat Crisp Bottom, Zero Curve)
         deep_pts = build_liquid_mesh_polygon(deep_spline, x_left, x_right, y_floor, corner_r_left=23.0, corner_r_right=3.0)
@@ -1419,7 +1434,7 @@ class AetherLiquidDesktopOverlay:
             tl_y,
             anchor="w",
             text=badge_text[:42],
-            fill="#FF3B30" if is_quota_flashing else palette["header"],
+            fill="#DE8222" if is_quota_flashing else palette["header"],
             font=(self.font_display, 8, "bold"),
         )
 

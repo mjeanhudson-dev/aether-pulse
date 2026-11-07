@@ -1,3 +1,8 @@
-# These are supported funding model platforms
+# Supported funding model platforms for Aether Pulse & Eloquent (@mjeanhudson-dev)
 github: [mjeanhudson-dev]
-custom: ['https://github.com/sponsors/mjeanhudson-dev', 'https://mjeanhudson-dev.github.io/aether-pulse/#donate']
+ko_fi: eloquent
+custom: [
+  'https://github.com/sponsors/mjeanhudson-dev',
+  'https://buymeacoffee.com/eloquent',
+  'https://mjeanhudson-dev.github.io/aether-pulse/#donate'
+]

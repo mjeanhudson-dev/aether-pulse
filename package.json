@@ -1,6 +1,6 @@
 {
   "name": "aether-pulse",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "Universal Plop-In AI Token Efficiency Leaderboard, Top 10 Harness Liquid-Physics HUD, Cache Doctor MCP Server, and Architect Loadout Platform for Claude Code, Google Antigravity, OpenAI Codex, Cursor, Aider, Windsurf, Continue, Copilot, OpenHands, and T3 Code.",
   "main": "bin/aether-pulse.js",
   "bin": {
@@ -8,6 +8,8 @@
   },
   "files": [
     "bin/",
+    "aether-pulse-agent-kit/",
+    "MARKETING_CAMPAIGN_AAA.md",
     "aether_pulse.py",
     "aether_pulse_mcp.py",
     "aether_pulse_ws.py",

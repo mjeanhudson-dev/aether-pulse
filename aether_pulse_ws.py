@@ -253,7 +253,7 @@ def step_liquid_physics(
       3. Excites the 48-node internal liquid meniscus with coupled shallow-water wave propagation.
     """
     dt = max(0.001, min(0.050, float(dt)))
-    m = float(state.get("mass", 1.85))
+    m = float(state.get("mass", 2.6))
     k = float(state.get("stiffness", 150.0))
     c = float(state.get("damping", 21.0))
     bmode = str(state.get("boundary_mode", "bounce"))
@@ -273,7 +273,7 @@ def step_liquid_physics(
 
     if is_dragging:
         # Crisp responsive tracking with satisfying physical weightiness (heft)
-        track_alpha = 0.92
+        track_alpha = 0.82
         prev_x = x
         prev_y = y
         x = track_alpha * float(target_x) + (1.0 - track_alpha) * x
@@ -294,7 +294,7 @@ def step_liquid_physics(
         # Freefloat / Fling Glide:
         # Weighted hydrodynamic glide: dv/dt = -drag_gamma * v
         # Mass = 3.2 kg sensation: smooth, weighty momentum deceleration without abrupt braking
-        drag_gamma = 0.78  # 1/s satisfying weighty viscous deceleration
+        drag_gamma = 0.56  # 1/s satisfying weighty viscous deceleration
         vx -= drag_gamma * vx * dt
         vy -= drag_gamma * vy * dt
         ax = -drag_gamma * vx
