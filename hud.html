@@ -14,7 +14,7 @@
       --text-primary: #f8fafc;
       --text-secondary: #94a3b8;
       --text-muted: #64748b;
-      --accent: #0066CC;
+      --accent: #2997FF;
       --verified-text: #30D158;
       --flagged-text: #FF9F0A;
       --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -286,43 +286,43 @@
               <span class="window-dot min" onclick="minimizeHudWindow(event)" title="Minimize HUD"></span>
             </span>
             <span class="hud-dot" id="hud-dot"></span>
-            <span id="hud-harness-name">4-Harness Quap Mesh</span>
+            <span id="hud-harness-name">3-Harness Trinity Mesh</span>
           </span>
           <span class="hud-mode-pill" id="hud-mode-pill">Pinned · Pin</span>
         </div>
         <div class="hud-metrics">
           <span class="hud-primary-val" id="hud-cache-val">94.4% Cache</span>
-          <span class="hud-secondary-val" id="hud-vol-val">4.43B · $303.68 · 27,056 pts</span>
+          <span class="hud-secondary-val" id="hud-vol-val">4.20B · $303.68 · 26,776 pts</span>
         </div>
         <div class="hud-foot">
-          <span id="hud-target-label">Over: 4-Harness Mesh</span>
-          <span id="hud-saved-val">Saved $11,140</span>
+          <span id="hud-target-label">Over: 3-Harness Mesh</span>
+          <span id="hud-saved-val">Saved $10,553</span>
         </div>
         <div class="hud-drawer" id="hud-all-drawer">
-          <div class="hud-drawer-row">
+          <div class="hud-drawer-row" id="row-claude">
             <span class="harness-tag"><span class="hdot" style="background:#E07A5F"></span>Claude Code</span>
             <span id="drawer-claude">2.01B · $271.02 · 94.94%</span>
           </div>
-          <div class="hud-drawer-row">
+          <div class="hud-drawer-row" id="row-gemini" style="display:none;">
             <span class="harness-tag"><span class="hdot" style="background:#1A73E8"></span>Google Gemini</span>
             <span id="drawer-gemini">1.45B · $48.20 · 95.12%</span>
           </div>
-          <div class="hud-drawer-row">
+          <div class="hud-drawer-row" id="row-agy">
             <span class="harness-tag"><span class="hdot" style="background:#2997FF"></span>Antigravity</span>
-            <span id="drawer-agy">2.24B · $244.42 · 93.86%</span>
+            <span id="drawer-agy">2.03B · $2.57 · 93.67%</span>
           </div>
-          <div class="hud-drawer-row">
+          <div class="hud-drawer-row" id="row-codex">
             <span class="harness-tag"><span class="hdot" style="background:#30D158"></span>OpenAI Codex</span>
-            <span id="drawer-codex">172.0M · $30.10 · 96.18%</span>
+            <span id="drawer-codex">154.3M · $30.10 · 96.77%</span>
           </div>
         </div>
       </div>
       <div class="hud-side-col">
-        <button type="button" class="hud-side-btn" id="hud-side-CycleBtn" onclick="cycleHudOverlayMode(event)" title="1-Click Mode Switcher: Auto / All 4 / Claude / Gemini / Antigravity / Codex">
+        <button type="button" class="hud-side-btn" id="hud-side-CycleBtn" onclick="cycleHudOverlayMode(event)" title="1-Click Mode Switcher: ALL 3 / ALL 4 / CLAU / GEMI / AGY / CODX / AUTO">
           <svg class="icon-svg" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M2 5c2-1.5 4 1.5 6 0s4-1.5 6 0M2 8.5c2-1.5 4 1.5 6 0s4-1.5 6 0M2 12c2-1.5 4 1.5 6 0s4-1.5 6 0"/>
           </svg>
-          <span class="hud-mode-code" id="hud-mode-code">ALL 4</span>
+          <span class="hud-mode-code" id="hud-mode-code">ALL 3</span>
         </button>
         <button type="button" class="hud-side-btn" id="hud-side-BoundaryBtn" onclick="cycleHudBoundaryMode(event)" title="Physics Mode: Pinned (PIN) / Bounce off Walls (BNC) / Pac-Man Wrap (PAC)">
           <span class="hud-mode-code" id="hud-bmode-code" style="color:var(--verified-text);">PIN</span>
@@ -338,13 +338,26 @@
 <script>
 const HUD_HARNESSES = {
   all: {
+    name: "3-Harness Trinity Mesh",
+    short: "ALL 3",
+    cache: "94.4% Cache",
+    vol: "4.20B · $303.68 · 26,776 pts",
+    saved: "Saved $10,553",
+    target: "Over: 3-Harness Mesh",
+    fill: 0.944,
+    color: "#2997FF",
+    showGemini: false
+  },
+  all4: {
     name: "4-Harness Quap Mesh",
     short: "ALL 4",
     cache: "94.4% Cache",
     vol: "4.43B · $303.68 · 27,056 pts",
     saved: "Saved $11,140",
+    target: "Over: 4-Harness Mesh",
     fill: 0.944,
-    color: "#0066CC"
+    color: "#0066CC",
+    showGemini: true
   },
   claude_code: {
     name: "Anthropic Claude Code",
@@ -352,8 +365,10 @@ const HUD_HARNESSES = {
     cache: "94.94% Cache",
     vol: "2.01B · $271.02 · 21,126 pts",
     saved: "Saved $5,042",
+    target: "Claude Code CLI",
     fill: 0.9494,
-    color: "#E07A5F"
+    color: "#E07A5F",
+    showGemini: false
   },
   gemini: {
     name: "Google Gemini",
@@ -361,38 +376,43 @@ const HUD_HARNESSES = {
     cache: "95.12% Cache",
     vol: "1.45B · $48.20 · 22,410 pts",
     saved: "Saved $3,920",
+    target: "Google Gemini 2.5 / 3.0 Pro",
     fill: 0.9512,
-    color: "#1A73E8"
+    color: "#1A73E8",
+    showGemini: true
   },
   antigravity: {
     name: "Google Antigravity",
     short: "AGY",
-    cache: "93.86% Cache",
-    vol: "2.24B · $244.42 · 21,310 pts",
+    cache: "93.67% Cache",
+    vol: "2.03B · $2.57 · 21,310 pts",
     saved: "Saved $5,653",
-    fill: 0.9386,
-    color: "#2997FF"
+    target: "Google Antigravity Architecture",
+    fill: 0.9367,
+    color: "#2997FF",
+    showGemini: false
   },
   openai_codex: {
     name: "OpenAI Codex CLI",
     short: "CODX",
-    cache: "96.18% Cache",
-    vol: "172.0M · $30.10 · 15,818 pts",
+    cache: "96.77% Cache",
+    vol: "154.3M · $30.10 · 15,818 pts",
     saved: "Saved $445",
-    fill: 0.9600,
-    color: "#30D158"
+    target: "OpenAI Codex Terminal",
+    fill: 0.9677,
+    color: "#30D158",
+    showGemini: false
   }
 };
 
-const HUD_MODES = ["all", "auto", "claude_code", "gemini", "antigravity", "openai_codex"];
-const HUD_SHORT = { all: "ALL 4", auto: "AUTO", claude_code: "CLAU", gemini: "GEMI", antigravity: "AGY", openai_codex: "CODX" };
+const HUD_MODES = ["all", "all4", "auto", "claude_code", "gemini", "antigravity", "openai_codex"];
+const HUD_SHORT = { all: "ALL 3", all4: "ALL 4", auto: "AUTO", claude_code: "CLAU", gemini: "GEMI", antigravity: "AGY", openai_codex: "CODX" };
 const HUD_BMODES = ["pin", "bounce", "pacman"];
 const HUD_BSHORT = { pin: "PIN", bounce: "BNC", pacman: "PAC" };
 
 let hudMode = "all";
 let hudBoundaryMode = "pin";
 let hudDetected = "all";
-let hudTargetText = "Over: 4-Harness Mesh";
 let hudSocket = null;
 let isTopmost = true;
 
@@ -406,7 +426,8 @@ function resizeCanvasDpr() {
   const dpr = window.devicePixelRatio || 1;
   const rect = hudEl.getBoundingClientRect();
   const targetW = Math.round(rect.width || 408);
-  const targetH = Math.round(hudMode === "all" ? 196 : 106);
+  const isMesh = (hudMode === "all" || hudMode === "all4");
+  const targetH = isMesh ? (hudMode === "all4" ? 208 : 188) : 106;
   if (hudCanvas.width !== targetW * dpr || hudCanvas.height !== targetH * dpr) {
     hudCanvas.width = targetW * dpr;
     hudCanvas.height = targetH * dpr;
@@ -418,7 +439,7 @@ const hudPhys = {
   phase: 0.0,
   tiltDeg: 0.0,
   fillRatio: 0.944,
-  color: "#0066CC",
+  color: "#2997FF",
   waves: new Array(24).fill(0),
   waveVels: new Array(24).fill(0)
 };
@@ -436,9 +457,9 @@ function renderHudText() {
   document.getElementById("hud-mode-pill").textContent = (hudMode === "auto" ? "Auto" : "Pinned") + " · " + bName;
   document.getElementById("hud-cache-val").textContent = info.cache;
   document.getElementById("hud-vol-val").textContent = info.vol;
-  document.getElementById("hud-target-label").textContent = hudTargetText;
+  document.getElementById("hud-target-label").textContent = info.target || "Over: 3-Harness Mesh";
   document.getElementById("hud-saved-val").textContent = info.saved;
-  document.getElementById("hud-mode-code").textContent = HUD_SHORT[hudMode] || "AUTO";
+  document.getElementById("hud-mode-code").textContent = HUD_SHORT[hudMode] || "ALL 3";
 
   const bEl = document.getElementById("hud-bmode-code");
   if (bEl) {
@@ -446,7 +467,14 @@ function renderHudText() {
     bEl.style.color = hudBoundaryMode === "pin" ? "var(--verified-text)" : hudBoundaryMode === "bounce" ? "var(--text-primary)" : "var(--flagged-text)";
   }
 
-  hudEl.classList.toggle("expanded", hudMode === "all");
+  const isMesh = (hudMode === "all" || hudMode === "all4");
+  hudEl.classList.toggle("expanded", isMesh);
+
+  const geminiRow = document.getElementById("row-gemini");
+  if (geminiRow) {
+    geminiRow.style.display = info.showGemini ? "flex" : "none";
+  }
+
   resizeCanvasDpr();
 }
 
@@ -512,9 +540,6 @@ function connectWebSocket() {
         if (frame.detected_harness && hudMode === "auto") {
           hudDetected = frame.detected_harness;
         }
-        if (frame.target_label) {
-          hudTargetText = frame.target_label;
-        }
         if (frame.harnesses) {
           if (frame.harnesses.claude_code && document.getElementById("drawer-claude")) {
             const c = frame.harnesses.claude_code;
@@ -554,7 +579,6 @@ function stepCanvas(now) {
 
   const n = hudPhys.waves.length;
   for (let i = 0; i < n; i++) {
-    const norm = (i / (n - 1)) * 2 - 1;
     const ripple = Math.sin(now * 0.0028 + i * 0.48) * 0.28;
     const spring = -96.0 * hudPhys.waves[i] - 5.2 * hudPhys.waveVels[i];
     hudPhys.waveVels[i] += spring * dt + ripple;
@@ -580,11 +604,13 @@ function stepCanvas(now) {
 
   if (hudCtx && hudCanvas) {
     const w = 408;
-    const h = hudMode === "all" ? 196 : 106;
+    const isMesh = (hudMode === "all" || hudMode === "all4");
+    const h = isMesh ? (hudMode === "all4" ? 208 : 188) : 106;
     hudCtx.clearRect(0, 0, w, h);
 
     const fillLevel = Math.max(0.2, Math.min(0.92, hudPhys.fillRatio));
-    const baseY = h - h * 0.38 * fillLevel;
+    // Position meniscus line right at the drawer boundary for the glowing blue accent line
+    const baseY = isMesh ? 88 : (h - h * 0.38 * fillLevel);
 
     // Draw Liquid Body
     hudCtx.beginPath();
@@ -607,12 +633,12 @@ function stepCanvas(now) {
 
     // Subtle translucent liquid gradient
     const grad = hudCtx.createLinearGradient(0, baseY - 10, 0, h);
-    grad.addColorStop(0, "rgba(0, 102, 204, 0.16)");
-    grad.addColorStop(1, "rgba(0, 102, 204, 0.04)");
+    grad.addColorStop(0, "rgba(41, 151, 255, 0.14)");
+    grad.addColorStop(1, "rgba(41, 151, 255, 0.03)");
     hudCtx.fillStyle = grad;
     hudCtx.fill();
 
-    // Draw Liquid Meniscus Surface
+    // Draw Glowing Liquid Meniscus Surface Line (Image 1 & 2 separator)
     hudCtx.beginPath();
     for (let i = 0; i < n; i++) {
       const px = (i / (n - 1)) * w;
@@ -635,7 +661,7 @@ function stepCanvas(now) {
   requestAnimationFrame(stepCanvas);
 }
 
-// Keyboard shortcuts for power users:
+// Keyboard shortcuts
 window.addEventListener("keydown", (e) => {
   if (e.code === "Space") {
     e.preventDefault();
