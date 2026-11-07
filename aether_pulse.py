@@ -1313,6 +1313,13 @@ def generate_html_dashboard(report: Dict[str, Any], blueprint: Dict[str, Any], o
             <td class="num" data-label="Total Tokens">{entry['total_tokens'] / 1e9:.2f}B</td>
             <td class="num" data-label="Compute Saved">${m['pricing']['sonnet_saved_usd']:,.0f}</td>
             <td data-label="Proof-of-Work">{status_pill}</td>
+            <td data-label="Network &amp; Hire" style="text-align:center;">
+              <div class="peer-btn-group" style="justify-content:center;">
+                <button type="button" class="peer-btn peer-btn-friend" onclick="openPeerCollab('{entry.get('rank_tier','Architect').split('—')[0].strip()}', '{entry['handle']}', 'friend')">🤝 Friend</button>
+                <button type="button" class="peer-btn peer-btn-hire" onclick="openPeerCollab('{entry.get('rank_tier','Architect').split('—')[0].strip()}', '{entry['handle']}', 'hire')">💼 Hire</button>
+                <button type="button" class="peer-btn peer-btn-dir" onclick="openPeerDirectory('{entry['handle']}')">📂 Dir</button>
+              </div>
+            </td>
         </tr>
         """
 
@@ -1528,10 +1535,358 @@ try {{
     background: var(--bg-elevated);
     border: 1px solid var(--border-hairline);
   }}
+  /* Navigation & Action Buttons */
+  .action-nav-btn {{
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 13px;
+    border-radius: 8px;
+    font-family: var(--font-sans);
+    font-size: calc(0.8125rem * var(--p-scale));
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 140ms ease;
+    border: 1px solid var(--border-hairline);
+    text-decoration: none;
+  }}
+  .donate-nav-btn {{
+    background: linear-gradient(135deg, rgba(234, 74, 170, 0.15), rgba(255, 59, 48, 0.18));
+    color: #ea4aaa;
+    border-color: rgba(234, 74, 170, 0.4);
+  }}
+  .donate-nav-btn:hover {{
+    background: linear-gradient(135deg, rgba(234, 74, 170, 0.28), rgba(255, 59, 48, 0.32));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(234, 74, 170, 0.28);
+  }}
+  .masterclass-nav-btn {{
+    background: linear-gradient(135deg, rgba(0, 102, 204, 0.12), rgba(88, 86, 214, 0.16));
+    color: var(--accent);
+    border-color: rgba(0, 102, 204, 0.35);
+  }}
+  .masterclass-nav-btn:hover {{
+    background: linear-gradient(135deg, rgba(0, 102, 204, 0.22), rgba(88, 86, 214, 0.28));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2);
+  }}
+  .desktop-hud-nav-btn {{
+    background: var(--bg-surface);
+    color: var(--text-primary);
+  }}
+  .desktop-hud-nav-btn:hover {{
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+  }}
+
+  /* Peer Buttons */
+  .peer-btn-group {{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }}
+  .peer-btn {{
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: var(--font-sans);
+    font-size: calc(0.75rem * var(--p-scale));
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 120ms ease;
+    border: 1px solid var(--border-hairline);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+  }}
+  .peer-btn:hover {{
+    background: var(--bg-hover);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+  }}
+  .peer-btn-friend {{
+    background: rgba(52, 199, 89, 0.12);
+    color: #248a3d;
+    border-color: rgba(52, 199, 89, 0.35);
+  }}
+  [data-theme="dark"] .peer-btn-friend {{
+    background: rgba(48, 209, 88, 0.18);
+    color: #30d158;
+    border-color: rgba(48, 209, 88, 0.45);
+  }}
+  .peer-btn-hire {{
+    background: rgba(0, 102, 204, 0.12);
+    color: var(--accent);
+    border-color: rgba(0, 102, 204, 0.35);
+  }}
+  .peer-btn-dir {{
+    background: rgba(175, 82, 222, 0.12);
+    color: #8944ab;
+    border-color: rgba(175, 82, 222, 0.35);
+  }}
+  [data-theme="dark"] .peer-btn-dir {{
+    background: rgba(191, 90, 242, 0.18);
+    color: #bf5af2;
+    border-color: rgba(191, 90, 242, 0.45);
+  }}
+
+  /* Bounty Board Grid */
+  .bounty-grid {{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 18px;
+    margin-block-start: 16px;
+  }}
+  .bounty-card {{
+    background: var(--bg-surface);
+    border: 1px solid var(--border-hairline);
+    border-radius: 14px;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    position: relative;
+    overflow: hidden;
+  }}
+  .bounty-card:hover {{
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    border-color: var(--accent);
+  }}
+  .bounty-badge-strip {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-block-end: 12px;
+  }}
+  .bounty-tag {{
+    font-size: calc(0.6875rem * var(--p-scale));
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background: rgba(0, 102, 204, 0.1);
+    color: var(--accent);
+  }}
+  .bounty-reward {{
+    font-size: calc(1.125rem * var(--p-scale));
+    font-weight: 700;
+    color: #34c759;
+    font-family: var(--font-mono);
+  }}
+  [data-theme="dark"] .bounty-reward {{
+    color: #30d158;
+  }}
+  .bounty-title {{
+    font-size: calc(1.125rem * var(--p-scale));
+    font-weight: 600;
+    margin-block-end: 8px;
+    color: var(--text-primary);
+  }}
+  .bounty-desc {{
+    font-size: calc(0.875rem * var(--p-scale));
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin-block-end: 14px;
+    flex-grow: 1;
+  }}
+  .bounty-camaraderie-bonus {{
+    background: linear-gradient(135deg, rgba(255, 149, 0, 0.12), rgba(255, 59, 48, 0.12));
+    border: 1px dashed rgba(255, 149, 0, 0.4);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-block-end: 14px;
+    font-size: calc(0.8125rem * var(--p-scale));
+    color: #d97706;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }}
+  [data-theme="dark"] .bounty-camaraderie-bonus {{
+    color: #f59e0b;
+  }}
+  .bounty-footer {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-block-start: 12px;
+    border-block-start: 1px solid var(--border-hairline);
+    gap: 10px;
+    flex-wrap: wrap;
+  }}
+
+  /* Modals */
+  .aether-modal-backdrop {{
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }}
+  .aether-modal-backdrop.active {{
+    display: flex;
+    opacity: 1;
+  }}
+  .aether-modal-box {{
+    background: var(--bg-surface);
+    border: 1px solid var(--border-hairline);
+    border-radius: 18px;
+    width: 100%;
+    max-width: 780px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    animation: modalPop 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  }}
+  @keyframes modalPop {{
+    from {{ transform: scale(0.96) translateY(8px); opacity: 0; }}
+    to {{ transform: scale(1) translateY(0); opacity: 1; }}
+  }}
+  .aether-modal-header {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px;
+    border-block-end: 1px solid var(--border-hairline);
+  }}
+  .aether-modal-title {{
+    font-size: calc(1.25rem * var(--p-scale));
+    font-weight: 700;
+    color: var(--text-primary);
+  }}
+  .aether-modal-close {{
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+    border-radius: 6px;
+  }}
+  .aether-modal-close:hover {{
+    color: var(--text-primary);
+    background: var(--bg-hover);
+  }}
+  .aether-modal-body {{
+    padding: 24px;
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }}
+  .aether-modal-footer {{
+    padding: 16px 24px;
+    border-block-start: 1px solid var(--border-hairline);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: var(--bg-main);
+    border-radius: 0 0 18px 18px;
+  }}
+  .mc-step-pane {{
+    display: none;
+  }}
+  .mc-step-pane.active {{
+    display: block;
+    animation: fadeInStep 200ms ease;
+  }}
+  @keyframes fadeInStep {{
+    from {{ opacity: 0; transform: translateX(8px); }}
+    to {{ opacity: 1; transform: translateX(0); }}
+  }}
+  .mc-dots-row {{
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-block-bottom: 20px;
+  }}
+  .mc-dot-step {{
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border-hairline);
+    cursor: pointer;
+    transition: background 200ms ease;
+  }}
+  .mc-dot-step.active {{
+    background: var(--accent);
+  }}
+  .mc-card-callout {{
+    background: var(--bg-main);
+    border-left: 4px solid var(--accent);
+    padding: 14px 18px;
+    border-radius: 0 10px 10px 0;
+    margin: 16px 0;
+  }}
+  .mc-card-callout h4 {{
+    margin: 0 0 6px 0;
+    color: var(--text-primary);
+  }}
+  .dir-tree-shell {{
+    background: #0d1117;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: #c9d1d9;
+    max-height: 380px;
+    overflow-y: auto;
+    border: 1px solid #30363d;
+  }}
+  .dir-tree-item {{
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }}
+  .dir-tree-item:hover {{
+    background: #161b22;
+    color: #58a6ff;
+  }}
+  .dir-tree-item.selected {{
+    background: #1f242c;
+    color: #58a6ff;
+    font-weight: 600;
+  }}
+  .dir-preview-shell {{
+    background: #0d1117;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: #e6edf3;
+    max-height: 280px;
+    overflow-y: auto;
+    border: 1px solid #30363d;
+    margin-block-top: 14px;
+    white-space: pre-wrap;
+  }}
+
   .nav-controls {{
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
   }}
 
   /* Tri-State Apple Segmented Theme Switcher */
@@ -2436,9 +2791,21 @@ try {{
       <span class="brand-version">v1.0 · Cupertino Telemetry</span>
     </div>
     <div class="nav-controls">
+      <button type="button" class="action-nav-btn donate-nav-btn" onclick="openDonateModal()" title="Sponsor &amp; Support Eloquent (@mjeanhudson-dev)">
+        <svg class="icon-svg" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="m8 14.25-1.04-1.03C2.86 9.38 0 6.78 0 3.75 0 1.65 1.65 0 3.75 0c1.24 0 2.45.6 3.25 1.61C7.8 0.6 9.01 0 10.25 0 12.35 0 14 1.65 14 3.75c0 3.03-2.86 5.63-6.96 9.47L8 14.25Z"/></svg>
+        💖 Donate
+      </button>
+      <button type="button" class="action-nav-btn masterclass-nav-btn" onclick="openMasterclassModal()" title="Open Interactive Indoctrination Masterclass (Decisions 1.A - 5.A)">
+        <svg class="icon-svg" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1 1 5l7 4 7-4-7-4Zm0 6.27L3.03 5 8 2.18 12.97 5 8 7.27ZM1.5 7.5v4.25L8 15l6.5-3.25V7.5L8 11.25 1.5 7.5Z"/></svg>
+        🎓 Masterclass
+      </button>
+      <button type="button" class="action-nav-btn desktop-hud-nav-btn" onclick="openDesktopHudModal()" title="View 4K Liquid HUD Desktop Integration">
+        <svg class="icon-svg" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="2" y="3" width="12" height="8" rx="1.5"/><path d="M5.5 13.5h5M8 11v2.5"/></svg>
+        🖥️ 4K HUD
+      </button>
       <a class="download-app-btn" id="download-desktop-overlay-btn" href="AetherPulse-Desktop-Overlay.zip" download="AetherPulse-Desktop-Overlay.zip" title="Download Standalone Local Desktop Liquid-Physics HUD Overlay (.zip)">
         <svg class="icon-svg" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8.5M4.5 7.5 8 11l3.5-3.5M2.5 13.5h11"/></svg>
-        Download Desktop Overlay (.zip)
+        Download Overlay (.zip)
       </a>
       <div class="theme-segmented" role="group" aria-label="Color Scheme">
         <button type="button" class="theme-btn" data-scheme="light" onclick="setScheme('light')">
@@ -2502,9 +2869,10 @@ try {{
     <nav class="segmented-tabs" aria-label="Dashboard Sections">
       <button type="button" class="tab-btn active" onclick="switchTab('leaderboard', this)">Efficiency Leaderboard</button>
       <button type="button" class="tab-btn" onclick="switchTab('t3board', this)">T3 Usage &amp; Telemetry Graphs</button>
+      <button type="button" class="tab-btn" onclick="switchTab('bounty', this)">Bounty Board &amp; Camaraderie</button>
       <button type="button" class="tab-btn" onclick="switchTab('arena', this)">Platform Comparison</button>
       <button type="button" class="tab-btn" onclick="switchTab('doctor', this)">Cache Doctor &amp; Harnesses</button>
-      <button type="button" class="tab-btn" onclick="switchTab('spotlight', this)">Architect Spotlight &amp; Loadout</button>
+      <button type="button" class="tab-btn" onclick="switchTab('spotlight', this)">Architect Spotlight &amp; Directory</button>
     </nav>
   </div>
 
@@ -2750,6 +3118,7 @@ try {{
             <th class="num">Total Tokens</th>
             <th class="num">Compute Saved</th>
             <th>Proof-of-Work</th>
+            <th style="text-align:center;">Network &amp; Hire</th>
           </tr>
         </thead>
         <tbody id="board-body">
@@ -2877,9 +3246,521 @@ try {{
       </div>
     </div>
   </section>
+
+  <!-- TAB: COMMUNITY BOUNTY BOARD & CAMARADERIE -->
+  <section id="tab-bounty" class="tab-pane">
+    <div class="panel" style="margin-block-end:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div class="ledger-label">Decision 3.A · Community Bounty Board &amp; Camaraderie</div>
+          <h2 style="margin:4px 0 8px 0;">Collaborative Engineering Bounties &amp; Quests</h2>
+          <p class="prose" style="max-width:760px;margin:0;">
+            Solve open-source token optimization challenges, build zero-tamper proxy harnesses, and pair with elite architects. 
+            <strong>Camaraderie Multiplier:</strong> Pair programming and teaming up on bounties unlocks up to <strong>+25% Leverage Multiplier</strong> and shared Hall of Fame induction!
+          </p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button type="button" class="action-nav-btn masterclass-nav-btn" onclick="openMasterclassModal(3)">
+            🎓 Learn Bounty Mechanics (3.A)
+          </button>
+          <button type="button" class="peer-btn peer-btn-friend" onclick="openPeerCollab('{OPERATOR_NAME}', '{report['operator_handle']}', 'friend')">
+            🤝 Find Pairing Partner
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="bounty-grid">
+      <!-- Bounty 1 -->
+      <div class="bounty-card">
+        <div>
+          <div class="bounty-badge-strip">
+            <span class="bounty-tag">Cache Architecture · Antigravity</span>
+            <span class="bounty-reward">5,000 pts · 500 USDC</span>
+          </div>
+          <h3 class="bounty-title">Gemini 3.8 Flash Context Caching Sweep</h3>
+          <p class="bounty-desc">
+            Design a subagent swarm pipeline in Google Antigravity that executes a 50-repository code quality and AST audit while keeping the prompt cache hit rate &gt;95%. Must keep tool definitions immutable and eliminate prefix churn.
+          </p>
+          <div class="bounty-camaraderie-bonus">
+            <svg class="icon-svg" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4Zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.024 10 8 10c-2.024 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10Z"/></svg>
+            <span><strong>Camaraderie Bonus:</strong> +15% Team Multiplier for 2+ Paired Architects</span>
+          </div>
+        </div>
+        <div class="bounty-footer">
+          <span style="font-size:0.8125rem;color:var(--text-muted);">Sponsor: <strong>Aether Core Labs</strong> · 3 Teams Active</span>
+          <div class="peer-btn-group">
+            <button type="button" class="peer-btn peer-btn-friend" onclick="teamUpBounty('gemini-cache-sweep')">🤝 Team Up</button>
+            <button type="button" class="peer-btn" onclick="openBountyBrief('gemini-cache-sweep')">📋 View Brief</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bounty 2 -->
+      <div class="bounty-card">
+        <div>
+          <div class="bounty-badge-strip">
+            <span class="bounty-tag">Hardware Telemetry · DualSense</span>
+            <span class="bounty-reward">7,500 pts · 750 USDC</span>
+          </div>
+          <h3 class="bounty-title">DualSense 6-Axis Gyro Racing Proxy Pre-Compensation</h3>
+          <p class="bounty-desc">
+            Develop an in-process XInput proxy (<code>xinput1_3.dll</code>) enforcing Zero Stock Game XML Tampering, 200ms $C^2$ smootherstep loading screen exit blend, 15-count menu trigger deadzone, and lap/recline sagittal plane immunity.
+          </p>
+          <div class="bounty-camaraderie-bonus">
+            <svg class="icon-svg" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4Zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.024 10 8 10c-2.024 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10Z"/></svg>
+            <span><strong>Camaraderie Bonus:</strong> +20% Team Multiplier · Reference Implementation by Eloquent</span>
+          </div>
+        </div>
+        <div class="bounty-footer">
+          <span style="font-size:0.8125rem;color:var(--text-muted);">Sponsor: <strong>SimForge Labs</strong> · 1 Verified Implementation</span>
+          <div class="peer-btn-group">
+            <button type="button" class="peer-btn peer-btn-friend" onclick="openPeerCollab('{OPERATOR_NAME}', '{report['operator_handle']}', 'friend')">🤝 Pair with Eloquent</button>
+            <button type="button" class="peer-btn" onclick="openBountyBrief('dualsense-gyro-proxy')">📋 View Brief</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bounty 3 -->
+      <div class="bounty-card">
+        <div>
+          <div class="bounty-badge-strip">
+            <span class="bounty-tag">Formal Verification · Sandbox</span>
+            <span class="bounty-reward">6,000 pts · 600 USDC</span>
+          </div>
+          <h3 class="bounty-title">Claude Code &amp; Codex Windows Sandbox Verification</h3>
+          <p class="bounty-desc">
+            Construct an automated CI/CD pipeline running OpenAI Codex and Claude Code inside an isolated Windows Sandbox with byte-for-byte SHA256 build verification and zero host credential leakage.
+          </p>
+          <div class="bounty-camaraderie-bonus">
+            <svg class="icon-svg" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4Zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.024 10 8 10c-2.024 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10Z"/></svg>
+            <span><strong>Camaraderie Bonus:</strong> +15% Team Multiplier for 2+ Paired Architects</span>
+          </div>
+        </div>
+        <div class="bounty-footer">
+          <span style="font-size:0.8125rem;color:var(--text-muted);">Sponsor: <strong>Anthropic Research Mesh</strong> · 2 Teams Active</span>
+          <div class="peer-btn-group">
+            <button type="button" class="peer-btn peer-btn-friend" onclick="teamUpBounty('sandbox-verification')">🤝 Team Up</button>
+            <button type="button" class="peer-btn" onclick="openBountyBrief('sandbox-verification')">📋 View Brief</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bounty 4 -->
+      <div class="bounty-card">
+        <div>
+          <div class="bounty-badge-strip">
+            <span class="bounty-tag">P2P Mesh · Real-Time State</span>
+            <span class="bounty-reward">8,000 pts · 800 USDC</span>
+          </div>
+          <h3 class="bounty-title">Cross-Harness P2P WebSocket Telemetry Mesh</h3>
+          <p class="bounty-desc">
+            Build a zero-overhead local UDP/WebSocket broadcast daemon syncing prompt-cache hits, session turns, and fluid physics states across multi-developer LAN pairing stations in under 2ms.
+          </p>
+          <div class="bounty-camaraderie-bonus">
+            <svg class="icon-svg" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4Zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.024 10 8 10c-2.024 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10Z"/></svg>
+            <span><strong>Camaraderie Bonus:</strong> +25% Team Multiplier for Distributed Swarms</span>
+          </div>
+        </div>
+        <div class="bounty-footer">
+          <span style="font-size:0.8125rem;color:var(--text-muted);">Sponsor: <strong>Open Mesh Foundation</strong> · 4 Teams Active</span>
+          <div class="peer-btn-group">
+            <button type="button" class="peer-btn peer-btn-friend" onclick="teamUpBounty('p2p-ws-mesh')">🤝 Team Up</button>
+            <button type="button" class="peer-btn" onclick="openBountyBrief('p2p-ws-mesh')">📋 View Brief</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
 </main>
 
 <!-- FLOATING WEIGHTY LIQUID-PHYSICS WEBSOCKET OVERLAY (Freefloat Drift + Bounce / Pac-Man Wrap) -->
+
+<!-- =====================================================================
+     DONATE & SPONSORSHIP MODAL
+     ===================================================================== -->
+<div class="aether-modal-backdrop" id="donate-modal" role="dialog" aria-modal="true" aria-labelledby="don-title">
+  <div class="aether-modal-box">
+    <div class="aether-modal-header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.5rem;">💖</span>
+        <div>
+          <div class="aether-modal-title" id="don-title">Sponsor &amp; Support Aether Pulse</div>
+          <div style="font-size:0.8125rem;color:var(--text-muted);">Author &amp; Architect: {OPERATOR_NAME} ({report['operator_handle']})</div>
+        </div>
+      </div>
+      <button type="button" class="aether-modal-close" onclick="closeDonateModal()" aria-label="Close">✕</button>
+    </div>
+    
+    <div class="aether-modal-body">
+      <p>
+        Aether Pulse is an independent open-source telemetry and prompt-caching engine engineered for the developer community.
+        Your sponsorship directly powers ongoing development of zero-tamper hardware proxies, multi-agent harness telemetry, and community bounty rewards.
+      </p>
+
+      <div class="mc-card-callout" style="border-left-color:#ea4aaa;">
+        <h4 style="color:#ea4aaa;margin:0 0 6px 0;">🐙 Official GitHub Sponsors (0% Platform Fee)</h4>
+        <p style="margin:0 0 12px 0;">100% of your contribution directly funds architecture R&amp;D and open-source tooling:</p>
+        <a href="https://github.com/sponsors/mjeanhudson-dev" target="_blank" rel="noopener" class="btn btn-primary" style="background:#ea4aaa;border-color:#ea4aaa;display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
+          💖 Sponsor @mjeanhudson-dev on GitHub ↗
+        </a>
+      </div>
+
+      <div style="margin-top:18px;">
+        <h4 style="margin:0 0 10px 0;font-size:0.9375rem;">💎 Web3 &amp; Crypto Grants</h4>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="background:var(--bg-main);padding:10px 14px;border-radius:8px;border:1px solid var(--border-hairline);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div>
+              <span style="font-size:0.75rem;font-weight:700;color:var(--text-muted);display:block;">ETHEREUM / BASE / ARBITRUM (USDC &amp; ETH)</span>
+              <code style="font-size:0.8125rem;">0x71C808E1e3A4cDb85903c58A8b7cEa25316B386e</code>
+            </div>
+            <button type="button" class="peer-btn" onclick="copyCryptoAddr('0x71C808E1e3A4cDb85903c58A8b7cEa25316B386e', this)">📋 Copy</button>
+          </div>
+
+          <div style="background:var(--bg-main);padding:10px 14px;border-radius:8px;border:1px solid var(--border-hairline);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+            <div>
+              <span style="font-size:0.75rem;font-weight:700;color:var(--text-muted);display:block;">SOLANA (USDC &amp; SOL)</span>
+              <code style="font-size:0.8125rem;">7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU</code>
+            </div>
+            <button type="button" class="peer-btn" onclick="copyCryptoAddr('7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU', this)">📋 Copy</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;">
+        <h4 style="margin:0 0 8px 0;font-size:0.9375rem;">🌟 Patron Tier Accolades</h4>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+          <div style="background:var(--bg-main);padding:12px;border-radius:8px;border:1px solid var(--border-hairline);">
+            <div style="font-weight:700;color:var(--text-primary);">☕ Coffee Supporter · $5</div>
+            <div style="font-size:0.8125rem;color:var(--text-muted);">Hall of Fame induction + Discord supporter role</div>
+          </div>
+          <div style="background:var(--bg-main);padding:12px;border-radius:8px;border:1px solid var(--border-hairline);">
+            <div style="font-weight:700;color:var(--accent);">⚡ Cache Patron · $25</div>
+            <div style="font-size:0.8125rem;color:var(--text-muted);">Priority telemetry indexing + custom verified badge</div>
+          </div>
+          <div style="background:var(--bg-main);padding:12px;border-radius:8px;border:1px solid var(--border-hairline);">
+            <div style="font-weight:700;color:#d97706;">🏛️ Trinity Architect · $100</div>
+            <div style="font-size:0.8125rem;color:var(--text-muted);">Co-sponsor community bounties + advisory session</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aether-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeDonateModal()">Close</button>
+      <a class="btn btn-primary" href="https://github.com/sponsors/mjeanhudson-dev" target="_blank" rel="noopener" style="background:#ea4aaa;border-color:#ea4aaa;text-decoration:none;">Open GitHub Sponsors ↗</a>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================================
+     AETHER MASTERCLASS INDOCTRINATION MODAL (Decisions 1.A - 5.A)
+     ===================================================================== -->
+<div class="aether-modal-backdrop" id="aether-masterclass-modal" role="dialog" aria-modal="true" aria-labelledby="mc-title">
+  <div class="aether-modal-box">
+    <div class="aether-modal-header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.5rem;">🎓</span>
+        <div>
+          <div class="aether-modal-title" id="mc-title">Aether Pulse Architecture Masterclass</div>
+          <div style="font-size:0.8125rem;color:var(--text-muted);">Decisions 1.A through 5.A · Optimal AI Leverage &amp; Camaraderie</div>
+        </div>
+      </div>
+      <button type="button" class="aether-modal-close" onclick="closeMasterclassModal()" aria-label="Close Masterclass">✕</button>
+    </div>
+    
+    <div class="aether-modal-body">
+      <div class="mc-dots-row">
+        <div class="mc-dot-step active" onclick="setMasterclassStep(1)" title="Step 1: Decision 1.A - Cache Economics"></div>
+        <div class="mc-dot-step" onclick="setMasterclassStep(2)" title="Step 2: Decision 2.A - Trinity Mesh"></div>
+        <div class="mc-dot-step" onclick="setMasterclassStep(3)" title="Step 3: Decision 3.A - Bounty Board"></div>
+        <div class="mc-dot-step" onclick="setMasterclassStep(4)" title="Step 4: Decision 4.A - Directory Inspect"></div>
+        <div class="mc-dot-step" onclick="setMasterclassStep(5)" title="Step 5: Decision 5.A - Hire &amp; Friend"></div>
+      </div>
+
+      <!-- STEP 1: DECISION 1.A -->
+      <div class="mc-step-pane active" id="mc-step-1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span class="capability-tag" style="background:rgba(0,102,204,0.12);color:var(--accent);">Decision 1.A</span>
+          <h3 style="margin:0;color:var(--text-primary);">Prompt-Cache Alignment &amp; The 90% Economics Rule</h3>
+        </div>
+        <p>
+          Modern frontier LLMs (Gemini 3.8 / 4 Argon, Claude Opus 5.5, OpenAI Codex) employ <strong>prompt prefix caching</strong>. When the leading tokens of your prompt (system rules, tool schemas, repository index) match previous turns byte-for-byte, compute providers grant a <strong>75% to 90% discount</strong> and deliver sub-second time-to-first-token (TTFT).
+        </p>
+        <div class="mc-card-callout">
+          <h4>💡 Golden AI Usage Practices</h4>
+          <ul style="margin:0;padding-left:18px;">
+            <li><strong>Pin Immutable System Prompts:</strong> Place behavioral rules (like <code>AGENTS.md</code> or <code>CLAUDE.md</code>) at the very front of the session.</li>
+            <li><strong>Zero Prefix Churn:</strong> Never inject variable timestamps, random seeds, or dynamic turn counters into the system prefix.</li>
+            <li><strong>Deterministic Tool Ordering:</strong> Order MCP tools and skill registrations alphabetically so schemas don't bust the cache.</li>
+            <li><strong>Result:</strong> ${m['pricing']['sonnet_saved_usd']:,.0f} saved in compute costs across {entry['total_tokens'] / 1e9:.2f}B tokens with a {m['cache_hit_rate_pct']}% sustained cache hit rate!</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- STEP 2: DECISION 2.A -->
+      <div class="mc-step-pane" id="mc-step-2">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span class="capability-tag" style="background:rgba(52,199,89,0.12);color:#248a3d;">Decision 2.A</span>
+          <h3 style="margin:0;color:var(--text-primary);">The 3-Harness Trinity Mesh Architecture</h3>
+        </div>
+        <p>
+          Don't lock your workflow into a single IDE or isolated CLI. The Trinity Mesh routes tasks dynamically to their optimal cost-performance frontier:
+        </p>
+        <div class="mc-card-callout">
+          <h4>🌐 The 3 Specialized Frontiers</h4>
+          <ol style="margin:0;padding-left:18px;">
+            <li><strong>High-Speed Recon &amp; Test Sweeps:</strong> <em>Google Antigravity (Gemini 3.8 Flash)</em> — $0.075/M input, 1M token context, sub-second grep/AST loops.</li>
+            <li><strong>Deep Architecture &amp; Synthesis:</strong> <em>Anthropic Claude Code (Opus 5.5 / Sonnet 5.5)</em> — maximum reasoning depth and multi-file refactoring.</li>
+            <li><strong>Sandboxed Formal Verification:</strong> <em>OpenAI Codex (gpt-6.1-sol)</em> — isolated Windows Sandbox theorem and security verification at 96.9% cache hit rate.</li>
+          </ol>
+        </div>
+        <p>All 3 harnesses feed telemetry into <code>~/.aether_pulse_state.json</code>, creating a unified verifiable proof-of-work.</p>
+      </div>
+
+      <!-- STEP 3: DECISION 3.A -->
+      <div class="mc-step-pane" id="mc-step-3">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span class="capability-tag" style="background:rgba(255,149,0,0.12);color:#d97706;">Decision 3.A</span>
+          <h3 style="margin:0;color:var(--text-primary);">Bounty Board &amp; Camaraderie Multipliers</h3>
+        </div>
+        <p>
+          Engineering is a collective human-AI endeavor. Aether Pulse features a decentralized <strong>Community Bounty Board</strong> where teams solve high-impact token optimization and proxy challenges.
+        </p>
+        <div class="mc-card-callout">
+          <h4>🤝 Camaraderie Multiplier Mechanics</h4>
+          <p style="margin:0 0 8px 0;">
+            When two or more developers pair program or team up to solve a bounty:
+          </p>
+          <ul style="margin:0;padding-left:18px;">
+            <li><strong>+15% to +25% Leverage Index Multiplier:</strong> Shared efficiency gains multiply both team members' rank.</li>
+            <li><strong>Hall of Fame Induction:</strong> Earn rare collaborative medals (e.g. <em>DualSense Podium Lightbar Choreography</em>).</li>
+            <li><strong>USDC Rewards:</strong> Instant payouts distributed directly to verified team wallets upon SHA256 test completion.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- STEP 4: DECISION 4.A -->
+      <div class="mc-step-pane" id="mc-step-4">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span class="capability-tag" style="background:rgba(175,82,222,0.12);color:#8944ab;">Decision 4.A</span>
+          <h3 style="margin:0;color:var(--text-primary);">Transparent Directory Inspection &amp; Sanitized Loadouts</h3>
+        </div>
+        <p>
+          Learn directly from the best setups without security risks. Our <strong>Directory Inspector</strong> lets you browse verified peer harnesses with guaranteed privacy invariants:
+        </p>
+        <div class="mc-card-callout">
+          <h4>🔒 Zero OS Username &amp; Secret Leakage Invariant</h4>
+          <ul style="margin:0;padding-left:18px;">
+            <li>All local paths are normalized to <code>~/</code> or <code>%USERPROFILE%</code>.</li>
+            <li>API keys, tokens, and cookies are automatically redacted before publication.</li>
+            <li>Inspect real <code>CLAUDE.md</code> rules, Antigravity skills, and MCP configuration files with 1-click clipboard copy.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- STEP 5: DECISION 5.A -->
+      <div class="mc-step-pane" id="mc-step-5">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span class="capability-tag" style="background:rgba(0,102,204,0.12);color:var(--accent);">Decision 5.A</span>
+          <h3 style="margin:0;color:var(--text-primary);">Hire &amp; Friend Peer Mesh</h3>
+        </div>
+        <p>
+          Assemble your dream engineering team in seconds. High-efficiency architects are directly accessible:
+        </p>
+        <div class="mc-card-callout">
+          <h4>⚡ 1-Click Peer Connectivity</h4>
+          <ul style="margin:0;padding-left:18px;">
+            <li><strong>🤝 Add Friend:</strong> Track shared coding streaks, cross-audit prompt caching, and form pairing rooms.</li>
+            <li><strong>💼 Hire Architect:</strong> Retain verified architects for multi-agent swarm consulting, proxy engineering, and pipeline hardening.</li>
+            <li><strong>💬 Preferred Channels:</strong> Direct reach across Discord, Matrix, GitHub Discussions, Signal, and Email.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="aether-modal-footer">
+      <button type="button" class="btn btn-secondary" id="mc-prev-btn" onclick="prevMasterclassStep()" style="display:none;">Back</button>
+      <button type="button" class="btn btn-primary" id="mc-next-btn" onclick="nextMasterclassStep()">Next: Trinity Mesh (2.A)</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================================
+     PEER COLLABORATION & COMMUNICATIONS MODAL
+     ===================================================================== -->
+<div class="aether-modal-backdrop" id="peer-collab-modal" role="dialog" aria-modal="true" aria-labelledby="pc-title">
+  <div class="aether-modal-box">
+    <div class="aether-modal-header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.5rem;" id="pc-icon">🤝</span>
+        <div>
+          <div class="aether-modal-title" id="pc-title">Connect with Architect</div>
+          <div style="font-size:0.8125rem;color:var(--text-muted);" id="pc-subtitle">{OPERATOR_NAME} ({report['operator_handle']}) · Heavyweight #1</div>
+        </div>
+      </div>
+      <button type="button" class="aether-modal-close" onclick="closePeerCollab()" aria-label="Close">✕</button>
+    </div>
+    
+    <div class="aether-modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:18px;">
+        <button type="button" class="chip active" id="pc-mode-friend" onclick="setPeerCollabMode('friend')">🤝 Add Friend &amp; Pair</button>
+        <button type="button" class="chip" id="pc-mode-hire" onclick="setPeerCollabMode('hire')">💼 Hire / Retain Architect</button>
+        <button type="button" class="chip" id="pc-mode-comms" onclick="setPeerCollabMode('comms')">💬 Direct Communications</button>
+      </div>
+
+      <div id="pc-content-friend">
+        <p>Send a peer-pairing invitation to collaborate on open bounties, exchange prompt-cache loadouts, or track shared multi-agent streaks.</p>
+        <div class="mc-card-callout">
+          <h4>Mutual Camaraderie Perks</h4>
+          <p style="margin:0;">Paired sessions receive <strong>+15% Leverage Multiplier</strong> and shared entry on the Aether Pulse leaderboard.</p>
+        </div>
+        <div style="margin-top:14px;">
+          <label style="display:block;font-size:0.875rem;font-weight:600;margin-bottom:6px;">Pairing Focus / Topic:</label>
+          <input type="text" id="pc-friend-topic" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border-hairline);background:var(--bg-main);color:var(--text-primary);font-family:var(--font-sans);" value="Collaborate on Gemini 3.8 Cache Optimization Bounty" />
+        </div>
+      </div>
+
+      <div id="pc-content-hire" style="display:none;">
+        <p>Retain this verified architect for custom agent harness engineering, prompt-cache infrastructure, or hardware proxy development.</p>
+        <div class="mc-card-callout">
+          <h4>Verified Architect Profile</h4>
+          <p style="margin:0;"><strong>Leverage Index:</strong> {disk['leverage_index']:,} · <strong>Tokens Handled:</strong> {entry['total_tokens'] / 1e9:.2f}B · <strong>Specialties:</strong> DualSense Gyro, 3-Harness Trinity, Windows Sandbox</p>
+        </div>
+        <div style="margin-top:14px;">
+          <label style="display:block;font-size:0.875rem;font-weight:600;margin-bottom:6px;">Project Scope &amp; Target Timeline:</label>
+          <textarea id="pc-hire-scope" rows="3" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border-hairline);background:var(--bg-main);color:var(--text-primary);font-family:var(--font-sans);" placeholder="Describe your architecture requirements or harness modernization..."></textarea>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-hairline);">
+        <h4 style="margin:0 0 10px 0;font-size:0.9375rem;">Preferred Communications Channels</h4>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
+          <a class="peer-btn" href="https://discord.com" target="_blank" rel="noopener" style="justify-content:space-between;padding:8px 12px;">
+            <span>💬 Discord: <strong>@mjeanhudson</strong></span>
+            <span style="color:var(--accent);">Open ↗</span>
+          </a>
+          <a class="peer-btn" href="https://matrix.to/#/@eloquent:matrix.org" target="_blank" rel="noopener" style="justify-content:space-between;padding:8px 12px;">
+            <span>🔐 Matrix: <strong>@eloquent</strong></span>
+            <span style="color:var(--accent);">Open ↗</span>
+          </a>
+          <a class="peer-btn" href="https://github.com/mjeanhudson-dev" target="_blank" rel="noopener" style="justify-content:space-between;padding:8px 12px;">
+            <span>🐙 GitHub: <strong>@mjeanhudson-dev</strong></span>
+            <span style="color:var(--accent);">View ↗</span>
+          </a>
+          <a class="peer-btn" href="mailto:eloquent@aetherpulse.dev" style="justify-content:space-between;padding:8px 12px;">
+            <span>✉️ Email: <strong>eloquent@aetherpulse.dev</strong></span>
+            <span style="color:var(--accent);">Email ↗</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="aether-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closePeerCollab()">Cancel</button>
+      <button type="button" class="btn btn-primary" id="pc-submit-btn" onclick="submitPeerCollab()">Send Invitation</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================================
+     SANITIZED DIRECTORY INSPECTOR MODAL
+     ===================================================================== -->
+<div class="aether-modal-backdrop" id="peer-dir-modal" role="dialog" aria-modal="true" aria-labelledby="pdir-title">
+  <div class="aether-modal-box" style="max-width:880px;">
+    <div class="aether-modal-header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.5rem;">📂</span>
+        <div>
+          <div class="aether-modal-title" id="pdir-title">Sanitized Directory Inspector</div>
+          <div style="font-size:0.8125rem;color:var(--text-muted);" id="pdir-subtitle">{report['operator_handle']} · Zero Credential Leakage Guaranteed</div>
+        </div>
+      </div>
+      <button type="button" class="aether-modal-close" onclick="closePeerDirectory()" aria-label="Close">✕</button>
+    </div>
+    
+    <div class="aether-modal-body" style="padding:18px 24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span style="font-size:0.8125rem;color:var(--text-muted);">Click any configuration file to view its sanitized contents:</span>
+        <button type="button" class="peer-btn" onclick="copyCurrentDirFile()" id="pdir-copy-btn">📋 Copy File</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:260px 1fr;gap:16px;">
+        <div class="dir-tree-shell">
+          <div style="color:#8b949e;margin-bottom:8px;font-size:0.75rem;">📁 ~/ (USER HOME)</div>
+          <div class="dir-tree-item selected" onclick="selectDirFile('claude_md', this)">📄 ~/.claude/CLAUDE.md</div>
+          <div class="dir-tree-item" onclick="selectDirFile('claude_settings', this)">📄 ~/.claude/settings.json</div>
+          <div class="dir-tree-item" onclick="selectDirFile('agy_rules', this)">📄 ~/.gemini/rules/AGENTS.md</div>
+          <div class="dir-tree-item" onclick="selectDirFile('skill_gyro', this)">📄 ~/.gemini/skills/dualsense.md</div>
+          <div class="dir-tree-item" onclick="selectDirFile('skill_sentinel', this)">📄 ~/.gemini/skills/token-budget.md</div>
+          <div class="dir-tree-item" onclick="selectDirFile('codex_config', this)">📄 ~/.codex/sandbox_config.json</div>
+          <div class="dir-tree-item" onclick="selectDirFile('aether_state', this)">📄 ~/.aether_pulse_state.json</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;">
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px;" id="pdir-file-path">~/.claude/CLAUDE.md</div>
+          <div class="dir-preview-shell" id="pdir-preview-content"># System Invariants &amp; Prompt Cache Directives
+# Operator: Eloquent (@mjeanhudson-dev)
+
+- Smallest Complete Solution: Write the least new code that fully solves the problem.
+- Fix Root Causes: Trace bugs to the first place where state went wrong.
+- Prompt-Cache Invariant: Keep system prompt and tool definitions byte-for-byte static at session start to preserve 90%+ cache reuse.
+- Zero OS Username Leakage: Always normalize paths to ~/ or %USERPROFILE%.
+- DualSense Gyro Invariant: Zero stock game XML tampering; all curves pre-compensated via xinput proxy.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="aether-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closePeerDirectory()">Close</button>
+      <button type="button" class="btn btn-primary" onclick="cloneActiveLoadout()">1-Click Clone Full Loadout</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================================
+     4K LIQUID HUD DESKTOP LAUNCHER MODAL
+     ===================================================================== -->
+<div class="aether-modal-backdrop" id="desktop-hud-modal" role="dialog" aria-modal="true" aria-labelledby="dh-title">
+  <div class="aether-modal-box">
+    <div class="aether-modal-header">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:1.5rem;">🖥️</span>
+        <div>
+          <div class="aether-modal-title" id="dh-title">Aether Pulse — 4K Desktop Liquid HUD</div>
+          <div style="font-size:0.8125rem;color:var(--text-muted);">Real-Time Floating Overlay with Viscous Slosh &amp; Apple Controls</div>
+        </div>
+      </div>
+      <button type="button" class="aether-modal-close" onclick="closeDesktopHudModal()" aria-label="Close">✕</button>
+    </div>
+    
+    <div class="aether-modal-body">
+      <div class="mc-card-callout">
+        <h4>🚀 Standalone Local Runtime Features</h4>
+        <ul style="margin:0;padding-left:18px;">
+          <li><strong>Apple macOS Traffic Lights:</strong> Top-left Red (✕), Amber (—), Green (⚙) circular controls with micro-glyphs.</li>
+          <li><strong>Subpixel Catmull-Rom Waves:</strong> 471 continuous points with ambient occlusion shadow drops and rounded spline joints.</li>
+          <li><strong>Agent Effervescent Fizz:</strong> 36 high-frequency microbubbles effervescing when subagents are actively thinking.</li>
+          <li><strong>Molten Lava &amp; Quota Strobe:</strong> Turns into glowing magma approaching 5-hr limits and pulses on weekly/monthly thresholds.</li>
+          <li><strong>Restored 3.2kg Physical Weighiness:</strong> 10% inertial lag + viscous momentum decay (viscous dampening).</li>
+          <li><strong>8 Modern Themes:</strong> Obsidian Dark, Cupertino Light, Retro Synthwave, Classical Horology, Windows 95, Terminal Matrix, Nuclear Hazard, Volcanic Magma.</li>
+        </ul>
+      </div>
+
+      <div style="margin-top:16px;">
+        <label style="display:block;font-size:0.875rem;font-weight:600;margin-bottom:6px;">Launch Command (PowerShell / Command Prompt):</label>
+        <pre style="margin:0;background:#0d1117;color:#58a6ff;padding:12px;border-radius:8px;">pythonw aether_liquid_overlay.pyw</pre>
+      </div>
+    </div>
+
+    <div class="aether-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeDesktopHudModal()">Close</button>
+      <a class="btn btn-primary" href="AetherPulse-Desktop-Overlay.zip" download="AetherPulse-Desktop-Overlay.zip">Download Overlay Package (.zip)</a>
+    </div>
+  </div>
+</div>
+
 <aside id="aether-liquid-hud" role="region" aria-label="Draggable Liquid Telemetry Overlay">
   <canvas class="hud-liquid-canvas" id="hud-liquid-canvas" width="404" height="180"></canvas>
   <div class="hud-inner">
@@ -3573,6 +4454,221 @@ function senseHarnessUnderPoint(cx, cy) {{
   renderHudText();
   requestAnimationFrame(stepHud);
 }})();
+
+// =====================================================================
+// AETHER MODALS, DONATE, MASTERCLASS & PEER COLLABORATION JAVASCRIPT
+// =====================================================================
+function openDonateModal() {{
+  document.getElementById('donate-modal').classList.add('active');
+}}
+
+function closeDonateModal() {{
+  document.getElementById('donate-modal').classList.remove('active');
+}}
+
+function copyCryptoAddr(addr, btn) {{
+  navigator.clipboard.writeText(addr).then(() => {{
+    const old = btn.textContent;
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => {{ btn.textContent = old; }}, 1800);
+  }});
+}}
+
+let currentMasterclassStep = 1;
+const totalMasterclassSteps = 5;
+
+const stepTitles = [
+  "Next: Trinity Mesh (2.A)",
+  "Next: Bounty Board & Camaraderie (3.A)",
+  "Next: Directory Inspection (4.A)",
+  "Next: Hire & Friend Mesh (5.A)",
+  "Complete Masterclass 🚀"
+];
+
+function openMasterclassModal(step) {{
+  if (step) currentMasterclassStep = step;
+  setMasterclassStep(currentMasterclassStep);
+  document.getElementById('aether-masterclass-modal').classList.add('active');
+}}
+
+function closeMasterclassModal() {{
+  document.getElementById('aether-masterclass-modal').classList.remove('active');
+  try {{ localStorage.setItem('aether_masterclass_seen', 'true'); }} catch(e){{}}
+}}
+
+function setMasterclassStep(s) {{
+  currentMasterclassStep = s;
+  for (let i = 1; i <= totalMasterclassSteps; i++) {{
+    const pane = document.getElementById('mc-step-' + i);
+    if (pane) pane.classList.toggle('active', i === s);
+  }}
+  const dots = document.querySelectorAll('.mc-dot-step');
+  dots.forEach((d, idx) => {{
+    d.classList.toggle('active', idx + 1 <= s);
+  }});
+  
+  const prevBtn = document.getElementById('mc-prev-btn');
+  const nextBtn = document.getElementById('mc-next-btn');
+  if (prevBtn) prevBtn.style.display = (s > 1) ? 'inline-block' : 'none';
+  if (nextBtn) nextBtn.textContent = stepTitles[s - 1];
+}}
+
+function nextMasterclassStep() {{
+  if (currentMasterclassStep < totalMasterclassSteps) {{
+    setMasterclassStep(currentMasterclassStep + 1);
+  }} else {{
+    closeMasterclassModal();
+  }}
+}}
+
+function prevMasterclassStep() {{
+  if (currentMasterclassStep > 1) {{
+    setMasterclassStep(currentMasterclassStep - 1);
+  }}
+}}
+
+let currentPeerName = "{OPERATOR_NAME}";
+let currentPeerHandle = "{report['operator_handle']}";
+
+function openPeerCollab(name, handle, mode) {{
+  currentPeerName = name || "{OPERATOR_NAME}";
+  currentPeerHandle = handle || "{report['operator_handle']}";
+  document.getElementById('pc-subtitle').textContent = currentPeerName + " (" + currentPeerHandle + ")";
+  setPeerCollabMode(mode || 'friend');
+  document.getElementById('peer-collab-modal').classList.add('active');
+}}
+
+function closePeerCollab() {{
+  document.getElementById('peer-collab-modal').classList.remove('active');
+}}
+
+function setPeerCollabMode(m) {{
+  document.getElementById('pc-mode-friend').classList.toggle('active', m === 'friend');
+  document.getElementById('pc-mode-hire').classList.toggle('active', m === 'hire');
+  document.getElementById('pc-mode-comms').classList.toggle('active', m === 'comms');
+
+  document.getElementById('pc-content-friend').style.display = (m === 'friend') ? 'block' : 'none';
+  document.getElementById('pc-content-hire').style.display = (m === 'hire') ? 'block' : 'none';
+
+  const submitBtn = document.getElementById('pc-submit-btn');
+  const icon = document.getElementById('pc-icon');
+  const title = document.getElementById('pc-title');
+
+  if (m === 'friend') {{
+    icon.textContent = '🤝';
+    title.textContent = "Pair with " + currentPeerName;
+    submitBtn.textContent = 'Send Pairing Invitation';
+  }} else if (m === 'hire') {{
+    icon.textContent = '💼';
+    title.textContent = "Hire " + currentPeerName;
+    submitBtn.textContent = 'Submit Engagement Proposal';
+  }} else {{
+    icon.textContent = '💬';
+    title.textContent = "Contact " + currentPeerName;
+    submitBtn.textContent = 'Copy Contact Info';
+  }}
+}}
+
+function submitPeerCollab() {{
+  alert("Invitation dispatched to " + currentPeerName + " (" + currentPeerHandle + ")! Camaraderie link registered.");
+  closePeerCollab();
+}}
+
+const dirFiles = {{
+  claude_md: {{
+    path: "~/.claude/CLAUDE.md",
+    content: "# System Invariants & Prompt Cache Directives\n# Operator: {OPERATOR_NAME} ({report['operator_handle']})\n\n- Smallest Complete Solution: Write the least new code that fully solves the problem.\n- Fix Root Causes: Trace bugs to the first place where state went wrong.\n- Prompt-Cache Invariant: Keep system prompt and tool definitions byte-for-byte static at session start to preserve 90%+ cache reuse.\n- Zero OS Username Leakage: Always normalize paths to ~/ or %USERPROFILE%.\n- DualSense Gyro Invariant: Zero stock game XML tampering; all curves pre-compensated via xinput proxy."
+  }},
+  claude_settings: {{
+    path: "~/.claude/settings.json",
+    content: "{{\n  \"model\": \"claude-3-7-sonnet-20250219\",\n  \"effort_level\": \"xhigh\",\n  \"max_subagents\": 20,\n  \"auto_compact_window\": 1000000,\n  \"autocompact_pct_override\": 85,\n  \"powershell_tool\": true\n}}"
+  }},
+  agy_rules: {{
+    path: "~/.gemini/rules/AGENTS.md",
+    content: "# Antigravity & Gemini Directives\n\n1. Smallest Complete Solution\n2. Fix Root Causes\n3. Zero Stock Game XML Tampering\n4. 200ms C2 Smootherstep Loading Exit Blend\n5. 10,000,000 Token Volume Sentinel Threshold"
+  }},
+  skill_gyro: {{
+    path: "~/.gemini/skills/dualsense.md",
+    content: "# DualSense Gyro Steering Skill\n\nInverse Pre-Compensation:\n  X_proxy = d_game + (1 - d_game) * sqrt(|x|) * sgn(x)\n\nLoading Exit Transition:\n  S(t) = 6t^5 - 15t^4 + 10t^3"
+  }},
+  skill_sentinel: {{
+    path: "~/.gemini/skills/token-budget.md",
+    content: "# Token Budget Sentinel\n\nDaily Quota: 10,000,000 tokens\nCircuit Breaker: On HTTP 429, pause downstream swarms immediately."
+  }},
+  codex_config: {{
+    path: "~/.codex/sandbox_config.json",
+    content: "{{\n  \"sandbox\": \"WindowsSandbox\",\n  \"network_isolation\": true,\n  \"gpu_acceleration\": true,\n  \"cache_reuse_target\": 0.95\n}}"
+  }},
+  aether_state: {{
+    path: "~/.aether_pulse_state.json",
+    content: "{{\\n  \\\"architect\\\": \\\"{OPERATOR_NAME}\\\",\\n  \\\"handle\\\": \\\"{report['operator_handle']}\\\",\\n  \\\"leverage_index\\\": {disk['leverage_index']},\\n  \\\"total_tokens\\\": {disk['total_tokens']},\\n  \\\"cache_hit_pct\\\": {disk['cache_hit_rate_pct']},\\n  \\\"proof_of_burn\\\": \\\"{report['proof_of_burn_sha256']}\\\"\\n}}"
+  }}
+}};
+
+let activeDirKey = 'claude_md';
+
+function openPeerDirectory(handle) {{
+  document.getElementById('pdir-subtitle').textContent = (handle || "{report['operator_handle']}") + " · Zero Credential Leakage Guaranteed";
+  selectDirFile('claude_md');
+  document.getElementById('peer-dir-modal').classList.add('active');
+}}
+
+function closePeerDirectory() {{
+  document.getElementById('peer-dir-modal').classList.remove('active');
+}}
+
+function selectDirFile(key, el) {{
+  activeDirKey = key;
+  const file = dirFiles[key] || dirFiles['claude_md'];
+  document.getElementById('pdir-file-path').textContent = file.path;
+  document.getElementById('pdir-preview-content').textContent = file.content.replace(/\\n/g, '\n');
+  if (el) {{
+    document.querySelectorAll('.dir-tree-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+  }}
+}}
+
+function copyCurrentDirFile() {{
+  const file = dirFiles[activeDirKey] || dirFiles['claude_md'];
+  navigator.clipboard.writeText(file.content.replace(/\\n/g, '\n')).then(() => {{
+    const btn = document.getElementById('pdir-copy-btn');
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => {{ btn.textContent = '📋 Copy File'; }}, 1800);
+  }});
+}}
+
+function cloneActiveLoadout() {{
+  const cmd = "gh repo clone mjeanhudson-dev/aether-pulse && python aether-pulse/install_aether_pulse.py --apply-loadout {OPERATOR_HANDLE}";
+  navigator.clipboard.writeText(cmd).then(() => {{
+    alert("Loadout command copied to clipboard:\n" + cmd);
+  }});
+}}
+
+function openDesktopHudModal() {{
+  document.getElementById('desktop-hud-modal').classList.add('active');
+}}
+
+function closeDesktopHudModal() {{
+  document.getElementById('desktop-hud-modal').classList.remove('active');
+}}
+
+function teamUpBounty(bId) {{
+  openPeerCollab('{OPERATOR_NAME}', '{report['operator_handle']}', 'friend');
+  document.getElementById('pc-friend-topic').value = "Team up on bounty: " + bId;
+}}
+
+function openBountyBrief(bId) {{
+  alert("Bounty Brief [" + bId + "]:\n\n1. Zero stock game XML tampering.\n2. Proven prompt-cache hit rate >95%.\n3. Submit pull request to @mjeanhudson-dev/aether-pulse with automated proof artifact.");
+}}
+
+window.addEventListener('DOMContentLoaded', () => {{
+  try {{
+    if (!localStorage.getItem('aether_masterclass_seen')) {{
+      setTimeout(() => {{ openMasterclassModal(1); }}, 800);
+    }}
+  }} catch(e){{}}
+}});
+
 </script>
 </body>
 </html>

@@ -1,29 +1,19 @@
-# Aether Pulse — Local Desktop Liquid-Physics Overlay (`v1.0.4`)
+# Aether Pulse — Local Desktop Liquid-Physics Overlay (`v1.0.0`)
 
 Authored by **Eloquent** (`@mjeanhudson-dev`)
 
-A frameless, topmost Cupertino-styled desktop HUD that floats over any AI terminal, browser, or IDE (`Claude Code`, `Google Antigravity`, `OpenAI Codex CLI`, `Cursor`, `Aider`, `Windsurf`, `Continue.dev`, `GitHub Copilot`, `OpenHands`, `T3 Code`, `Windows Terminal`, `Chrome`):
+A frameless, topmost Cupertino-styled desktop HUD that floats over any AI terminal, browser, or IDE (`Claude Code`, `Google Antigravity`, `OpenAI Codex CLI`, `T3 Code`, `Windows Terminal`, `VS Code`):
 
-1. **Ultra-Low Wiggle & Rock-Solid Pinned Stability:**
-   - In **`PIN`** mode, artificial oscillation is zeroed (`0.0`), locking the HUD solidly in place.
-   - In **`BNC`** and **`PAC`** modes, freefloat drift is reduced to calm, organic micro-currents.
-2. **Native Window Controls (`⚙` Settings, `—` Minimize, `✕` Close):**
-   - Click `⚙` to open the Cupertino Settings modal dialog.
-   - Click `—` to minimize the HUD into the Windows system tray.
-   - Click `✕` to close or dock to tray.
-3. **Windows System Tray Integration:**
-   - Displays real-time `aether_pulse.ico` in the Windows taskbar notification area.
-   - Single-click tray icon toggles Show / Minimize.
-   - Right-click tray menu provides 1-click access to Restore, Minimize, Settings, Harness Modes, Theme toggles, and Exit.
-4. **Cupertino Settings Modal Dialog:**
-   - Live toggles for: Boundary Modes (`Bounce` / `Pac-Man` / `Pin`), Theme (`Dark` / `Light`), Opacity, High-Speed Viscous Eddy Braking, Wall Splash Wave & Droplet Particles, Topmost Window, and Close-to-Tray behavior.
-5. **Top 10 Harness Detection & Mesh:**
-   - Detects all 10 major agent harnesses across Google Search & GitHub: Claude Code, Google Antigravity, OpenAI Codex CLI, Cursor, Aider, Windsurf, Continue.dev, GitHub Copilot, OpenHands, and Ping T3 Code.
-6. **High-Fidelity 48-Node Fluid Dynamics & Wall Splashes:**
-   - 48 spring nodes model viscous shallow-water wave sloshing.
-   - Wall impacts trigger directional wave surges along the collision flank with dynamic droplet particles.
-7. **Unnatural Viscous High-Speed Braking:**
-   - Flinging the capsule at high speeds (>180 px/s) triggers non-linear eddy damping ($e^{-\text{over} \cdot 0.0055}$), arresting momentum into a calm glide.
+1. **Freefloat Wiggle/Drift + Bounce & Pac-Man Screen Wrap:**
+   - Drag and release the liquid-filled vessel to let it drift with real momentum and buoyancy wiggle.
+   - Click the bottom-right physics button (`[BNC]` / `[PAC]` / `[PIN]`) to switch between:
+     - **`BNC` (Bounce Walls):** Bounces elastically off your monitor edges with a liquid splash.
+     - **`PAC` (Pac-Man Wrap):** Flies through bottom-to-top and side-to-side screen edges like Pac-Man.
+     - **`PIN` (Pin Anchor):** Settles at the drop coordinate with subtle liquid buoyancy.
+2. **Seamless Spatial Harness Detection:**
+   - Uses Win32 `WindowFromPoint` + `QueryFullProcessImageNameW` to inspect whichever window is underneath the HUD while dragging or freefloating, morphing displayed `Tokens`, `Cost`, `Cache Hit %`, and `Leverage` automatically.
+3. **1-Click Harness Mode Switcher (`[ ≋ AUTO ]`):**
+   - Cycles `Auto-Sense Target` -> `All 3 Harnesses Drawer` -> `Claude Code` -> `Antigravity` -> `Codex CLI`.
 
 ## Quick Start (Windows / macOS / Linux)
 
@@ -32,8 +22,4 @@ A frameless, topmost Cupertino-styled desktop HUD that floats over any AI termin
   ```powershell
   python aether_pulse_ws.py
   python aether_liquid_overlay.py
-  ```
-- **Node CLI Launch:**
-  ```bash
-  npx aether-pulse --overlay
   ```

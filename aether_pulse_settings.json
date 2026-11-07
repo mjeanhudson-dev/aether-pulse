@@ -1,0 +1,9 @@
+{
+  "overlay_mode": "auto",
+  "boundary_mode": "bounce",
+  "theme": "dark",
+  "enable_particles": true,
+  "enable_bubbles": true,
+  "topmost": true,
+  "close_to_tray": true
+}

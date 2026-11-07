@@ -41,6 +41,7 @@
     "url": "git+https://github.com/mjeanhudson-dev/aether-pulse.git"
   },
   "homepage": "https://mjeanhudson-dev.github.io/aether-pulse/",
+  "funding": "https://github.com/sponsors/mjeanhudson-dev",
   "keywords": [
     "ai-leaderboard",
     "token-efficiency",

@@ -1,16 +1,16 @@
 {
-  "timestamp_utc": "2026-11-07T04:28:41.961619+00:00",
-  "updated_at_epoch": 1794025721.96163,
+  "timestamp_utc": "2026-11-07T08:04:01.908601+00:00",
+  "updated_at_epoch": 1794038641.908612,
   "operator_name": "Eloquent",
   "operator_handle": "@mjeanhudson-dev",
-  "proof_of_burn_sha256": "e3520448083003c03066c5d090fc29d5b281b1400eebf5db69428b056b850527",
+  "proof_of_burn_sha256": "fb34253d65079d2525d179122eca7061b888bab0cec07be9dd405b867ee4651c",
   "anti_cheat_verification": {
-    "turn_entropy_bits": 4.03,
+    "turn_entropy_bits": 4.02,
     "min_organic_threshold_bits": 3.5,
     "status": "VERIFIED_ORGANIC_ARCHITECT",
-    "verified_30d_commits": 653,
+    "verified_30d_commits": 661,
     "verified_repo_count": 17,
-    "zk_repo_head_proof": "8a7d7d5f41b47c1ce7b2e755"
+    "zk_repo_head_proof": "b5f2f6c1860ed9482faf6c91"
   },
   "fast_read_multi_harness_state": {
     "active_harnesses": [
@@ -19,15 +19,15 @@
       "openai_codex"
     ],
     "weight_class": "Heavyweight (1B+)",
-    "total_sessions": 523,
-    "total_tokens": 4199705287,
-    "total_tokens_formatted": "4.20B",
-    "cache_hit_rate_pct": 94.4,
-    "kardashev_index": 1.1039,
-    "aether_pulse_score": 26776,
-    "leverage_index": 26776,
+    "total_sessions": 524,
+    "total_tokens": 4314804568,
+    "total_tokens_formatted": "4.31B",
+    "cache_hit_rate_pct": 94.43,
+    "kardashev_index": 1.1058,
+    "aether_pulse_score": 26925,
+    "leverage_index": 26925,
     "routing_multiplier": 1.24,
-    "entropy_bits": 4.03,
+    "entropy_bits": 4.02,
     "verified_status": "VERIFIED_ORGANIC_ARCHITECT",
     "harnesses": {
       "claude_code": {
@@ -38,10 +38,10 @@
         "status": "active"
       },
       "antigravity": {
-        "sessions": 370,
-        "total_tokens": 2032334537,
-        "total_tokens_formatted": "2.03B",
-        "cache_hit_rate_pct": 93.67,
+        "sessions": 371,
+        "total_tokens": 2147433818,
+        "total_tokens_formatted": "2.15B",
+        "cache_hit_rate_pct": 93.78,
         "status": "active"
       },
       "openai_codex": {
@@ -70,7 +70,7 @@
     "kardashev_index": 1.0506,
     "cache_mastery_score": 88.7,
     "routing_multiplier": 1.1,
-    "entropy_bits": 4.03,
+    "entropy_bits": 4.02,
     "aether_pulse_score": 21126,
     "leverage_index": 21126,
     "badges": [
@@ -88,35 +88,35 @@
     }
   },
   "antigravity": {
-    "sessions": 370,
+    "sessions": 371,
     "weight_class": "Heavyweight (1B+)",
-    "input_tokens": 127835536,
-    "cache_read": 1892536297,
+    "input_tokens": 132841878,
+    "cache_read": 2002055249,
     "cache_write": 0,
-    "output_tokens": 11962704,
+    "output_tokens": 12536691,
     "reasoning_output_tokens": 0,
-    "total_context": 2020371833,
-    "total_tokens": 2032334537,
-    "cache_hit_rate_pct": 93.67,
-    "cache_reuse_multiplier": 14.8,
-    "context_to_output_ratio": 168.89,
-    "kardashev_index": 1.0513,
-    "cache_mastery_score": 84.5,
+    "total_context": 2134897127,
+    "total_tokens": 2147433818,
+    "cache_hit_rate_pct": 93.78,
+    "cache_reuse_multiplier": 15.07,
+    "context_to_output_ratio": 170.29,
+    "kardashev_index": 1.0553,
+    "cache_mastery_score": 84.8,
     "routing_multiplier": 1.15,
-    "entropy_bits": 4.03,
-    "aether_pulse_score": 20910,
-    "leverage_index": 20910,
+    "entropy_bits": 4.02,
+    "aether_pulse_score": 21133,
+    "leverage_index": 21133,
     "badges": [
       "Cache Tactician",
       "Type-I Kardashev Architect (1B+)",
       "Verified Organic Proof-of-Work"
     ],
     "pricing": {
-      "sonnet_uncached_usd": 6240.56,
-      "sonnet_cached_usd": 1130.71,
-      "sonnet_saved_usd": 5109.85,
-      "opus_uncached_usd": 31202.78,
-      "opus_cached_usd": 5653.54
+      "sonnet_uncached_usd": 6592.74,
+      "sonnet_cached_usd": 1187.19,
+      "sonnet_saved_usd": 5405.55,
+      "opus_uncached_usd": 32963.71,
+      "opus_cached_usd": 5935.96
     }
   },
   "openai_codex": {
@@ -135,7 +135,7 @@
     "kardashev_index": 0.8647,
     "cache_mastery_score": 95.5,
     "routing_multiplier": 1.1,
-    "entropy_bits": 4.03,
+    "entropy_bits": 4.02,
     "aether_pulse_score": 15982,
     "leverage_index": 15982,
     "badges": [
@@ -151,24 +151,24 @@
     }
   },
   "combined_disk": {
-    "sessions": 523,
+    "sessions": 524,
     "weight_class": "Heavyweight (1B+)",
-    "input_tokens": 132935594,
-    "cache_read": 3936668664,
+    "input_tokens": 137941936,
+    "cache_read": 4046187616,
     "cache_write": 100789450,
-    "output_tokens": 29311579,
+    "output_tokens": 29885566,
     "reasoning_output_tokens": 378495,
-    "total_context": 4170393708,
-    "total_tokens": 4199705287,
-    "cache_hit_rate_pct": 94.4,
-    "cache_reuse_multiplier": 39.06,
-    "context_to_output_ratio": 142.28,
-    "kardashev_index": 1.1039,
-    "cache_mastery_score": 91.4,
+    "total_context": 4284919002,
+    "total_tokens": 4314804568,
+    "cache_hit_rate_pct": 94.43,
+    "cache_reuse_multiplier": 40.14,
+    "context_to_output_ratio": 143.38,
+    "kardashev_index": 1.1058,
+    "cache_mastery_score": 91.6,
     "routing_multiplier": 1.24,
-    "entropy_bits": 4.03,
-    "aether_pulse_score": 26776,
-    "leverage_index": 26776,
+    "entropy_bits": 4.02,
+    "aether_pulse_score": 26925,
+    "leverage_index": 26925,
     "badges": [
       "Cache Wizard (94%+ Hit / High Reuse)",
       "Multi-Model Connoisseur (3-CLI Router)",
@@ -177,11 +177,11 @@
       "Verified Organic Proof-of-Work"
     ],
     "pricing": {
-      "sonnet_uncached_usd": 12950.85,
-      "sonnet_cached_usd": 2397.44,
-      "sonnet_saved_usd": 10553.41,
-      "opus_uncached_usd": 64754.27,
-      "opus_cached_usd": 11987.21
+      "sonnet_uncached_usd": 13303.04,
+      "sonnet_cached_usd": 2453.93,
+      "sonnet_saved_usd": 10849.11,
+      "opus_uncached_usd": 66515.2,
+      "opus_cached_usd": 12269.63
     }
   },
   "user_reported_snapshot": {
@@ -199,7 +199,7 @@
     "kardashev_index": 1.0673,
     "cache_mastery_score": 95.6,
     "routing_multiplier": 1.24,
-    "entropy_bits": 4.03,
+    "entropy_bits": 4.02,
     "aether_pulse_score": 26217,
     "leverage_index": 26217,
     "badges": [
@@ -218,7 +218,7 @@
     }
   },
   "model_distribution": {
-    "gemini-3.8-flash / gemini-4-argon": 2032334537,
+    "gemini-3.8-flash / gemini-4-argon": 2147433818,
     "claude-opus-5-5": 1941933364,
     "gpt-6.1-sol / gpt-6-luna": 154314378,
     "claude-sonnet-5-5": 54448714,
@@ -246,36 +246,36 @@
     {
       "handle": "@mjeanhudson-dev (3-CLI Trinity)",
       "rank_tier": "Eloquent \u2014 Verified 3-Harness Mesh",
-      "archetype": "Claude (2.01B) + Antigravity (2.03B) + Codex (154.3M)",
+      "archetype": "Claude (2.01B) + Antigravity (2.15B) + Codex (154.3M)",
       "weight_class": "Heavyweight (1B+)",
-      "total_tokens": 4199705287,
-      "input_tokens": 132935594,
-      "cache_read": 3936668664,
+      "total_tokens": 4314804568,
+      "input_tokens": 137941936,
+      "cache_read": 4046187616,
       "cache_write": 100789450,
-      "output_tokens": 29311579,
+      "output_tokens": 29885566,
       "routing_multiplier": 1.24,
-      "entropy_bits": 4.03,
+      "entropy_bits": 4.02,
       "verified_status": "VERIFIED_ORGANIC_ARCHITECT",
-      "source": "SHA-256: e3520448083003c0...",
+      "source": "SHA-256: fb34253d65079d25...",
       "metrics": {
-        "sessions": 523,
+        "sessions": 524,
         "weight_class": "Heavyweight (1B+)",
-        "input_tokens": 132935594,
-        "cache_read": 3936668664,
+        "input_tokens": 137941936,
+        "cache_read": 4046187616,
         "cache_write": 100789450,
-        "output_tokens": 29311579,
+        "output_tokens": 29885566,
         "reasoning_output_tokens": 378495,
-        "total_context": 4170393708,
-        "total_tokens": 4199705287,
-        "cache_hit_rate_pct": 94.4,
-        "cache_reuse_multiplier": 39.06,
-        "context_to_output_ratio": 142.28,
-        "kardashev_index": 1.1039,
-        "cache_mastery_score": 91.4,
+        "total_context": 4284919002,
+        "total_tokens": 4314804568,
+        "cache_hit_rate_pct": 94.43,
+        "cache_reuse_multiplier": 40.14,
+        "context_to_output_ratio": 143.38,
+        "kardashev_index": 1.1058,
+        "cache_mastery_score": 91.6,
         "routing_multiplier": 1.24,
-        "entropy_bits": 4.03,
-        "aether_pulse_score": 26776,
-        "leverage_index": 26776,
+        "entropy_bits": 4.02,
+        "aether_pulse_score": 26925,
+        "leverage_index": 26925,
         "badges": [
           "Cache Wizard (94%+ Hit / High Reuse)",
           "Multi-Model Connoisseur (3-CLI Router)",
@@ -284,11 +284,11 @@
           "Verified Organic Proof-of-Work"
         ],
         "pricing": {
-          "sonnet_uncached_usd": 12950.85,
-          "sonnet_cached_usd": 2397.44,
-          "sonnet_saved_usd": 10553.41,
-          "opus_uncached_usd": 64754.27,
-          "opus_cached_usd": 11987.21
+          "sonnet_uncached_usd": 13303.04,
+          "sonnet_cached_usd": 2453.93,
+          "sonnet_saved_usd": 10849.11,
+          "opus_uncached_usd": 66515.2,
+          "opus_cached_usd": 12269.63
         }
       },
       "highlight": true,
@@ -305,7 +305,7 @@
       "cache_write": 24500000,
       "output_tokens": 15000000,
       "routing_multiplier": 1.24,
-      "entropy_bits": 4.03,
+      "entropy_bits": 4.02,
       "verified_status": "VERIFIED_ORGANIC_ARCHITECT",
       "source": "96.73x Cache Write-to-Read Multiplier Benchmark",
       "metrics": {
@@ -323,7 +323,7 @@
         "kardashev_index": 1.0673,
         "cache_mastery_score": 95.6,
         "routing_multiplier": 1.24,
-        "entropy_bits": 4.03,
+        "entropy_bits": 4.02,
         "aether_pulse_score": 26217,
         "leverage_index": 26217,
         "badges": [

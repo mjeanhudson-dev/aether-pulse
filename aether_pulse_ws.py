@@ -23,11 +23,23 @@ import ctypes.wintypes
 import hashlib
 import json
 import math
+import os
 import struct
 import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+if sys.stdout is None:
+    try:
+        sys.stdout = open(os.devnull, "w")
+    except Exception:
+        pass
+if sys.stderr is None:
+    try:
+        sys.stderr = open(os.devnull, "w")
+    except Exception:
+        pass
 
 import aether_pulse
 
@@ -259,46 +271,45 @@ def step_liquid_physics(
     n = len(heights)
     state["splash_event"] = None
 
-    if is_dragging or bmode == "pin":
-        # Zero artificial wiggle when dragging or pinned (rock-solid anchor requested by user)
-        wiggle_x = 0.0
-        wiggle_y = 0.0
-        fx = k * ((float(target_x) + wiggle_x) - x) - c * vx
-        fy = k * ((float(target_y) + wiggle_y) - y) - c * vy
-        ax = fx / m
-        ay = fy / m
-        vx += ax * dt
-        vy += ay * dt
-        x += vx * dt
-        y += vy * dt
+    if is_dragging:
+        # Crisp responsive tracking with satisfying physical weightiness (heft)
+        track_alpha = 0.92
+        prev_x = x
+        prev_y = y
+        x = track_alpha * float(target_x) + (1.0 - track_alpha) * x
+        y = track_alpha * float(target_y) + (1.0 - track_alpha) * y
+        vx = (x - prev_x) / dt if dt > 0 else 0.0
+        vy = (y - prev_y) / dt if dt > 0 else 0.0
+        ax = (vx - float(state.get("vx", 0.0))) / dt if dt > 0 else 0.0
+        ay = (vy - float(state.get("vy", 0.0))) / dt if dt > 0 else 0.0
+    elif bmode == "pin":
+        # Pinned mode: rock-solid absolute anchor at target coordinates, zero wiggle, zero drift
+        x = float(target_x)
+        y = float(target_y)
+        vx = 0.0
+        vy = 0.0
+        ax = 0.0
+        ay = 0.0
     else:
-        # Freefloat Drift mode (significantly reduced, subtle organic currents)
-        wiggle_ax = math.sin(phase * 1.4) * 5.5 + math.cos(phase * 2.8) * 2.0
-        wiggle_ay = math.cos(phase * 1.1) * 4.0 + math.sin(phase * 2.3) * 1.8
-        fluid_drag = 0.24
-        ax = wiggle_ax - fluid_drag * vx
-        ay = wiggle_ay - fluid_drag * vy
-        vx += ax * dt
-        vy += ay * dt
+        # Freefloat / Fling Glide:
+        # Weighted hydrodynamic glide: dv/dt = -drag_gamma * v
+        # Mass = 3.2 kg sensation: smooth, weighty momentum deceleration without abrupt braking
+        drag_gamma = 0.78  # 1/s satisfying weighty viscous deceleration
+        vx -= drag_gamma * vx * dt
+        vy -= drag_gamma * vy * dt
+        ax = -drag_gamma * vx
+        ay = -drag_gamma * vy
 
-        # High-Speed Unnatural Braking (Heavy Eddy/Viscosity Damping when released > 180 px/s)
         spd = math.hypot(vx, vy)
-        if spd > 180.0:
-            over_spd = spd - 180.0
-            eddy_drag = math.exp(-over_spd * 0.0055)
-            viscous_decay = max(0.15, 1.0 - (over_spd / 260.0) * dt * 4.5)
-            brake_scale = ((180.0 + over_spd * eddy_drag) / spd) * viscous_decay
-            vx *= brake_scale
-            vy *= brake_scale
-            spd = math.hypot(vx, vy)
-
-        # Gentle minimum freefloat drift velocity
-        if spd < 24.0:
-            ang = phase * 1.1 if spd < 1e-3 else math.atan2(vy, vx)
-            vx += math.cos(ang) * 14.0 * dt
-            vy += math.sin(ang) * 14.0 * dt
-        elif spd > 980.0:
-            scale = 980.0 / spd
+        # Gentle transition into subtle organic ambient hover drift only when speed is near zero (< 14 px/s)
+        if spd < 14.0:
+            drift_speed = 10.0
+            drift_ang = phase * 0.75
+            blend = max(0.0, min(1.0, (14.0 - spd) / 14.0))
+            vx += math.cos(drift_ang) * drift_speed * dt * blend
+            vy += math.sin(drift_ang) * drift_speed * dt * blend
+        elif spd > 1200.0:
+            scale = 1200.0 / spd
             vx *= scale
             vy *= scale
 
@@ -315,39 +326,39 @@ def step_liquid_physics(
 
             if x <= 0.0:
                 x = 0.0
-                vx = abs(vx) * 0.92 + 22.0
+                vx = abs(vx) * 0.82 + 14.0
                 bounced = True
                 splash_side = "left"
             elif x >= max_x:
                 x = max_x
-                vx = -abs(vx) * 0.92 - 22.0
+                vx = -abs(vx) * 0.82 - 14.0
                 bounced = True
                 splash_side = "right"
 
             if y <= 0.0:
                 y = 0.0
-                vy = abs(vy) * 0.92 + 18.0
+                vy = abs(vy) * 0.82 + 12.0
                 bounced = True
                 splash_side = splash_side or "top"
             elif y >= max_y:
                 y = max_y
-                vy = -abs(vy) * 0.92 - 18.0
+                vy = -abs(vy) * 0.82 - 12.0
                 bounced = True
                 splash_side = splash_side or "bottom"
 
             if bounced:
                 state["wall_bounces"] = int(state.get("wall_bounces", 0)) + 1
-                surge_impulse = min(140.0, impact_speed * 0.65 + 35.0)
+                surge_impulse = min(160.0, impact_speed * 0.62 + 32.0)
 
                 # Fluid dynamic crash and wave surge on impact flank
                 if splash_side == "left":
-                    flank_reach = max(6, n // 3)
+                    flank_reach = max(8, n // 3)
                     for i in range(min(flank_reach, n)):
                         falloff = (flank_reach - i) / float(flank_reach)
                         vels[i] += surge_impulse * (falloff ** 1.3)
                     state["splash_event"] = {"side": "left", "impulse": surge_impulse}
                 elif splash_side == "right":
-                    flank_reach = max(6, n // 3)
+                    flank_reach = max(8, n // 3)
                     start_i = max(0, n - flank_reach)
                     for i in range(start_i, n):
                         falloff = (i - start_i + 1) / float(flank_reach)
@@ -509,6 +520,13 @@ def build_ws_telemetry_frame(
             "cost_usd": round(claude.get("pricing", {}).get("sonnet_actual_usd", claude.get("pricing", {}).get("sonnet_cached_usd", 271.02)), 2),
             "liquid_fill_ratio": round(min(0.98, max(0.15, claude["cache_hit_rate_pct"] / 100.0)), 4),
             "accent_hex": "#E07A5F",
+            "usage": {
+                "ratio_5hr": 0.89,
+                "ratio_monthly": 0.92,
+                "is_approaching_5hr": True,
+                "is_approaching_monthly": True,
+                "quota_status": "WARNING_5HR",
+            },
         },
         "antigravity": {
             "id": "antigravity",
@@ -525,6 +543,13 @@ def build_ws_telemetry_frame(
             "cost_usd": round(agy.get("pricing", {}).get("flash_actual_usd", 2.57), 2),
             "liquid_fill_ratio": round(min(0.98, max(0.15, agy["cache_hit_rate_pct"] / 100.0)), 4),
             "accent_hex": "#2997FF",
+            "usage": {
+                "ratio_5hr": 0.22,
+                "ratio_monthly": 0.35,
+                "is_approaching_5hr": False,
+                "is_approaching_monthly": False,
+                "quota_status": "NOMINAL",
+            },
         },
         "openai_codex": {
             "id": "openai_codex",
@@ -541,6 +566,13 @@ def build_ws_telemetry_frame(
             "cost_usd": round(codex.get("pricing", {}).get("sonnet_actual_usd", codex.get("pricing", {}).get("sonnet_cached_usd", 30.10)), 2),
             "liquid_fill_ratio": round(min(0.98, max(0.15, codex["cache_hit_rate_pct"] / 100.0)), 4),
             "accent_hex": "#30D158",
+            "usage": {
+                "ratio_5hr": 0.14,
+                "ratio_monthly": 0.28,
+                "is_approaching_5hr": False,
+                "is_approaching_monthly": False,
+                "quota_status": "NOMINAL",
+            },
         },
         "cursor": {
             "id": "cursor",
@@ -676,6 +708,15 @@ def build_ws_telemetry_frame(
     if effective_key not in harnesses:
         effective_key = "all"
 
+    # Sentinel Quota & 5-Hour / Monthly Limit Monitoring
+    # Nominal by default; triggers Lava mode when usage reaches >= 0.75 or simulated
+    ratio_5hr = float(report.get("rate_limit_ratio_5hr", 0.42))
+    is_approaching_5hr = ratio_5hr >= 0.75
+    total_spend = sum(h["cost_usd"] for h in harnesses.values() if h["id"] != "all")
+    monthly_cap = 1400.0
+    ratio_monthly = min(1.0, total_spend / monthly_cap)
+    is_approaching_monthly = ratio_monthly >= 0.88
+
     return {
         "schema": "aether.pulse.ws.v1",
         "timestamp_ms": int(time.time() * 1000),
@@ -691,6 +732,13 @@ def build_ws_telemetry_frame(
         "show_all_drawer": overlay_mode == "all",
         "active": harnesses[effective_key],
         "harnesses": harnesses,
+        "usage_sentinel": {
+            "ratio_5hr": round(ratio_5hr, 3),
+            "ratio_monthly": round(ratio_monthly, 3),
+            "is_approaching_5hr": is_approaching_5hr,
+            "is_approaching_monthly": is_approaching_monthly,
+            "quota_status": "CRITICAL_MONTHLY" if is_approaching_monthly else ("WARNING_5HR" if is_approaching_5hr else "NOMINAL"),
+        },
     }
 
 
@@ -798,24 +846,63 @@ class AetherPulseWebSocketServer:
                 writer.write(encode_ws_frame(frame_payload))
                 await writer.drain()
         else:
-            # Standard HTTP JSON endpoint (`/api/telemetry`) with CORS
-            body = json.dumps(
-                build_ws_telemetry_frame(
-                    self.report,
-                    self.overlay_mode,
-                    self.detected_harness,
-                    self.target_label,
-                    self.boundary_mode,
-                ),
-                indent=2,
-            ).encode("utf-8")
-            resp = (
-                "HTTP/1.1 200 OK\r\n"
-                "Content-Type: application/json; charset=utf-8\r\n"
-                "Access-Control-Allow-Origin: *\r\n"
-                f"Content-Length: {len(body)}\r\n"
-                "Connection: close\r\n\r\n"
-            ).encode("ascii") + body
+            # Handle HTTP requests: serve index.html, static assets, or JSON telemetry
+            req_path = "/"
+            if first_line:
+                parts = first_line.split(" ")
+                if len(parts) > 1:
+                    req_path = parts[1].split("?")[0]
+
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+
+            if req_path in ("/", "/index.html", "/leaderboard"):
+                target_file = os.path.join(base_dir, "index.html")
+                content_type = "text/html; charset=utf-8"
+            elif req_path.endswith(".svg"):
+                target_file = os.path.join(base_dir, os.path.basename(req_path))
+                content_type = "image/svg+xml"
+            elif req_path.endswith(".zip"):
+                target_file = os.path.join(base_dir, os.path.basename(req_path))
+                content_type = "application/zip"
+            elif req_path.endswith(".ico"):
+                target_file = os.path.join(base_dir, os.path.basename(req_path))
+                content_type = "image/x-icon"
+            elif req_path in ("/api/telemetry", "/telemetry"):
+                target_file = None
+                content_type = "application/json; charset=utf-8"
+            else:
+                target_file = os.path.join(base_dir, "index.html")
+                content_type = "text/html; charset=utf-8"
+
+            if target_file and os.path.exists(target_file):
+                with open(target_file, "rb") as f:
+                    body = f.read()
+                resp = (
+                    "HTTP/1.1 200 OK\r\n"
+                    f"Content-Type: {content_type}\r\n"
+                    "Access-Control-Allow-Origin: *\r\n"
+                    f"Content-Length: {len(body)}\r\n"
+                    "Connection: close\r\n\r\n"
+                ).encode("ascii") + body
+            else:
+                # Standard HTTP JSON endpoint (`/api/telemetry`) with CORS
+                body = json.dumps(
+                    build_ws_telemetry_frame(
+                        self.report,
+                        self.overlay_mode,
+                        self.detected_harness,
+                        self.target_label,
+                        self.boundary_mode,
+                    ),
+                    indent=2,
+                ).encode("utf-8")
+                resp = (
+                    "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: application/json; charset=utf-8\r\n"
+                    "Access-Control-Allow-Origin: *\r\n"
+                    f"Content-Length: {len(body)}\r\n"
+                    "Connection: close\r\n\r\n"
+                ).encode("ascii") + body
             writer.write(resp)
             await writer.drain()
 
@@ -823,7 +910,10 @@ class AetherPulseWebSocketServer:
 
     async def serve_forever(self) -> None:
         server = await asyncio.start_server(self.handle_client, self.host, self.port)
-        print(f"Aether Pulse WebSocket & Telemetry Server active on ws://{self.host}:{self.port}/ws")
+        try:
+            print(f"Aether Pulse WebSocket & Telemetry Server active on ws://{self.host}:{self.port}/ws")
+        except Exception:
+            pass
         async with server:
             await server.serve_forever()
 

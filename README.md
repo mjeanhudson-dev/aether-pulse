@@ -1,6 +1,9 @@
 # Aether Pulse (`aether-pulse`)
 
 ![Aether Pulse Verified Badge](./aether_pulse_badge.svg)
+[![Sponsor Eloquent](https://img.shields.io/badge/Sponsor-@mjeanhudson--dev-ea4aaa?style=flat&logo=github-sponsors)](https://github.com/sponsors/mjeanhudson-dev)
+[![Live Dashboard](https://img.shields.io/badge/Dashboard-Live-0066CC?style=flat)](https://mjeanhudson-dev.github.io/aether-pulse/)
+[![npm package](https://img.shields.io/npm/v/aether-pulse?color=CB3837)](https://www.npmjs.com/package/aether-pulse)
 
 **The Open-Source, "Plop-In" AI Token Efficiency Leaderboard, Cache Doctor MCP Server, & Architect Loadout Platform for Claude Code, Google Antigravity (Gemini), and OpenAI Codex CLI — Authored by Eloquent (`@mjeanhudson-dev`).**
 
@@ -47,6 +50,23 @@ Instead of ranking by raw spend, Aether Pulse computes a composite **Leverage In
 
 ### 5. Architect of the Month Spotlight & 1-Click Loadout Exporter
 - Exports secret-scrubbed [`aether_loadout_blueprint.json`](./aether_loadout_blueprint.json) and [`AETHER_LOADOUT.md`](./AETHER_LOADOUT.md) so peers can clone top routing strategies with `python install_aether_pulse.py --apply-loadout @mjeanhudson-dev`.
+
+---
+
+## 💖 Sponsoring & Supporting Aether Pulse
+
+Aether Pulse is an independent, zero-trust open-source initiative authored by **Eloquent** (`@mjeanhudson-dev`) advancing prompt-cache economics, multi-harness telemetry, and zero-tamper tactile hardware integration.
+
+### Official Sponsorship Channels:
+- **GitHub Sponsors (0% Fee):** [github.com/sponsors/mjeanhudson-dev](https://github.com/sponsors/mjeanhudson-dev)
+- **Web3 / Crypto Grants:**
+  - **Ethereum / Base / Arbitrum (USDC & ETH):** `0x71C808E1e3A4cDb85903c58A8b7cEa25316B386e`
+  - **Solana (USDC & SOL):** `7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU`
+
+### Patron Tiers & Accolades:
+- **☕ Coffee Supporter ($5/mo):** Supporter badge in Discord & GitHub Hall of Fame.
+- **⚡ Cache Patron ($25/mo):** Priority telemetry indexing & custom verified badge.
+- **🏛️ Trinity Architect ($100/mo):** Co-sponsor community bounties and architecture advisory.
 
 ---
 
