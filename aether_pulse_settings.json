@@ -4,8 +4,12 @@
   "theme": "dark",
   "enable_particles": true,
   "enable_bubbles": true,
+  "enable_fizz": true,
+  "simulate_lava_5hr": true,
   "topmost": true,
   "close_to_tray": true,
+  "custom_accent": "#0066CC",
+  "custom_liquid": "#0E243B",
   "active_subscriptions": [
     "claude_code",
     "antigravity",

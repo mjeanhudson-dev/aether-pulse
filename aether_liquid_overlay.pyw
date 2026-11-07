@@ -58,6 +58,7 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "enable_fizz": True,
     "simulate_lava_5hr": False,
     "topmost": True,
+    "accounting_lens": "specular",
     "close_to_tray": True,
     "custom_accent": "#0066CC",
     "custom_liquid": "#0E243B",
@@ -553,7 +554,9 @@ class AetherLiquidDesktopOverlay:
         self.root = tk.Tk()
         self.root.title("Aether Pulse Liquid HUD")
         self.root.overrideredirect(True)
-        self.root.attributes("-topmost", bool(self.settings.get("topmost", True)))
+        self.lens = self.settings.get("accounting_lens", "specular")
+        self.topmost = bool(self.settings.get("topmost", True))
+        self.root.attributes("-topmost", self.topmost)
 
         # Masking: set window to transparent color #010101
         self.mask_color = "#010101"
@@ -775,6 +778,25 @@ class AetherLiquidDesktopOverlay:
         self.root.destroy()
         sys.exit(0)
 
+    def _toggle_always_on_top(self) -> None:
+        cur = bool(self.settings.get("topmost", True))
+        self.topmost = not cur
+        self.settings["topmost"] = self.topmost
+        self.root.attributes("-topmost", self.topmost)
+        self._save_settings()
+        self._render()
+
+    def _cycle_accounting_lens(self) -> None:
+        lenses = ["specular", "secular", "spectacular"]
+        cur = self.settings.get("accounting_lens", "specular")
+        idx = (lenses.index(cur) + 1) % len(lenses) if cur in lenses else 0
+        self.lens = lenses[idx]
+        self.settings["accounting_lens"] = self.lens
+        self._save_settings()
+        mid = len(self.phys["wave_velocities"]) // 2
+        self.phys["wave_velocities"][mid] += 32.0
+        self._render()
+
     def _cycle_theme(self) -> None:
         cur_idx = THEME_ORDER.index(self.theme) if self.theme in THEME_ORDER else 0
         next_idx = (cur_idx + 1) % len(THEME_ORDER)
@@ -824,17 +846,19 @@ class AetherLiquidDesktopOverlay:
             elif event.x <= 64:
                 self._hover_control = "traffic_lights"
 
-        # Check Right-Side 4-Button Column (x: 390..438)
+        # Check Right-Side 5-Button Column (x: body_w + 6 .. width - 10)
         body_w = self.width - 64
         if event.x >= body_w + 6 and event.x <= self.width - 10:
-            h4 = (self.height - 26) / 4.0
-            if 8 <= event.y <= 8 + h4:
+            h5 = (self.height - 28) / 5.0
+            if 8 <= event.y <= 8 + h5:
                 self._hover_control = "side_mode"
-            elif 8 + h4 + 3 <= event.y <= 8 + 2 * h4 + 3:
+            elif 8 + h5 + 3 <= event.y <= 8 + 2 * h5 + 3:
                 self._hover_control = "side_theme"
-            elif 8 + 2 * h4 + 6 <= event.y <= 8 + 3 * h4 + 6:
+            elif 8 + 2 * h5 + 6 <= event.y <= 8 + 3 * h5 + 6:
                 self._hover_control = "side_physics"
-            elif 8 + 3 * h4 + 9 <= event.y <= self.height - 8:
+            elif 8 + 3 * h5 + 9 <= event.y <= 8 + 4 * h5 + 9:
+                self._hover_control = "side_topmost"
+            elif 8 + 4 * h5 + 12 <= event.y <= self.height - 8:
                 self._hover_control = "side_web"
 
         # Check Harness Drawer Rows when mode == "all" (y > 104)
@@ -889,11 +913,11 @@ class AetherLiquidDesktopOverlay:
                 self.open_settings_dialog()
                 return
 
-        # Check Right-Side 4-Button Column
+        # Check Right-Side 5-Button Column
         body_w = self.width - 64
         if event.x >= body_w + 6 and event.x <= self.width - 10:
-            h4 = (self.height - 26) / 4.0
-            if 8 <= event.y <= 8 + h4:
+            h5 = (self.height - 28) / 5.0
+            if 8 <= event.y <= 8 + h5:
                 # Button 1: Mode Switcher
                 self.mode = aether_pulse_ws.next_overlay_mode(self.mode)
                 self.settings["overlay_mode"] = self.mode
@@ -902,13 +926,13 @@ class AetherLiquidDesktopOverlay:
                 self.phys["wave_velocities"][mid] += 48.0
                 self._update_height_for_mode()
                 return
-            elif 8 + h4 + 3 <= event.y <= 8 + 2 * h4 + 3:
+            elif 8 + h5 + 3 <= event.y <= 8 + 2 * h5 + 3:
                 # Button 2: Cycle Theme
                 self._cycle_theme()
                 mid = len(self.phys["wave_velocities"]) // 2
                 self.phys["wave_velocities"][mid] -= 32.0
                 return
-            elif 8 + 2 * h4 + 6 <= event.y <= 8 + 3 * h4 + 6:
+            elif 8 + 2 * h5 + 6 <= event.y <= 8 + 3 * h5 + 6:
                 # Button 3: Cycle Boundary Mode
                 self.boundary_mode = aether_pulse_ws.next_boundary_mode(self.boundary_mode)
                 self.settings["boundary_mode"] = self.boundary_mode
@@ -923,10 +947,21 @@ class AetherLiquidDesktopOverlay:
                     self.phys["vx"] = 0.0
                     self.phys["vy"] = 0.0
                 return
-            elif 8 + 3 * h4 + 9 <= event.y <= self.height - 8:
-                # Button 4: Launch Web Dashboard
+            elif 8 + 3 * h5 + 9 <= event.y <= 8 + 4 * h5 + 9:
+                # Button 4: Dedicated Quick Always-on-Top Toggle
+                self._toggle_always_on_top()
+                mid = len(self.phys["wave_velocities"]) // 2
+                self.phys["wave_velocities"][mid] += 28.0
+                return
+            elif 8 + 4 * h5 + 12 <= event.y <= self.height - 8:
+                # Button 5: Launch Web Dashboard
                 self._launch_web_dashboard()
                 return
+
+        # Check clicking on metric text or subtitle to cycle accounting lens
+        if 16 <= event.x < body_w and 42 <= event.y <= 92:
+            self._cycle_accounting_lens()
+            return
 
         # Start Dragging with physical weightiness
         self._is_dragging = True
@@ -1388,28 +1423,40 @@ class AetherLiquidDesktopOverlay:
             font=(self.font_display, 8, "bold"),
         )
 
-        # 11. Primary Metric: Tabular Figures
-        metric_str = f"{active['tokens_formatted']} TOK    ${active['cost_usd']:,.2f}    {active['cache_hit_pct']}% HIT"
+        # 11. Primary Metric: Tabular Figures with 3-Lens Accounting
+        lens = self.settings.get("accounting_lens", "specular")
+        if lens == "secular":
+            sec_cost = active.get("secular_cost_usd", 20.00)
+            metric_str = f"{active['tokens_formatted']} TOK    ${sec_cost:,.2f}/MO FLAT    {active['cache_hit_pct']}% HIT"
+            sub_str = f"SECULAR CASH · OVER: {frame['target_label'][:16]} · ZERO EXTRA API"
+        elif lens == "spectacular":
+            spec_val = active.get("spectacular_usd", active.get("saved_usd", 5110))
+            metric_str = f"{active['tokens_formatted']} TOK    ${spec_val:,.0f} WORTH    {active['cache_hit_pct']}% HIT"
+            sub_str = f"SPECTACULAR LENS · 45.8M NET CODE YIELD · 2.11B STREAM"
+        else: # specular developer API standard
+            cost_val = active.get("cost_usd", 244.42)
+            metric_str = f"{active['tokens_formatted']} TOK    ${cost_val:,.2f} API    {active['cache_hit_pct']}% HIT"
+            sub_str = f"SPECULAR (API) · OVER: {frame['target_label'][:16]} · SAVED ${active['saved_usd']:,}"
+
+        if is_lava_mode:
+            sub_str = f"MOLTEN LAVA MODE · SAVED ${active['saved_usd']:,} · 5HR SENTINEL"
+
         self.canvas.create_text(
             18,
             51,
             anchor="w",
             text=metric_str,
             fill=palette["primary_text"],
-            font=(self.font_mono, 11, "bold"),
+            font=(self.font_mono, 10, "bold"),
         )
 
-        # 12. Subtitle / Spatial Context Line
-        sub_str = f"OVER: {frame['target_label'][:20]}   {frame['boundary_mode_label'].upper()}   SAVED ${active['saved_usd']:,}"
-        if is_lava_mode:
-            sub_str = f"MOLTEN LAVA MODE · SAVED ${active['saved_usd']:,} · 5HR SENTINEL"
         self.canvas.create_text(
             18,
             81,
             anchor="w",
             text=sub_str,
             fill=palette["secondary_text"],
-            font=(self.font_text, 8),
+            font=(self.font_mono, 7, "bold"),
         )
 
         # 13. If "All 10 Harnesses" drawer is open, render comparative 2-column grid
@@ -1436,25 +1483,25 @@ class AetherLiquidDesktopOverlay:
                 txt2 = f"{h2['short_name'][:10]:<10} {h2['tokens_formatted']:>6} · {h2['cache_hit_pct']}%"
                 self.canvas.create_text(col2_x + 10, cur_y, anchor="w", text=txt2, fill=palette["primary_text"], font=(self.font_mono, 8))
 
-        # 14. Right-Edge Domed Tactile Side Buttons (4 Buttons)
+        # 14. Right-Edge Domed Tactile Side Buttons (5 Buttons)
         # Vertical divider line
         self.canvas.create_line(body_w, 14, body_w, self.height - 14, fill=palette["divider"], width=1)
 
-        btn_x1 = body_w + 7
-        btn_x2 = self.width - 11
-        h4 = (self.height - 26) / 4.0
+        btn_x1 = body_w + 6
+        btn_x2 = self.width - 9
+        h5 = (self.height - 28) / 5.0
 
         # Button 1: Mode Switcher (Domed Stadium Pill)
         b1_y1 = 8
-        b1_y2 = int(8 + h4)
+        b1_y2 = int(8 + h5)
         b1_fill = palette["button_hover"] if self._hover_control == "side_mode" else palette["button_bg"]
         self._draw_domed_button(btn_x1, b1_y1, btn_x2, b1_y2, 9, b1_fill, palette["button_border"])
         self.canvas.create_text((btn_x1 + btn_x2) // 2, (b1_y1 + b1_y2) // 2 - 4, text="≋", fill=palette["header"], font=(self.font_display, 8, "bold"))
         self.canvas.create_text((btn_x1 + btn_x2) // 2, (b1_y1 + b1_y2) // 2 + 5, text=self.mode[:4].upper(), fill=palette["secondary_text"], font=(self.font_mono, 6, "bold"))
 
         # Button 2: Theme Switcher (Domed Stadium Pill)
-        b2_y1 = int(8 + h4 + 3)
-        b2_y2 = int(8 + 2 * h4 + 3)
+        b2_y1 = int(8 + h5 + 3)
+        b2_y2 = int(8 + 2 * h5 + 3)
         b2_fill = palette["button_hover"] if self._hover_control == "side_theme" else palette["button_bg"]
         self._draw_domed_button(btn_x1, b2_y1, btn_x2, b2_y2, 9, b2_fill, palette["button_border"])
         theme_short = self.theme[:3].upper()
@@ -1462,21 +1509,34 @@ class AetherLiquidDesktopOverlay:
         self.canvas.create_text((btn_x1 + btn_x2) // 2, (b2_y1 + b2_y2) // 2 + 5, text=theme_short, fill="#FF9F0A" if not palette.get("is_dark", True) else "#5E5CE6", font=(self.font_mono, 6, "bold"))
 
         # Button 3: Boundary Physics Mode (Domed Stadium Pill)
-        b3_y1 = int(8 + 2 * h4 + 6)
-        b3_y2 = int(8 + 3 * h4 + 6)
+        b3_y1 = int(8 + 2 * h5 + 6)
+        b3_y2 = int(8 + 3 * h5 + 6)
         b3_fill = palette["button_hover"] if self._hover_control == "side_physics" else palette["button_bg"]
         self._draw_domed_button(btn_x1, b3_y1, btn_x2, b3_y2, 9, b3_fill, palette["button_border"])
         b_tag = BOUNDARY_SHORT.get(self.boundary_mode, "BNC")
         b_color = "#30D158" if self.boundary_mode == "bounce" else ("#FF9F0A" if self.boundary_mode == "pacman" else palette["subtle_text"])
         self.canvas.create_text((btn_x1 + btn_x2) // 2, (b3_y1 + b3_y2) // 2, text=b_tag, fill=b_color, font=(self.font_mono, 7, "bold"))
 
-        # Button 4: Quick Launch Web Dashboard (Domed Stadium Pill)
-        b4_y1 = int(8 + 3 * h4 + 9)
-        b4_y2 = int(self.height - 8)
-        b4_fill = "#0066CC" if self._hover_control == "side_web" else palette["button_bg"]
-        b4_fg = "#FFFFFF" if self._hover_control == "side_web" else "#0077EE"
-        self._draw_domed_button(btn_x1, b4_y1, btn_x2, b4_y2, 9, b4_fill, palette["button_border"])
-        self.canvas.create_text((btn_x1 + btn_x2) // 2, (b4_y1 + b4_y2) // 2, text="🌐 WEB", fill=b4_fg, font=(self.font_mono, 7, "bold"))
+        # Button 4: Dedicated Quick Always-on-Top Toggle (Domed Stadium Pill)
+        b4_y1 = int(8 + 3 * h5 + 9)
+        b4_y2 = int(8 + 4 * h5 + 9)
+        is_topmost = bool(self.settings.get("topmost", True))
+        b4_fill = palette["button_hover"] if self._hover_control == "side_topmost" else (
+            ("#133620" if palette.get("is_dark", True) else "#D4F4DD") if is_topmost else palette["button_bg"]
+        )
+        b4_border = "#30D158" if is_topmost else palette["button_border"]
+        self._draw_domed_button(btn_x1, b4_y1, btn_x2, b4_y2, 9, b4_fill, b4_border)
+        top_color = "#30D158" if is_topmost else palette["subtle_text"]
+        self.canvas.create_text((btn_x1 + btn_x2) // 2, (b4_y1 + b4_y2) // 2 - 4, text="📌", fill=top_color, font=(self.font_display, 7))
+        self.canvas.create_text((btn_x1 + btn_x2) // 2, (b4_y1 + b4_y2) // 2 + 5, text="TOP" if is_topmost else "OFF", fill=top_color, font=(self.font_mono, 6, "bold"))
+
+        # Button 5: Quick Launch Web Dashboard (Domed Stadium Pill)
+        b5_y1 = int(8 + 4 * h5 + 12)
+        b5_y2 = int(self.height - 8)
+        b5_fill = "#0066CC" if self._hover_control == "side_web" else palette["button_bg"]
+        b5_fg = "#FFFFFF" if self._hover_control == "side_web" else "#0077EE"
+        self._draw_domed_button(btn_x1, b5_y1, btn_x2, b5_y2, 9, b5_fill, palette["button_border"])
+        self.canvas.create_text((btn_x1 + btn_x2) // 2, (b5_y1 + b5_y2) // 2, text="🌐 WEB", fill=b5_fg, font=(self.font_mono, 7, "bold"))
 
     def open_settings_dialog(self) -> None:
         if self._settings_window and self._settings_window.winfo_exists():
@@ -1650,7 +1710,28 @@ class AetherLiquidDesktopOverlay:
         DomedPillButton(color_row, "🎨 Pick Accent", _pick_accent, width=105, height=26, bg_color=palette["button_bg"], fg_color=palette["primary_text"], hover_bg=palette["button_hover"], border_color=palette["button_border"], font=(self.font_text, 8), theme=self.theme, container_bg=palette["pill_bg"]).pack(side=tk.LEFT, padx=(0, 6))
         DomedPillButton(color_row, "🌊 Pick Liquid", _pick_liquid, width=105, height=26, bg_color=palette["button_bg"], fg_color=palette["primary_text"], hover_bg=palette["button_hover"], border_color=palette["button_border"], font=(self.font_text, 8), theme=self.theme, container_bg=palette["pill_bg"]).pack(side=tk.LEFT)
 
-        # 4. Feature Set Checkboxes
+        # 4. Accounting Lens Radio Selector
+        tk.Label(container, text="ACCOUNTING LENS (USAGE & WORTH):", bg=palette["pill_bg"], fg=palette["secondary_text"], font=(self.font_mono, 8, "bold")).pack(anchor="w", pady=(4, 2))
+        lens_frame = tk.Frame(container, bg=palette["pill_bg"])
+        lens_frame.pack(fill=tk.X, pady=2)
+        lens_var = tk.StringVar(value=self.settings.get("accounting_lens", "specular"))
+        for l_key, l_label in [
+            ("specular", "💎 Specular ($244.42 Official Metered Developer API Compute)"),
+            ("secular", "👁️ Secular ($20.00/mo Earthly Flat Cash Subscription)"),
+            ("spectacular", "⚡ Spectacular ($5,110+ Gross Frontier Market Worth Delivered)"),
+        ]:
+            tk.Radiobutton(
+                lens_frame,
+                text=l_label,
+                value=l_key,
+                variable=lens_var,
+                bg=palette["pill_bg"],
+                fg=palette["primary_text"],
+                selectcolor=palette["button_bg"],
+                font=(self.font_text, 8),
+            ).pack(anchor="w", pady=1)
+
+        # 5. Feature Set Checkboxes
         tk.Label(container, text="FEATURE TOGGLES:", bg=palette["pill_bg"], fg=palette["secondary_text"], font=(self.font_mono, 8, "bold")).pack(anchor="w", pady=(4, 2))
         fizz_var = tk.BooleanVar(value=bool(self.settings.get("enable_fizz", True)))
         lava_var = tk.BooleanVar(value=bool(self.settings.get("simulate_lava_5hr", False)))
@@ -1685,6 +1766,8 @@ class AetherLiquidDesktopOverlay:
             self.settings["simulate_lava_5hr"] = lava_var.get()
             self.settings["enable_particles"] = part_var.get()
             self.settings["topmost"] = top_var.get()
+            self.settings["accounting_lens"] = lens_var.get()
+            self.lens = lens_var.get()
             self.settings["close_to_tray"] = tray_close_var.get()
 
             new_active_subs = [sk for sk, v in sub_vars.items() if v.get()]

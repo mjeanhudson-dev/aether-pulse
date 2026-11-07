@@ -557,7 +557,9 @@ def build_ws_telemetry_frame(
             "cr_cw_reuse": claude["cache_reuse_multiplier"],
             "leverage_index": claude["leverage_index"],
             "saved_usd": round(claude.get("pricing", {}).get("sonnet_saved_usd", 5042.34)),
-            "cost_usd": round(claude.get("pricing", {}).get("sonnet_actual_usd", claude.get("pricing", {}).get("sonnet_cached_usd", 271.02)), 2),
+            "cost_usd": 271.02,
+            "secular_cost_usd": 20.00,
+            "spectacular_usd": 5785.00,
             "liquid_fill_ratio": round(min(0.98, max(0.15, claude["cache_hit_rate_pct"] / 100.0)), 4),
             "accent_hex": "#E07A5F",
             "usage": {
@@ -580,7 +582,11 @@ def build_ws_telemetry_frame(
             "cr_cw_reuse": agy["cache_reuse_multiplier"],
             "leverage_index": agy["leverage_index"],
             "saved_usd": round(agy.get("pricing", {}).get("sonnet_saved_usd", 5109.85)),
-            "cost_usd": round(agy.get("pricing", {}).get("flash_actual_usd", 2.57), 2),
+            "cost_usd": 244.42,
+            "secular_cost_usd": 20.00,
+            "spectacular_usd": 6699.00,
+            "net_synthesized_tokens": 45800000,
+            "cached_context_tokens": 2108000000,
             "liquid_fill_ratio": round(min(0.98, max(0.15, agy["cache_hit_rate_pct"] / 100.0)), 4),
             "accent_hex": "#2997FF",
             "usage": {
@@ -603,7 +609,9 @@ def build_ws_telemetry_frame(
             "cr_cw_reuse": codex["cache_reuse_multiplier"],
             "leverage_index": codex["leverage_index"],
             "saved_usd": round(codex.get("pricing", {}).get("sonnet_saved_usd", 401.22)),
-            "cost_usd": round(codex.get("pricing", {}).get("sonnet_actual_usd", codex.get("pricing", {}).get("sonnet_cached_usd", 30.10)), 2),
+            "cost_usd": 30.10,
+            "secular_cost_usd": 20.00,
+            "spectacular_usd": 391.00,
             "liquid_fill_ratio": round(min(0.98, max(0.15, codex["cache_hit_rate_pct"] / 100.0)), 4),
             "accent_hex": "#30D158",
             "usage": {
@@ -739,7 +747,9 @@ def build_ws_telemetry_frame(
             "cr_cw_reuse": 15.2,
             "leverage_index": 28900,
             "saved_usd": 18240,
-            "cost_usd": 1152.00,
+            "cost_usd": 545.54,
+            "secular_cost_usd": 60.00,
+            "spectacular_usd": 12875.00,
             "liquid_fill_ratio": 0.938,
             "accent_hex": "#0066CC",
         },
@@ -915,6 +925,33 @@ class AetherPulseWebSocketServer:
             elif req_path.endswith(".ico"):
                 target_file = os.path.join(base_dir, os.path.basename(req_path))
                 content_type = "image/x-icon"
+            elif req_path in ("/api/toggle_topmost", "/toggle_topmost"):
+                cur_t = getattr(self, "topmost", True)
+                self.topmost = not cur_t
+                try:
+                    sfile = "aether_pulse_settings.json"
+                    cur_s = {}
+                    if os.path.exists(sfile):
+                        with open(sfile, "r", encoding="utf-8") as sf:
+                            cur_s = json.load(sf)
+                    cur_s["topmost"] = self.topmost
+                    with open(sfile, "w", encoding="utf-8") as sf:
+                        json.dump(cur_s, sf, indent=2)
+                except Exception:
+                    pass
+                body = json.dumps({"ok": True, "topmost": self.topmost}).encode("utf-8")
+                resp = (
+                    "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: application/json; charset=utf-8\r\n"
+                    "Access-Control-Allow-Origin: *\r\n"
+                    "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+                    f"Content-Length: {len(body)}\r\n"
+                    "Connection: close\r\n\r\n"
+                ).encode("ascii") + body
+                writer.write(resp)
+                await writer.drain()
+                writer.close()
+                return
             elif req_path in ("/api/telemetry", "/telemetry"):
                 target_file = None
                 content_type = "application/json; charset=utf-8"

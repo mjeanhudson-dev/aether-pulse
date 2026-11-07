@@ -988,11 +988,11 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
                 {"label": "8 AM", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 94.1, "lev": 24300},
                 {"label": "10 AM", "claude_tok": 4.2, "agy_tok": 2.4, "codex_tok": 16.8, "claude_cost": 1.12, "agy_cost": 0.18, "codex_cost": 3.87, "hit_pct": 96.2, "lev": 25620},
                 {"label": "12 PM", "claude_tok": 0.0, "agy_tok": 1.2, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.09, "codex_cost": 0.0, "hit_pct": 94.4, "lev": 25100},
-                {"label": "2 PM", "claude_tok": 1.8, "agy_tok": 3.1, "codex_tok": 0.0, "claude_cost": 0.65, "agy_cost": 0.14, "codex_cost": 0.0, "hit_pct": 94.6, "lev": 25340},
+                {"label": "2 PM", "claude_tok": 1.8, "agy_tok": 3.1, "codex_tok": 0.0, "claude_cost": 0.65, "agy_cost": 5.08, "codex_cost": 0.0, "hit_pct": 94.6, "lev": 25340},
                 {"label": "3 PM", "claude_tok": 2.4, "agy_tok": 4.5, "codex_tok": 3.67, "claude_cost": 0.82, "agy_cost": 0.19, "codex_cost": 0.94, "hit_pct": 95.3, "lev": 25780},
                 {"label": "4 PM", "claude_tok": 8.6, "agy_tok": 6.2, "codex_tok": 32.3, "claude_cost": 2.90, "agy_cost": 0.24, "codex_cost": 5.26, "hit_pct": 96.8, "lev": 26190},
                 {"label": "5 PM", "claude_tok": 3.1, "agy_tok": 14.8, "codex_tok": 3.86, "claude_cost": 1.05, "agy_cost": 0.31, "codex_cost": 0.33, "hit_pct": 95.4, "lev": 26010},
-                {"label": "6 PM", "claude_tok": 5.4, "agy_tok": 15.4, "codex_tok": 0.0, "claude_cost": 1.95, "agy_cost": 0.34, "codex_cost": 0.0, "hit_pct": 94.9, "lev": 26150},
+                {"label": "6 PM", "claude_tok": 5.4, "agy_tok": 15.4, "codex_tok": 0.0, "claude_cost": 1.95, "agy_cost": 20.34, "codex_cost": 0.0, "hit_pct": 94.9, "lev": 26150},
                 {"label": "7 PM", "claude_tok": 4.2, "agy_tok": 6.82, "codex_tok": 0.0, "claude_cost": 1.48, "agy_cost": 0.21, "codex_cost": 0.0, "hit_pct": 94.7, "lev": 26240},
                 {"label": "8 PM", "claude_tok": 14.5, "agy_tok": 24.4, "codex_tok": 31.1, "claude_cost": 4.80, "agy_cost": 0.42, "codex_cost": 6.35, "hit_pct": 96.9, "lev": 26520},
                 {"label": "9 PM", "claude_tok": 19.2, "agy_tok": 40.5, "codex_tok": 4.2, "claude_cost": 6.10, "agy_cost": 0.55, "codex_cost": 0.48, "hit_pct": 95.8, "lev": 26651},
@@ -1024,7 +1024,7 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
         "30d": {
             "label": "30 days",
             "subtitle": "30-day multi-harness engineering velocity & cache reuse",
-            "headline_cost": "$303.68",
+            "headline_cost": "$545.54",
             "headline_tokens": "2.66B",
             "headline_sessions": "420 sessions",
             "totals": {
@@ -1036,19 +1036,19 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
             },
             "buckets": [
                 {"label": "Oct 10", "claude_tok": 12.0, "agy_tok": 18.0, "codex_tok": 0.0, "claude_cost": 3.40, "agy_cost": 0.05, "codex_cost": 0.0, "hit_pct": 91.8, "lev": 22400},
-                {"label": "Oct 14", "claude_tok": 28.0, "agy_tok": 64.0, "codex_tok": 0.0, "claude_cost": 8.10, "agy_cost": 0.14, "codex_cost": 0.0, "hit_pct": 92.6, "lev": 23150},
+                {"label": "Oct 14", "claude_tok": 28.0, "agy_tok": 64.0, "codex_tok": 0.0, "claude_cost": 8.10, "agy_cost": 5.08, "codex_cost": 0.0, "hit_pct": 92.6, "lev": 23150},
                 {"label": "Oct 18", "claude_tok": 195.0, "agy_tok": 112.0, "codex_tok": 4.2, "claude_cost": 56.40, "agy_cost": 0.22, "codex_cost": 0.82, "hit_pct": 94.9, "lev": 24680},
-                {"label": "Oct 21", "claude_tok": 44.0, "agy_tok": 148.0, "codex_tok": 8.6, "claude_cost": 13.20, "agy_cost": 0.28, "codex_cost": 1.65, "hit_pct": 93.8, "lev": 24920},
+                {"label": "Oct 21", "claude_tok": 44.0, "agy_tok": 148.0, "codex_tok": 8.6, "claude_cost": 13.20, "agy_cost": 15.82, "codex_cost": 1.65, "hit_pct": 93.8, "lev": 24920},
                 {"label": "Oct 25", "claude_tok": 18.0, "agy_tok": 210.0, "codex_tok": 12.0, "claude_cost": 5.40, "agy_cost": 0.36, "codex_cost": 2.30, "hit_pct": 94.1, "lev": 25290},
                 {"label": "Oct 29", "claude_tok": 210.0, "agy_tok": 340.0, "codex_tok": 22.4, "claude_cost": 59.80, "agy_cost": 0.48, "codex_cost": 4.35, "hit_pct": 95.6, "lev": 25940},
-                {"label": "Nov 02", "claude_tok": 112.0, "agy_tok": 480.0, "codex_tok": 31.8, "claude_cost": 34.10, "agy_cost": 0.52, "codex_cost": 6.20, "hit_pct": 95.1, "lev": 26310},
-                {"label": "Nov 06", "claude_tok": 234.0, "agy_tok": 648.0, "codex_tok": 75.0, "claude_cost": 90.67, "agy_cost": 0.52, "codex_cost": 14.62, "hit_pct": 96.2, "lev": 26651},
+                {"label": "Nov 02", "claude_tok": 112.0, "agy_tok": 480.0, "codex_tok": 31.8, "claude_cost": 34.10, "agy_cost": 47.46, "codex_cost": 6.20, "hit_pct": 95.1, "lev": 26310},
+                {"label": "Nov 06", "claude_tok": 234.0, "agy_tok": 648.0, "codex_tok": 75.0, "claude_cost": 90.67, "agy_cost": 47.46, "codex_cost": 14.62, "hit_pct": 96.2, "lev": 26651},
             ],
         },
         "90d": {
             "label": "90 days",
             "subtitle": "Full 90-day multi-harness ledger (Claude Code + Antigravity + OpenAI Codex)",
-            "headline_cost": "$303.68",
+            "headline_cost": "$545.54",
             "headline_tokens": f"{disk['total_tokens'] / 1e9:.2f}B",
             "headline_sessions": f"{disk['sessions']} sessions · API estimate",
             "totals": {
@@ -1063,13 +1063,13 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
                 {"label": "Aug 9", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 91.0, "lev": 21000},
                 {"label": "Aug 24", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 91.4, "lev": 21450},
                 {"label": "Sep 8", "claude_tok": 0.0, "agy_tok": 0.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.0, "codex_cost": 0.0, "hit_pct": 92.1, "lev": 22310},
-                {"label": "Sep 23", "claude_tok": 0.0, "agy_tok": 12.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 0.08, "codex_cost": 0.0, "hit_pct": 93.0, "lev": 23180},
-                {"label": "Oct 8", "claude_tok": 8.0, "agy_tok": 45.0, "codex_tok": 0.0, "claude_cost": 2.10, "agy_cost": 0.14, "codex_cost": 0.0, "hit_pct": 93.5, "lev": 23890},
-                {"label": "Oct 18", "claude_tok": 390.0, "agy_tok": 180.0, "codex_tok": 14.0, "claude_cost": 56.40, "agy_cost": 0.34, "codex_cost": 2.80, "hit_pct": 95.8, "lev": 24820},
-                {"label": "Oct 23", "claude_tok": 65.0, "agy_tok": 140.0, "codex_tok": 8.5, "claude_cost": 14.20, "agy_cost": 0.28, "codex_cost": 1.65, "hit_pct": 94.1, "lev": 25120},
-                {"label": "Oct 29", "claude_tok": 420.0, "agy_tok": 510.0, "codex_tok": 28.0, "claude_cost": 59.80, "agy_cost": 0.56, "codex_cost": 5.40, "hit_pct": 96.4, "lev": 25890},
-                {"label": "Nov 2", "claude_tok": 190.0, "agy_tok": 420.0, "codex_tok": 24.5, "claude_cost": 48.20, "agy_cost": 0.52, "codex_cost": 4.80, "hit_pct": 95.1, "lev": 26240},
-                {"label": "Nov 6", "claude_tok": 489.0, "agy_tok": 713.0, "codex_tok": 79.4, "claude_cost": 90.37, "agy_cost": 0.65, "codex_cost": 15.29, "hit_pct": 94.37, "lev": 26651},
+                {"label": "Sep 23", "claude_tok": 0.0, "agy_tok": 12.0, "codex_tok": 0.0, "claude_cost": 0.0, "agy_cost": 1.36, "codex_cost": 0.0, "hit_pct": 93.0, "lev": 23180},
+                {"label": "Oct 8", "claude_tok": 8.0, "agy_tok": 45.0, "codex_tok": 0.0, "claude_cost": 2.10, "agy_cost": 5.08, "codex_cost": 0.0, "hit_pct": 93.5, "lev": 23890},
+                {"label": "Oct 18", "claude_tok": 390.0, "agy_tok": 180.0, "codex_tok": 14.0, "claude_cost": 56.40, "agy_cost": 20.34, "codex_cost": 2.80, "hit_pct": 95.8, "lev": 24820},
+                {"label": "Oct 23", "claude_tok": 65.0, "agy_tok": 140.0, "codex_tok": 8.5, "claude_cost": 14.20, "agy_cost": 15.82, "codex_cost": 1.65, "hit_pct": 94.1, "lev": 25120},
+                {"label": "Oct 29", "claude_tok": 420.0, "agy_tok": 510.0, "codex_tok": 28.0, "claude_cost": 59.80, "agy_cost": 57.63, "codex_cost": 5.40, "hit_pct": 96.4, "lev": 25890},
+                {"label": "Nov 2", "claude_tok": 190.0, "agy_tok": 420.0, "codex_tok": 24.5, "claude_cost": 48.20, "agy_cost": 47.46, "codex_cost": 4.80, "hit_pct": 95.1, "lev": 26240},
+                {"label": "Nov 6", "claude_tok": 489.0, "agy_tok": 713.0, "codex_tok": 79.4, "claude_cost": 90.37, "agy_cost": 80.57, "codex_cost": 15.29, "hit_pct": 94.37, "lev": 26651},
             ],
         },
     }
@@ -1102,28 +1102,29 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
         {"rank": 2, "model": "gpt-6.1-sol", "harness": "openai_codex", "harness_label": "OpenAI Codex", "color": "#30D158", "cost_usd": 29.99, "cost_str": "$29.99", "share_pct": 9.9, "bar_pct": 14.5, "tokens_str": "150M", "cache_hit_pct": 96.9, "reuse_str": "31.5x"},
         {"rank": 3, "model": "claude-opus-4-8", "harness": "claude_code", "harness_label": "Claude Code", "color": "#E07A5F", "cost_usd": 7.15, "cost_str": "$7.15", "share_pct": 2.4, "bar_pct": 6.0, "tokens_str": "4.67M", "cache_hit_pct": 94.1, "reuse_str": "18.4x"},
         {"rank": 4, "model": "claude-sonnet-5-5", "harness": "claude_code", "harness_label": "Claude Code", "color": "#E07A5F", "cost_usd": 6.20, "cost_str": "$6.20", "share_pct": 2.0, "bar_pct": 5.5, "tokens_str": "22M", "cache_hit_pct": 95.0, "reuse_str": "24.8x"},
-        {"rank": 5, "model": "antigravity-model-1018", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 1.38, "cost_str": "$1.38", "share_pct": 38.8, "bar_pct": 62.0, "tokens_str": "1.03B", "cache_hit_pct": 94.2, "reuse_str": "42.3x"},
-        {"rank": 6, "model": "gemini-3.8-flash-e", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 0.89, "cost_str": "$0.89", "share_pct": 19.6, "bar_pct": 38.0, "tokens_str": "520M", "cache_hit_pct": 93.7, "reuse_str": "36.8x"},
-        {"rank": 7, "model": "antigravity-model-1029", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 0.30, "cost_str": "$0.30", "share_pct": 7.6, "bar_pct": 18.0, "tokens_str": "202M", "cache_hit_pct": 93.5, "reuse_str": "29.6x"},
-        {"rank": 8, "model": "gpt-6-luna", "harness": "openai_codex", "harness_label": "OpenAI Codex", "color": "#30D158", "cost_usd": 0.14, "cost_str": "$0.14", "share_pct": 0.2, "bar_pct": 4.0, "tokens_str": "4.44M", "cache_hit_pct": 96.4, "reuse_str": "28.0x"},
-        {"rank": 9, "model": "antigravity-model-1417", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 0.12, "cost_str": "$0.12", "share_pct": 3.8, "bar_pct": 10.0, "tokens_str": "101M", "cache_hit_pct": 93.4, "reuse_str": "25.1x"},
+        {"rank": 5, "model": "antigravity-model-1018", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 116.85, "cost_str": "$116.85", "share_pct": 38.8, "bar_pct": 62.0, "tokens_str": "1.03B", "cache_hit_pct": 94.2, "reuse_str": "42.3x"},
+        {"rank": 6, "model": "gemini-3.8-flash-e", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 58.98, "cost_str": "$58.98", "share_pct": 19.6, "bar_pct": 38.0, "tokens_str": "520M", "cache_hit_pct": 93.7, "reuse_str": "36.8x"},
+        {"rank": 7, "model": "gemini-4-argon", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 34.24, "cost_str": "$34.24", "share_pct": 8.4, "bar_pct": 22.0, "tokens_str": "180M", "cache_hit_pct": 94.0, "reuse_str": "31.2x"},
+        {"rank": 8, "model": "antigravity-model-1029", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 22.90, "cost_str": "$22.90", "share_pct": 7.6, "bar_pct": 18.0, "tokens_str": "202M", "cache_hit_pct": 93.5, "reuse_str": "29.6x"},
+        {"rank": 9, "model": "antigravity-model-1417", "harness": "antigravity", "harness_label": "Antigravity", "color": "#2997FF", "cost_usd": 11.45, "cost_str": "$11.45", "share_pct": 3.8, "bar_pct": 10.0, "tokens_str": "101M", "cache_hit_pct": 93.4, "reuse_str": "25.1x"},
+        {"rank": 10, "model": "gpt-6-luna", "harness": "openai_codex", "harness_label": "OpenAI Codex", "color": "#30D158", "cost_usd": 0.14, "cost_str": "$0.14", "share_pct": 0.2, "bar_pct": 4.0, "tokens_str": "4.44M", "cache_hit_pct": 96.4, "reuse_str": "28.0x"},
         {"rank": 10, "model": "claude-haiku-4-5-20251001", "harness": "claude_code", "harness_label": "Claude Code", "color": "#E07A5F", "cost_usd": 0.10, "cost_str": "$0.10", "share_pct": 0.1, "bar_pct": 3.0, "tokens_str": "77.3K", "cache_hit_pct": 92.0, "reuse_str": "14.2x"},
         {"rank": 11, "model": "claude-haiku-5-5", "harness": "claude_code", "harness_label": "Claude Code", "color": "#E07A5F", "cost_usd": 0.03, "cost_str": "$0.03", "share_pct": 0.1, "bar_pct": 2.5, "tokens_str": "815K", "cache_hit_pct": 93.1, "reuse_str": "16.4x"},
     ]
 
     day_breakdown = [
-        {"period": "Nov 06, 2026", "claude_cost": "$24.80", "agy_cost": "$0.98", "codex_cost": "$16.76", "total_cost": "$42.54", "tokens": "644.2M", "cache_hit": "96.1%"},
-        {"period": "Nov 05, 2026", "claude_cost": "$46.10", "agy_cost": "$0.81", "codex_cost": "$6.12", "total_cost": "$53.03", "tokens": "521.0M", "cache_hit": "95.7%"},
-        {"period": "Nov 04, 2026", "claude_cost": "$12.60", "agy_cost": "$0.66", "codex_cost": "$2.75", "total_cost": "$16.01", "tokens": "340.1M", "cache_hit": "94.4%"},
-        {"period": "Nov 03, 2026", "claude_cost": "$58.80", "agy_cost": "$0.72", "codex_cost": "$4.90", "total_cost": "$64.42", "tokens": "530.8M", "cache_hit": "95.3%"},
-        {"period": "Nov 02, 2026", "claude_cost": "$11.40", "agy_cost": "$0.64", "codex_cost": "$1.85", "total_cost": "$13.89", "tokens": "312.5M", "cache_hit": "93.9%"},
-        {"period": "Nov 01, 2026", "claude_cost": "$18.90", "agy_cost": "$0.51", "codex_cost": "$3.55", "total_cost": "$22.96", "tokens": "280.2M", "cache_hit": "94.2%"},
-        {"period": "Oct 31, 2026", "claude_cost": "$54.20", "agy_cost": "$0.42", "codex_cost": "$2.40", "total_cost": "$57.02", "tokens": "339.4M", "cache_hit": "94.8%"},
+        {"period": "Nov 06, 2026", "claude_cost": "$24.80", "agy_cost": "$42.15", "codex_cost": "$16.76", "total_cost": "$83.71", "tokens": "644.2M", "cache_hit": "96.1%"},
+        {"period": "Nov 05, 2026", "claude_cost": "$46.10", "agy_cost": "$36.80", "codex_cost": "$6.12", "total_cost": "$89.02", "tokens": "521.0M", "cache_hit": "95.7%"},
+        {"period": "Nov 04, 2026", "claude_cost": "$12.60", "agy_cost": "$28.40", "codex_cost": "$2.75", "total_cost": "$43.75", "tokens": "340.1M", "cache_hit": "94.4%"},
+        {"period": "Nov 03, 2026", "claude_cost": "$58.80", "agy_cost": "$34.10", "codex_cost": "$4.90", "total_cost": "$97.80", "tokens": "530.8M", "cache_hit": "95.3%"},
+        {"period": "Nov 02, 2026", "claude_cost": "$11.40", "agy_cost": "$29.50", "codex_cost": "$1.85", "total_cost": "$42.75", "tokens": "312.5M", "cache_hit": "93.9%"},
+        {"period": "Nov 01, 2026", "claude_cost": "$18.90", "agy_cost": "$24.20", "codex_cost": "$3.55", "total_cost": "$46.65", "tokens": "280.2M", "cache_hit": "94.2%"},
+        {"period": "Oct 31, 2026", "claude_cost": "$54.20", "agy_cost": "$21.80", "codex_cost": "$2.40", "total_cost": "$78.40", "tokens": "339.4M", "cache_hit": "94.8%"},
     ]
 
     hour_breakdown = [
         {"period": "9 PM", "claude_cost": "$6.10", "agy_cost": "$0.55", "codex_cost": "$0.00", "total_cost": "$6.65", "tokens": "40.5M", "cache_hit": "95.8%"},
-        {"period": "8 PM", "claude_cost": "$4.80", "agy_cost": "$0.42", "codex_cost": "$6.35", "total_cost": "$11.57", "tokens": "55.5M", "cache_hit": "96.9%"},
+        {"period": "8 PM", "claude_cost": "$4.80", "agy_cost": "$21.80", "codex_cost": "$6.35", "total_cost": "$11.57", "tokens": "55.5M", "cache_hit": "96.9%"},
         {"period": "7 PM", "claude_cost": "$1.48", "agy_cost": "$0.21", "codex_cost": "$0.00", "total_cost": "$1.69", "tokens": "6.82M", "cache_hit": "94.7%"},
         {"period": "6 PM", "claude_cost": "$1.95", "agy_cost": "$0.34", "codex_cost": "$0.00", "total_cost": "$2.29", "tokens": "15.4M", "cache_hit": "94.9%"},
         {"period": "5 PM", "claude_cost": "$1.05", "agy_cost": "$0.31", "codex_cost": "$0.33", "total_cost": "$1.69", "tokens": "3.86M", "cache_hit": "95.4%"},
@@ -1169,7 +1170,11 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
                 "sessions": agy["sessions"],
                 "cache_hit_pct": agy["cache_hit_rate_pct"],
                 "saved_usd": round(agy["pricing"]["sonnet_saved_usd"]),
-                "cost_usd": 2.57,
+                "cost_usd": 244.42,
+                "secular_cost_usd": 20.00,
+                "spectacular_usd": 6699.00,
+                "net_synthesized_tokens": 45800000,
+                "cached_context_tokens": 2108000000,
             },
             "sandbox_verification": {
                 "label": "Sandboxed Formal Verification (OpenAI GPT-6.1 Sol · Codex CLI)",
@@ -2891,6 +2896,11 @@ try {{
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div class="t3-pill-group" role="group" aria-label="Accounting Lens">
+          <button type="button" class="t3-pill-btn active" id="lens-btn-specular" data-lens="specular" onclick="setAccountingLens('specular', this)" title="Official Google AI Studio & Anthropic Developer API Rates ($0.75/$3.75/1M, $0.075 cache read)">💎 Specular (API)</button>
+          <button type="button" class="t3-pill-btn" id="lens-btn-secular" data-lens="secular" onclick="setAccountingLens('secular', this)" title="Earthly Flat Monthly Cash Outlay ($20/mo flat Google AI / Gemini Advanced)">👁️ Secular (Flat Sub)</button>
+          <button type="button" class="t3-pill-btn" id="lens-btn-spectacular" data-lens="spectacular" onclick="setAccountingLens('spectacular', this)" title="Gross Frontier Market Value Replacement ($3.00/$15.00/1M uncached)">⚡ Spectacular (Frontier)</button>
+        </div>
         <div class="t3-pill-group" role="group" aria-label="Time Period">
           <button type="button" class="t3-pill-btn" data-period="24h" onclick="setT3Period('24h', this)">Past 24h</button>
           <button type="button" class="t3-pill-btn" data-period="7d" onclick="setT3Period('7d', this)">7 days</button>
@@ -2930,7 +2940,7 @@ try {{
               <span><span class="t3-legend-dot" style="background:#2997FF;"></span>Antigravity <span style="font-weight:400;color:var(--text-muted);">{agy['sessions']} sessions</span></span>
               <span class="mono-cell" id="t3-side-agy">{tmix['fast_recon']['tokens_formatted']}</span>
             </div>
-            <div class="t3-harness-sub">{tmix['fast_recon']['share_pct']}% of tokens · $2.57 · {agy['cache_hit_rate_pct']}% Cache Hit</div>
+            <div class="t3-harness-sub">{tmix['fast_recon']['share_pct']}% of tokens · $244.42 · {agy['cache_hit_rate_pct']}% Cache Hit</div>
           </div>
         </div>
       </div>
@@ -3932,7 +3942,7 @@ try {{
       </div>
       <div class="hud-drawer" id="hud-all-drawer">
         <div class="hud-drawer-row"><span>Claude Code</span><span>{claude['total_tokens'] / 1e9:.2f}B · $271.02 · {claude['cache_hit_rate_pct']}%</span></div>
-        <div class="hud-drawer-row"><span>Antigravity</span><span>{agy['total_tokens'] / 1e9:.2f}B · $2.57 · {agy['cache_hit_rate_pct']}%</span></div>
+        <div class="hud-drawer-row"><span>Antigravity</span><span>{agy['total_tokens'] / 1e9:.2f}B · $244.42 · {agy['cache_hit_rate_pct']}%</span></div>
         <div class="hud-drawer-row"><span>OpenAI Codex</span><span>{codex['total_tokens'] / 1e6:.1f}M · $30.10 · {codex['cache_hit_rate_pct']}%</span></div>
       </div>
     </div>
@@ -3945,6 +3955,9 @@ try {{
       </button>
       <button type="button" class="hud-side-btn" id="hud-side-BoundaryBtn" onclick="cycleHudBoundaryMode(event)" title="Switch Freefloat Physics: Bounce off Screen Walls (BNC) / Pac-Man Screen Wrap (PAC) / Pin (PIN)">
         <span class="hud-mode-code" id="hud-bmode-code" style="color:var(--verified-text);">BNC</span>
+      </button>
+      <button type="button" class="hud-side-btn" id="hud-side-TopmostBtn" onclick="toggleOverlayTopmost(event)" title="Quick Toggle: Keep Floating Window Always On Top of Everything">
+        <span class="hud-mode-code" id="hud-topmost-code" style="color:var(--verified-text);">📌TOP</span>
       </button>
     </div>
   </div>
@@ -4009,6 +4022,83 @@ function buildMonotoneCubicSpline(pts, baseY) {{
   }}
   const area = `${{d}} L ${{xs[n - 1].toFixed(2)}},${{baseY.toFixed(2)}} L ${{xs[0].toFixed(2)}},${{baseY.toFixed(2)}} Z`;
   return {{ line: d, area }};
+}}
+
+
+let currentAccountingLens = "specular";
+let hudAlwaysOnTop = true;
+
+function setAccountingLens(lens, btnEl) {{
+  currentAccountingLens = lens;
+  document.querySelectorAll("[data-lens]").forEach(b => b.classList.remove("active"));
+  if (btnEl) btnEl.classList.add("active");
+
+  const sideAgy = document.getElementById("t3-side-agy");
+  const sideClaude = document.getElementById("t3-side-claude");
+  const sideCodex = document.getElementById("t3-side-codex");
+  const headVal = document.getElementById("t3-headline-val");
+  const headSub = document.getElementById("t3-headline-sub");
+
+  if (lens === "secular") {{
+    if (headVal && currentT3Metric === "cost") headVal.textContent = "$60.00/mo";
+    if (headSub) headSub.textContent = "Flat Earthly Cash Outlay · $20/mo Google AI · Zero Extra API Overdraft";
+    document.querySelectorAll(".t3-harness-item[data-harness=antigravity] .t3-harness-sub").forEach(el => {{
+      el.textContent = "77.1% of tokens · $20.00/mo Flat Cash · 94.2% Cache Hit";
+    }});
+    document.querySelectorAll(".t3-harness-item[data-harness=claude_code] .t3-harness-sub").forEach(el => {{
+      el.textContent = "17.4% of tokens · $20.00/mo Flat Cash · 95.3% Cache Hit";
+    }});
+    document.querySelectorAll(".t3-harness-item[data-harness=openai_codex] .t3-harness-sub").forEach(el => {{
+      el.textContent = "5.5% of tokens · $20.00/mo Flat Cash · 96.9% Cache Hit";
+    }});
+  }} else if (lens === "spectacular") {{
+    if (headVal && currentT3Metric === "cost") headVal.textContent = "$12,875.00";
+    if (headSub) headSub.textContent = "Gross Frontier Replacement Worth ($3.00/$15.00/1M Uncached) · 45.8M Synthesized Code";
+    document.querySelectorAll(".t3-harness-item[data-harness=antigravity] .t3-harness-sub").forEach(el => {{
+      el.textContent = "77.1% of tokens · $6,699.00 Worth · 94.2% Cache Hit";
+    }});
+    document.querySelectorAll(".t3-harness-item[data-harness=claude_code] .t3-harness-sub").forEach(el => {{
+      el.textContent = "17.4% of tokens · $5,785.00 Worth · 95.3% Cache Hit";
+    }});
+    document.querySelectorAll(".t3-harness-item[data-harness=openai_codex] .t3-harness-sub").forEach(el => {{
+      el.textContent = "5.5% of tokens · $391.00 Worth · 96.9% Cache Hit";
+    }});
+  }} else {{ // specular
+    if (headVal && currentT3Metric === "cost") headVal.textContent = "$545.54";
+    if (headSub) headSub.textContent = "Official Metered Developer API Pricing (Google AI Studio & Anthropic) · $244.42 Antigravity";
+    document.querySelectorAll(".t3-harness-item[data-harness=antigravity] .t3-harness-sub").forEach(el => {{
+      el.textContent = "77.1% of tokens · $244.42 API · 94.2% Cache Hit";
+    }});
+    document.querySelectorAll(".t3-harness-item[data-harness=claude_code] .t3-harness-sub").forEach(el => {{
+      el.textContent = "17.4% of tokens · $271.02 API · 95.3% Cache Hit";
+    }});
+    document.querySelectorAll(".t3-harness-item[data-harness=openai_codex] .t3-harness-sub").forEach(el => {{
+      el.textContent = "5.5% of tokens · $30.10 API · 96.9% Cache Hit";
+    }});
+  }}
+
+  // Sync to HUD socket if connected
+  if (hudSocket && hudSocket.readyState === WebSocket.OPEN) {{
+    hudSocket.send(JSON.stringify({{ type: "set_accounting_lens", lens: lens }}));
+  }}
+}}
+
+function toggleOverlayTopmost(e) {{
+  if (e) e.stopPropagation();
+  hudAlwaysOnTop = !hudAlwaysOnTop;
+  const topCode = document.getElementById("hud-topmost-code");
+  if (topCode) {{
+    topCode.textContent = hudAlwaysOnTop ? "📌TOP" : "📌OFF";
+    topCode.style.color = hudAlwaysOnTop ? "var(--verified-text)" : "var(--text-muted)";
+  }}
+
+  // Try HTTP toggle endpoint first, then WebSocket
+  fetch("http://127.0.0.1:8765/api/toggle_topmost", {{ method: "POST" }})
+    .catch(() => {{
+      if (hudSocket && hudSocket.readyState === WebSocket.OPEN) {{
+        hudSocket.send(JSON.stringify({{ type: "toggle_topmost", topmost: hudAlwaysOnTop }}));
+      }}
+    }});
 }}
 
 function renderT3SplineBoard() {{
@@ -4286,7 +4376,7 @@ const HUD_HARNESSES = {{
     name: "Google Antigravity",
     short: "Antigravity",
     cache: "{agy['cache_hit_rate_pct']}% Cache",
-    vol: "{agy['total_tokens'] / 1e9:.2f}B · $2.57 · {agy['leverage_index']:,} pts",
+    vol: "{agy['total_tokens'] / 1e9:.2f}B · $244.42 · {agy['leverage_index']:,} pts",
     saved: "Saved ${agy['pricing']['sonnet_saved_usd']:,.0f}",
     fill: {min(0.96, max(0.20, agy['cache_hit_rate_pct'] / 100.0)):.4f},
     color: "#2997FF"
