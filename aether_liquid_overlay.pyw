@@ -762,6 +762,25 @@ class AetherLiquidDesktopOverlay:
         online_url = "https://mjeanhudson-dev.github.io/aether-pulse/"
         local_file = os.path.abspath("index.html")
 
+        # Prioritize Standalone Native Edge App window for 1:1 desktop studio experience
+        edge_candidates = [
+            r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+            r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+        ]
+        edge_bin = next((p for p in edge_candidates if os.path.exists(p)), None)
+        if edge_bin:
+            try:
+                import subprocess
+                subprocess.Popen([
+                    edge_bin,
+                    f"--app={local_url}",
+                    "--window-size=1440,900",
+                    "--window-position=120,60",
+                ])
+                return
+            except Exception:
+                pass
+
         opened = False
         try:
             import urllib.request
@@ -875,18 +894,20 @@ class AetherLiquidDesktopOverlay:
             elif 8 + 4 * h5 + 12 <= event.y <= self.height - 8:
                 self._hover_control = "side_web"
 
-        # Check Harness Drawer Rows when mode == "all" (y > 104)
+        # Check Harness Drawer Rows & 4 KPI Cards when mode == "all"
         old_harness = self._hover_harness
         self._hover_harness = None
-        if self.mode == "all" and event.y > 104 and event.x < body_w:
+        if self.mode == "all" and 112 <= event.y <= 200 and event.x < body_w:
+            self._hover_control = "card_kpi"
+        elif self.mode == "all" and 218 <= event.y <= 296 and event.x < body_w:
             top_harness_keys = [
                 "claude_code", "antigravity", "openai_codex", "cursor", "aider",
                 "windsurf", "continue_dev", "github_copilot", "openhands", "t3_code"
             ]
             col1 = top_harness_keys[:5]
             col2 = top_harness_keys[5:]
-            row_i = min(4, max(0, int((event.y - 108) // 24)))
-            if event.x < 200:
+            row_i = min(4, max(0, int((event.y - 220) // 15)))
+            if event.x < (body_w // 2):
                 self._hover_harness = col1[row_i]
             else:
                 self._hover_harness = col2[row_i]
@@ -972,8 +993,8 @@ class AetherLiquidDesktopOverlay:
                 self._launch_web_dashboard()
                 return
 
-        # Check clicking on metric text or subtitle to cycle accounting lens
-        if 16 <= event.x < body_w and 42 <= event.y <= 92:
+        # Check clicking on metric text or 4 KPI cards to cycle accounting lens
+        if 16 <= event.x < body_w and (42 <= event.y <= 92 or (self.mode == "all" and 112 <= event.y <= 200)):
             self._cycle_accounting_lens()
             return
 
@@ -1063,7 +1084,7 @@ class AetherLiquidDesktopOverlay:
             self.target_label = probed["process_name"][:34]
 
     def _update_height_for_mode(self) -> None:
-        self.height = 246 if self.mode == "all" else 118
+        self.height = 328 if self.mode == "all" else 118
         self.phys["height"] = float(self.height)
         self.canvas.config(height=self.height)
         self.root.update_idletasks()
@@ -1132,7 +1153,8 @@ class AetherLiquidDesktopOverlay:
 
         # Step volumetric aeration micro-bubbles
         body_w = self.width - 64
-        base_y = self.height - (self.height * 0.44 * float(self.phys.get("squish_y", 1.0) * 0.94))
+        liquid_h = 98.0 if self.mode == "all" else float(self.height)
+        base_y = liquid_h - (liquid_h * 0.44 * float(self.phys.get("squish_y", 1.0) * 0.94))
         for b in self.bubbles:
             b.step(dt, base_y)
 
@@ -1270,14 +1292,16 @@ class AetherLiquidDesktopOverlay:
         self.canvas.create_line(6.0 + self.capsule_radius * 0.7, 7.0, self.width - 6.0 - self.capsule_radius * 0.7, 7.0, fill=palette["border_highlight"], width=1)
 
         body_w = self.width - 64
-        base_y = self.height - (self.height * 0.44 * fill_ratio)
+        is_expanded = frame.get("show_all_drawer", False)
+        liquid_h = 98.0 if is_expanded else float(self.height)
+        base_y = liquid_h - (liquid_h * 0.44 * fill_ratio)
         waves = self.phys["wave_heights"]
         n = len(waves)
         tilt = float(self.phys["tilt_deg"])
 
         x_left = 7.0
         x_right = body_w - 1.0
-        y_floor = self.height - 7.0
+        y_floor = 96.0 if is_expanded else (self.height - 7.0)
 
         # 2. Build Smooth Catmull-Rom Splines (470+ points, zero line breaks)
         deep_nodes: List[Tuple[float, float]] = []
@@ -1420,7 +1444,7 @@ class AetherLiquidDesktopOverlay:
         tier_title = sub_tier["name"].upper()
 
         if self.mode == "all" or active.get("id") == "all":
-            badge_text = f"{tier_title} · {h_label}"
+            badge_text = f"✓ ARCHITECT · {tier_title} · {h_label}"
         else:
             badge_text = f"{active['name'].upper()} · {h_label}"
 
@@ -1474,10 +1498,82 @@ class AetherLiquidDesktopOverlay:
             font=(self.font_mono, 7, "bold"),
         )
 
-        # 13. If "All 10 Harnesses" drawer is open, render comparative 2-column grid
+        # 13. If "All 10 Harnesses" drawer is open, render 4 KPI Cards + 10-Harness Comparative Grid
         if frame["show_all_drawer"]:
-            self.canvas.create_line(18, 100, body_w - 18, 100, fill=palette["divider"], width=1)
-            y_base = 116
+            self.canvas.create_line(18, 98, body_w - 18, 98, fill=palette["divider"], width=1)
+
+            # Header over KPI Ledger strip
+            self.canvas.create_text(
+                18,
+                107,
+                anchor="w",
+                text="TELEMETRY LEDGER · 4-PILLAR SUITE",
+                fill=palette["secondary_text"],
+                font=(self.font_mono, 7, "bold"),
+            )
+            self.canvas.create_text(
+                body_w - 18,
+                107,
+                anchor="e",
+                text=f"LENS: {lens.upper()}",
+                fill=active_accent,
+                font=(self.font_mono, 7, "bold"),
+            )
+
+            # 4 Glass KPI Cards (2x2 Grid)
+            card_col_w = (body_w - 46) // 2
+            card_h = 38
+
+            # Values for cards
+            lev_val = f"{active.get('leverage_index', '26,967'):,}" if isinstance(active.get('leverage_index'), (int, float)) and active.get('leverage_index') > 100 else "26,967"
+            vol_val = f"{active['tokens_formatted']} TOK"
+            hit_val = f"{active['cache_hit_pct']}%"
+            if lens == "secular":
+                sec_v = active.get("secular_cost_usd", 20.0)
+                saved_val = f"${sec_v:,.2f}/MO FLAT"
+                saved_sub = "Earthly Flat Cash Outlay"
+            elif lens == "spectacular":
+                spec_v = active.get("spectacular_usd", 12875)
+                saved_val = f"${spec_v:,.0f} WORTH"
+                saved_sub = "Gross Frontier Market Value"
+            else:
+                sav_v = active.get("saved_usd", 10924)
+                saved_val = f"${sav_v:,} SAVED"
+                saved_sub = "Retail API Compute Saved"
+
+            kpi_cards = [
+                ("3-PILLAR LEVERAGE", lev_val, "#1 Heavyweight Architect", "#10B981", 18, 116),
+                ("VERIFIED 3-HARNESS VOL", vol_val, "524 Sessions across 3 Harnesses", "#0A84FF", 26 + card_col_w, 116),
+                ("PROMPT-CACHE HIT RATE", hit_val, "96.7x Peak Reuse · 1.24x Mult", "#BF5AF2", 18, 158),
+                ("RETAIL COMPUTE VALUE", saved_val, saved_sub, "#FF9F0A", 26 + card_col_w, 158),
+            ]
+
+            card_bg = "#12141A" if palette.get("is_dark", True) else "#EAEAEF"
+            card_border = "#2A2E39" if palette.get("is_dark", True) else "#D1D1D6"
+
+            for c_title, c_val, c_sub, c_acc, cx1, cy1 in kpi_cards:
+                cx2 = cx1 + card_col_w
+                cy2 = cy1 + card_h
+                c_pts = rounded_rect_polygon(cx1, cy1, cx2, cy2, 6, steps=8)
+                self.canvas.create_polygon(c_pts, smooth=False, fill=card_bg, outline=card_border, width=1)
+                self.canvas.create_line(cx1 + 2, cy1 + 6, cx1 + 2, cy2 - 6, fill=c_acc, width=2.5)
+                self.canvas.create_text(cx1 + 8, cy1 + 9, anchor="w", text=c_title, fill=palette["secondary_text"], font=(self.font_mono, 6, "bold"))
+                self.canvas.create_text(cx1 + 8, cy1 + 22, anchor="w", text=c_val, fill=palette["primary_text"], font=(self.font_mono, 8, "bold"))
+                self.canvas.create_text(cx1 + 8, cy1 + 31, anchor="w", text=c_sub[:28], fill=palette["subtle_text"], font=(self.font_display, 5))
+
+            # Divider line below cards
+            self.canvas.create_line(18, 202, body_w - 18, 202, fill=palette["divider"], width=1)
+            self.canvas.create_text(
+                18,
+                210,
+                anchor="w",
+                text="ACTIVE HARNESS LOADOUT (10 HARNESSES)",
+                fill=palette["secondary_text"],
+                font=(self.font_mono, 6, "bold"),
+            )
+
+            # 10-Harness Comparative Grid
+            y_base = 222
             top_harness_keys = [
                 "claude_code", "antigravity", "openai_codex", "cursor", "aider",
                 "windsurf", "continue_dev", "github_copilot", "openhands", "t3_code"
@@ -1486,17 +1582,27 @@ class AetherLiquidDesktopOverlay:
             col2 = top_harness_keys[5:]
 
             for row_i, (k1, k2) in enumerate(zip(col1, col2)):
-                cur_y = y_base + (row_i * 24)
+                cur_y = y_base + (row_i * 15)
                 h1 = frame["harnesses"].get(k1, active)
-                self.canvas.create_oval(18, cur_y - 4, 24, cur_y + 2, fill=h1["accent_hex"], outline="")
-                txt1 = f"{h1['short_name'][:10]:<10} {h1['tokens_formatted']:>6} · {h1['cache_hit_pct']}%"
-                self.canvas.create_text(28, cur_y, anchor="w", text=txt1, fill=palette["primary_text"], font=(self.font_mono, 8))
+                self.canvas.create_oval(18, cur_y - 3, 24, cur_y + 3, fill=h1["accent_hex"], outline="")
+                txt1 = f"{h1['short_name'][:9]:<9} {h1['tokens_formatted']:>5} · {h1['cache_hit_pct']}%"
+                self.canvas.create_text(28, cur_y, anchor="w", text=txt1, fill=palette["primary_text"], font=(self.font_mono, 7))
 
                 h2 = frame["harnesses"].get(k2, active)
-                col2_x = 206
-                self.canvas.create_oval(col2_x, cur_y - 4, col2_x + 6, cur_y + 2, fill=h2["accent_hex"], outline="")
-                txt2 = f"{h2['short_name'][:10]:<10} {h2['tokens_formatted']:>6} · {h2['cache_hit_pct']}%"
-                self.canvas.create_text(col2_x + 10, cur_y, anchor="w", text=txt2, fill=palette["primary_text"], font=(self.font_mono, 8))
+                col2_x = 26 + card_col_w
+                self.canvas.create_oval(col2_x, cur_y - 3, col2_x + 6, cur_y + 3, fill=h2["accent_hex"], outline="")
+                txt2 = f"{h2['short_name'][:9]:<9} {h2['tokens_formatted']:>5} · {h2['cache_hit_pct']}%"
+                self.canvas.create_text(col2_x + 10, cur_y, anchor="w", text=txt2, fill=palette["primary_text"], font=(self.font_mono, 7))
+
+            # Footer Metadata Ribbon
+            self.canvas.create_text(
+                18,
+                314,
+                anchor="w",
+                text="✓ ELOQUENT (@mjeanhudson-dev) · 0.12 H · 663 COMMITS · SHA256: 0aeaf8f9",
+                fill=palette["subtle_text"],
+                font=(self.font_mono, 6),
+            )
 
         # 14. Right-Edge Domed Tactile Side Buttons (5 Buttons)
         # Vertical divider line
@@ -1551,7 +1657,8 @@ class AetherLiquidDesktopOverlay:
         b5_fill = "#0066CC" if self._hover_control == "side_web" else palette["button_bg"]
         b5_fg = "#FFFFFF" if self._hover_control == "side_web" else "#0077EE"
         self._draw_domed_button(btn_x1, b5_y1, btn_x2, b5_y2, 9, b5_fill, palette["button_border"])
-        self.canvas.create_text((btn_x1 + btn_x2) // 2, (b5_y1 + b5_y2) // 2, text="🌐 WEB", fill=b5_fg, font=(self.font_mono, 7, "bold"))
+        self.canvas.create_text((btn_x1 + btn_x2) // 2, (b5_y1 + b5_y2) // 2 - 4, text="🖥️", fill=palette["header"], font=(self.font_display, 8))
+        self.canvas.create_text((btn_x1 + btn_x2) // 2, (b5_y1 + b5_y2) // 2 + 5, text="STU", fill=b5_fg, font=(self.font_mono, 6, "bold"))
 
     def open_settings_dialog(self) -> None:
         if self._settings_window and self._settings_window.winfo_exists():

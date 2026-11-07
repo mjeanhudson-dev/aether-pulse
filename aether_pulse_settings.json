@@ -1,6 +1,6 @@
 {
-  "overlay_mode": "auto",
-  "boundary_mode": "pin",
+  "overlay_mode": "claude_code",
+  "boundary_mode": "bounce",
   "theme": "dark",
   "enable_particles": true,
   "enable_bubbles": true,
