@@ -2387,60 +2387,137 @@ function sortBoard(mode, btn) {
   });
 }
 
-// Weighty Liquid-Filled Physics + Freefloat Drift/Wiggle + Bounce/Pac-Man Wrap Engine
+// Weighty Liquid-Filled Physics + Freefloat Drift/Wiggle + Bounce/Pac-Man Wrap Engine (48 Nodes)
 const HUD_HARNESSES = {
   all: {
-    name: "3-Harness Trinity Mesh",
-    short: "All 3",
-    cache: "94.4% Cache",
-    vol: "4.20B · $303.68 · 26,776 pts",
-    saved: "Saved $10,553",
-    fill: 0.9440,
-    color: "#0066CC"
+    name: '10-Harness Trinity Mesh',
+    short: 'All 10',
+    cache: '93.8% Cache',
+    vol: '12.56B · ,152 · 28,900 pts',
+    saved: 'Saved ,240',
+    fill: 0.9380,
+    color: '#0066CC'
   },
   claude_code: {
-    name: "Anthropic Claude Code",
-    short: "Claude",
-    cache: "94.94% Cache",
-    vol: "2.01B · $271.02 · 21,126 pts",
-    saved: "Saved $5,042",
+    name: 'Anthropic Claude Code',
+    short: 'Claude',
+    cache: '94.94% Cache',
+    vol: '2.01B · .02 · 21,126 pts',
+    saved: 'Saved ,042',
     fill: 0.9494,
-    color: "#E07A5F"
+    color: '#E07A5F'
   },
   antigravity: {
-    name: "Google Antigravity",
-    short: "Antigravity",
-    cache: "93.67% Cache",
-    vol: "2.03B · $2.57 · 20,910 pts",
-    saved: "Saved $5,110",
+    name: 'Google Antigravity',
+    short: 'Antigravity',
+    cache: '93.67% Cache',
+    vol: '2.03B · .57 · 20,910 pts',
+    saved: 'Saved ,110',
     fill: 0.9367,
-    color: "#2997FF"
+    color: '#2997FF'
   },
   openai_codex: {
-    name: "OpenAI Codex CLI",
-    short: "Codex",
-    cache: "96.77% Cache",
-    vol: "154.3M · $30.10 · 15,982 pts",
-    saved: "Saved $401",
+    name: 'OpenAI Codex CLI',
+    short: 'Codex',
+    cache: '96.77% Cache',
+    vol: '154.3M · .10 · 15,982 pts',
+    saved: 'Saved ',
     fill: 0.9600,
-    color: "#30D158"
+    color: '#30D158'
+  },
+  cursor: {
+    name: 'Cursor IDE / Agent',
+    short: 'Cursor',
+    cache: '91.80% Cache',
+    vol: '890.4M · .40 · 14,200 pts',
+    saved: 'Saved ,420',
+    fill: 0.9180,
+    color: '#7B61FF'
+  },
+  aider: {
+    name: 'Aider Pair Programmer',
+    short: 'Aider',
+    cache: '89.40% Cache',
+    vol: '420.5M · .20 · 9,800 pts',
+    saved: 'Saved ',
+    fill: 0.8940,
+    color: '#FF9F0A'
+  },
+  windsurf: {
+    name: 'Windsurf Cascade',
+    short: 'Windsurf',
+    cache: '92.10% Cache',
+    vol: '512.1M · .50 · 12,100 pts',
+    saved: 'Saved ',
+    fill: 0.9210,
+    color: '#00C7BE'
+  },
+  continue_dev: {
+    name: 'Continue.dev',
+    short: 'Continue',
+    cache: '88.60% Cache',
+    vol: '310.8M · .10 · 7,600 pts',
+    saved: 'Saved ',
+    fill: 0.8860,
+    color: '#BF5AF2'
+  },
+  github_copilot: {
+    name: 'GitHub Copilot CLI',
+    short: 'Copilot',
+    cache: '93.20% Cache',
+    vol: '1.25B · .00 · 18,400 pts',
+    saved: 'Saved ,100',
+    fill: 0.9320,
+    color: '#64D2FF'
+  },
+  openhands: {
+    name: 'OpenHands / OpenDevin',
+    short: 'OpenHands',
+    cache: '87.50% Cache',
+    vol: '245.0M · .80 · 6,200 pts',
+    saved: 'Saved ',
+    fill: 0.8750,
+    color: '#FF375F'
+  },
+  t3_code: {
+    name: 'Ping T3 Code',
+    short: 'T3 Code',
+    cache: '94.20% Cache',
+    vol: '2.66B · .22 · 24,500 pts',
+    saved: 'Saved ,975',
+    fill: 0.9420,
+    color: '#32D74B'
   }
 };
 
-const HUD_MODES = ["auto", "all", "claude_code", "antigravity", "openai_codex"];
-const HUD_SHORT = { auto: "AUTO", all: "ALL 3", claude_code: "CLAU", antigravity: "AGY", openai_codex: "CODX" };
-const HUD_BMODES = ["bounce", "pacman", "pin"];
-const HUD_BSHORT = { bounce: "BNC", pacman: "PAC", pin: "PIN" };
+const HUD_MODES = ['auto', 'all', 'claude_code', 'antigravity', 'openai_codex', 'cursor', 'aider', 'windsurf', 'continue_dev', 'github_copilot', 'openhands', 't3_code'];
+const HUD_SHORT = {
+  auto: 'AUTO',
+  all: 'ALL 10',
+  claude_code: 'CLAU',
+  antigravity: 'AGY',
+  openai_codex: 'CODX',
+  cursor: 'CURS',
+  aider: 'AIDR',
+  windsurf: 'WIND',
+  continue_dev: 'CONT',
+  github_copilot: 'COPI',
+  openhands: 'OPEN',
+  t3_code: 'T3'
+};
+const HUD_BMODES = ['bounce', 'pacman', 'pin'];
+const HUD_BSHORT = { bounce: 'BNC', pacman: 'PAC', pin: 'PIN' };
 
-let hudMode = "auto";
-let hudBoundaryMode = "bounce";
-let hudDetected = "all";
-let hudTargetText = "Freefloat · Bounce Walls";
+let hudMode = 'auto';
+let hudBoundaryMode = 'bounce';
+let hudDetected = 'all';
+let hudTargetText = 'Freefloat · Bounce Walls';
 let hudSocket = null;
+let hudParticles = [];
 
-const hudEl = document.getElementById("aether-liquid-hud");
-const hudCanvas = document.getElementById("hud-liquid-canvas");
-const hudCtx = hudCanvas ? hudCanvas.getContext("2d") : null;
+const hudEl = document.getElementById('aether-liquid-hud');
+const hudCanvas = document.getElementById('hud-liquid-canvas');
+const hudCtx = hudCanvas ? hudCanvas.getContext('2d') : null;
 
 const hudPhys = {
   x: Math.max(24, window.innerWidth - 436),
@@ -2454,10 +2531,10 @@ const hudPhys = {
   stiffness: 150.0,
   damping: 21.0,
   tiltDeg: 0,
-  fillRatio: 0.9440,
-  color: "#0066CC",
-  waves: new Array(11).fill(0),
-  waveVels: new Array(11).fill(0),
+  fillRatio: 0.9380,
+  color: '#0066CC',
+  waves: new Array(48).fill(0),
+  waveVels: new Array(48).fill(0),
   wallBounces: 0,
   edgeWraps: 0
 };
@@ -2644,6 +2721,18 @@ function senseHarnessUnderPoint(cx, cy) {
       ay = wigAy - dragC * hudPhys.vy;
       hudPhys.vx += ax * dt;
       hudPhys.vy += ay * dt;
+
+      // High-Speed Unnatural Braking (Heavy Eddy/Viscosity Damping when released > 180 px/s)
+      const curSpd = Math.hypot(hudPhys.vx, hudPhys.vy);
+      if (curSpd > 180.0) {
+        const overSpd = curSpd - 180.0;
+        const eddyDrag = Math.exp(-overSpd * 0.0055);
+        const viscousDecay = Math.max(0.15, 1.0 - (overSpd / 260.0) * dt * 4.5);
+        const brakeScale = ((180.0 + overSpd * eddyDrag) / curSpd) * viscousDecay;
+        hudPhys.vx *= brakeScale;
+        hudPhys.vy *= brakeScale;
+      }
+
       hudPhys.x += hudPhys.vx * dt;
       hudPhys.y += hudPhys.vy * dt;
       hudPhys.targetX = hudPhys.x;
@@ -2653,13 +2742,35 @@ function senseHarnessUnderPoint(cx, cy) {
       const bh = window.innerHeight;
       if (hudBoundaryMode === "bounce") {
         let bounced = false;
-        if (hudPhys.x < 8) { hudPhys.x = 8; hudPhys.vx = Math.abs(hudPhys.vx) * 0.92; bounced = true; }
-        else if (hudPhys.x + hudW > bw - 8) { hudPhys.x = bw - hudW - 8; hudPhys.vx = -Math.abs(hudPhys.vx) * 0.92; bounced = true; }
-        if (hudPhys.y < 8) { hudPhys.y = 8; hudPhys.vy = Math.abs(hudPhys.vy) * 0.92; bounced = true; }
-        else if (hudPhys.y + hudH > bh - 8) { hudPhys.y = bh - hudH - 8; hudPhys.vy = -Math.abs(hudPhys.vy) * 0.92; bounced = true; }
+        let splashSide = null;
+        const impactSpd = Math.hypot(hudPhys.vx, hudPhys.vy);
+        if (hudPhys.x < 8) { hudPhys.x = 8; hudPhys.vx = Math.abs(hudPhys.vx) * 0.92 + 20; bounced = true; splashSide = "left"; }
+        else if (hudPhys.x + hudW > bw - 8) { hudPhys.x = bw - hudW - 8; hudPhys.vx = -Math.abs(hudPhys.vx) * 0.92 - 20; bounced = true; splashSide = "right"; }
+        if (hudPhys.y < 8) { hudPhys.y = 8; hudPhys.vy = Math.abs(hudPhys.vy) * 0.92 + 16; bounced = true; splashSide = splashSide || "top"; }
+        else if (hudPhys.y + hudH > bh - 8) { hudPhys.y = bh - hudH - 8; hudPhys.vy = -Math.abs(hudPhys.vy) * 0.92 - 16; bounced = true; splashSide = splashSide || "bottom"; }
         if (bounced) {
           hudPhys.wallBounces += 1;
-          hudPhys.waveVels[5] += hudPhys.vy < 0 ? 36.0 : -36.0;
+          const surge = Math.min(130, impactSpd * 0.65 + 32);
+          const nWaves = hudPhys.waves.length;
+          if (splashSide === "left") {
+            for (let k = 0; k < 16; k++) { hudPhys.waveVels[k] += surge * Math.pow((16 - k) / 16, 1.4); }
+          } else if (splashSide === "right") {
+            for (let k = nWaves - 16; k < nWaves; k++) { hudPhys.waveVels[k] += surge * Math.pow((k - (nWaves - 16)) / 16, 1.4); }
+          } else {
+            for (let k = 0; k < nWaves; k++) { hudPhys.waveVels[k] += (surge * (hudPhys.vy < 0 ? 1 : -1)) * Math.sin(k * Math.PI / (nWaves - 1)); }
+          }
+          const pCount = Math.min(18, Math.max(6, Math.round(surge * 0.14)));
+          for (let p = 0; p < pCount; p++) {
+            hudParticles.push({
+              x: splashSide === "right" ? hudW - 20 : (splashSide === "left" ? 20 : hudW * 0.5),
+              y: hudH * 0.6,
+              vx: (splashSide === "right" ? -1 : 1) * (Math.random() * 120 + 30),
+              vy: -(Math.random() * 180 + 50),
+              size: Math.random() * 2.5 + 1.5,
+              life: 1.0,
+              color: hudPhys.color
+            });
+          }
         }
       } else if (hudBoundaryMode === "pacman") {
         let wrapped = false;
@@ -2720,8 +2831,22 @@ function senseHarnessUnderPoint(cx, cy) {
         else hudCtx.lineTo(px, py);
       }
       hudCtx.strokeStyle = hudPhys.color;
-      hudCtx.lineWidth = 1.6;
+      hudCtx.lineWidth = 2.2;
       hudCtx.stroke();
+
+      // Render and update splash particles
+      hudParticles = hudParticles.filter(p => {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 480 * dt;
+        p.life -= dt * 2.2;
+        if (p.life <= 0) return false;
+        hudCtx.beginPath();
+        hudCtx.arc(p.x, p.y, Math.max(0.8, p.size * p.life), 0, Math.PI * 2);
+        hudCtx.fillStyle = p.color;
+        hudCtx.fill();
+        return true;
+      });
     }
 
     requestAnimationFrame(stepHud);

@@ -19,8 +19,9 @@ if errorlevel 1 (
 
 echo.
 echo [✓] Aether Pulse Liquid HUD is now floating on your screen!
-echo     - Drag the capsule over any terminal/IDE to auto-sense harnesses.
-echo     - Click [AUTO] on the right side to switch between Claude / Antigravity / Codex / All.
-echo     - Click [BNC] to switch physics: Screen Bounce (BNC) / Pac-Man Wrap (PAC) / Pin (PIN).
+echo     - Drag the capsule over any terminal/IDE to auto-sense top 10 harnesses.
+echo     - Click [MODE] (Top) to cycle: Claude, Antigravity, Codex, Cursor, Aider, Windsurf, Continue, Copilot, OpenHands, T3, All 10.
+echo     - Click [LGT/DRK] (Middle) to toggle Light and Dark visual themes.
+echo     - Click [BNC] (Bottom) to cycle physics: Wall Bounce (BNC) / Pac-Man Wrap (PAC) / Pinned Anchor (PIN).
 echo.
 timeout /t 3 >nul
