@@ -4,41 +4,67 @@ Aether Pulse — Native Desktop & Terminal Floating Liquid-Physics Overlay (`aet
 ======================================================================================================
 Authored by Eloquent (@mjeanhudson-dev)
 
-A frameless, topmost Cupertino-styled desktop HUD that floats over any AI terminal or IDE
+A frameless, topmost Cupertino-styled desktop HUD that floats over any AI terminal, browser, or IDE
 (Claude Code, Google Antigravity, OpenAI Codex CLI, Cursor, Aider, Windsurf, Continue.dev,
 GitHub Copilot, OpenHands, T3 Code, Windows Terminal, Chrome):
-  1. Weighty Liquid-Filled Drag + Freefloat Drift/Wiggle Physics:
-     Uses `aether_pulse_ws.step_liquid_physics` with 48 spring nodes, 2nd-order spring-mass-damper,
-     and unnatural viscous eddy braking when flung at high speeds.
-  2. Fluid Wall Splashes & Waves:
-     Wall collisions excite violent directional surges along the impact flank, spraying dynamic
-     droplet particles that fall under simulated gravity.
-  3. Native Win32 Rounded Window Frame:
-     Clips the frameless window with `CreateRoundRectRgn` / `SetWindowRgn` for native rounded corners.
-  4. Light / Dark Mode Toggle (`☀️ LGT` / `🌙 DRK`):
-     Dedicated tactile button on the right control column, switching complete color palettes
-     and translucent liquid horizons.
-  5. Top 10 Ecosystem Harnesses Support:
-     Continuously probes the foreground/underlying window to detect all 10 major agent harnesses
-     from Google search & GitHub.
-  6. Elevated Typography:
-     Uses `Segoe UI Variable Display` micro-caps, `Cascadia Code` / `Consolas` tabular figures,
-     and crisp secondary hierarchies.
+  1. Ultra-Low Wiggle & Rock-Solid Pinned Stability:
+     - Near-zero / 0.0 wiggle when in 'PIN' anchor mode.
+     - Subdued, organic micro-currents when in freefloat 'BNC' or 'PAC' modes.
+  2. Window Controls (`✕` Close, `—` Minimize, `⚙` Settings Cog):
+     - Sleek Cupertino traffic/pill control cluster in top-right header.
+     - Minimize hides to system tray; Close exits or docks to tray based on operator setting.
+  3. Native Windows System Tray Integration:
+     - Real-time tray icon with right-click context menu (Show, Minimize, Settings, Modes, Exit).
+     - Single-click tray icon toggles Show / Minimize.
+  4. Cupertino Settings Modal Dialog:
+     - Accessible via `⚙` cog button or tray menu.
+     - Live toggles for: Boundary Modes (Bounce/Pac-Man/Pin), Theme (Dark/Light), Opacity,
+       High-Speed Viscous Braking, Wall Splash Particles, Auto-Sense Sensing, and Close Action.
+  5. 48-Node Coupled Shallow-Water Liquid Physics + Wall Splashes:
+     - Viscous fluid dynamics with wave crests and gravity-affected droplet particles.
+  6. Top 10 Ecosystem Harness Detection:
+     - Seamless foreground detection across Claude, Antigravity, Codex, Cursor, Aider,
+       Windsurf, Continue, Copilot, OpenHands, and T3 Code.
 """
 
 from __future__ import annotations
 
 import ctypes
+import json
 import math
+import os
 import random
 import sys
+import threading
 import time
 import tkinter as tk
 import tkinter.font as tkfont
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 import aether_pulse
 import aether_pulse_ws
+
+try:
+    import pystray
+    from PIL import Image
+    HAS_TRAY = True
+except Exception:
+    HAS_TRAY = False
+
+SETTINGS_FILE = "aether_pulse_settings.json"
+
+DEFAULT_SETTINGS = {
+    "theme": "dark",
+    "boundary_mode": "bounce",
+    "overlay_mode": "auto",
+    "alpha": 0.96,
+    "topmost": True,
+    "enable_particles": True,
+    "enable_viscous_braking": True,
+    "close_to_tray": True,
+    "wiggle_intensity": "subdued",  # "none", "subdued", "active"
+}
 
 BOUNDARY_SHORT = {
     "bounce": "BNC",
@@ -57,6 +83,8 @@ THEME_PALETTES = {
         "subtle_text": "#75757C",
         "button_bg": "#1C1C1E",
         "button_border": "#3A3A3C",
+        "button_hover": "#2C2C2E",
+        "close_hover": "#FF453A",
         "divider": "#2C2C2E",
         "fluid_back": "#0D1826",
         "fluid_front": "#13273D",
@@ -73,6 +101,8 @@ THEME_PALETTES = {
         "subtle_text": "#8E8E93",
         "button_bg": "#FFFFFF",
         "button_border": "#D1D1D6",
+        "button_hover": "#E5E5EA",
+        "close_hover": "#FF3B30",
         "divider": "#E5E5EA",
         "fluid_back": "#DCEAF7",
         "fluid_front": "#C8E1FA",
@@ -90,7 +120,7 @@ class SplashParticle:
         self.vy = vy
         self.size = size
         self.color = color
-        self.life = 1.0  # Fades from 1.0 to 0.0
+        self.life = 1.0
 
     def step(self, dt: float, gravity: float = 520.0) -> bool:
         self.x += self.vx * dt
@@ -102,19 +132,31 @@ class SplashParticle:
 
 class AetherLiquidDesktopOverlay:
     def __init__(self) -> None:
+        self.settings = self._load_settings()
         self.report = aether_pulse.scan_local_harnesses()
-        self.mode = "auto"
-        self.boundary_mode = "bounce"
-        self.theme = "dark"
+        self.mode = self.settings.get("overlay_mode", "auto")
+        self.boundary_mode = self.settings.get("boundary_mode", "bounce")
+        self.theme = self.settings.get("theme", "dark")
         self.detected_harness = "all"
         self.target_label = "Desktop Workspace"
         self.particles: List[SplashParticle] = []
+        self._hover_control: Optional[str] = None
+        self._settings_window: Optional[tk.Toplevel] = None
+        self.tray_icon: Optional[Any] = None
 
         self.root = tk.Tk()
         self.root.title("Aether Pulse Liquid HUD")
         self.root.overrideredirect(True)
-        self.root.attributes("-topmost", True)
-        self.root.attributes("-alpha", 0.96)
+        self.root.attributes("-topmost", bool(self.settings.get("topmost", True)))
+        self.root.attributes("-alpha", float(self.settings.get("alpha", 0.96)))
+
+        # Load native Windows icon
+        self.ico_path = os.path.abspath("aether_pulse.ico")
+        if os.path.exists(self.ico_path):
+            try:
+                self.root.iconbitmap(self.ico_path)
+            except Exception:
+                pass
 
         palette = THEME_PALETTES[self.theme]
         self.root.configure(bg=palette["bg"])
@@ -122,8 +164,8 @@ class AetherLiquidDesktopOverlay:
         self.screen_w = float(max(800, self.root.winfo_screenwidth()))
         self.screen_h = float(max(600, self.root.winfo_screenheight()))
 
-        self.width = 418
-        self.height = 114
+        self.width = 442
+        self.height = 116
         self.target_x = 140.0
         self.target_y = 140.0
         self.corner_radius = 24
@@ -136,9 +178,10 @@ class AetherLiquidDesktopOverlay:
             width=float(self.width),
             height=float(self.height),
         )
-        # Seed gentle initial freefloat drift so the vessel feels alive immediately
-        self.phys["vx"] = 54.0
-        self.phys["vy"] = 32.0
+        # Gentle initial velocity
+        if self.boundary_mode != "pin":
+            self.phys["vx"] = 32.0
+            self.phys["vy"] = 18.0
         self.root.geometry(f"{self.width}x{self.height}+{int(self.target_x)}+{int(self.target_y)}")
 
         self._init_fonts()
@@ -167,12 +210,35 @@ class AetherLiquidDesktopOverlay:
         self.canvas.bind("<ButtonPress-1>", self._on_press)
         self.canvas.bind("<B1-Motion>", self._on_drag)
         self.canvas.bind("<ButtonRelease-1>", self._on_release)
+        self.canvas.bind("<Motion>", self._on_mouse_move)
+        self.canvas.bind("<Leave>", self._on_mouse_leave)
 
         # Apply native Windows 11 rounded window region
         self.root.update_idletasks()
         self._apply_rounded_window_region()
 
+        # Initialize system tray
+        self._init_system_tray()
+
         self._tick()
+
+    def _load_settings(self) -> Dict[str, Any]:
+        settings = dict(DEFAULT_SETTINGS)
+        if os.path.exists(SETTINGS_FILE):
+            try:
+                with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
+                    saved = json.load(f)
+                    settings.update(saved)
+            except Exception:
+                pass
+        return settings
+
+    def _save_settings(self) -> None:
+        try:
+            with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
+                json.dump(self.settings, f, indent=2)
+        except Exception:
+            pass
 
     def _init_fonts(self) -> None:
         try:
@@ -196,22 +262,137 @@ class AetherLiquidDesktopOverlay:
         except Exception:
             pass
 
+    def _init_system_tray(self) -> None:
+        if not HAS_TRAY:
+            return
+        try:
+            icon_img = None
+            png_path = "chrome-extension/icons/icon-48.png"
+            if os.path.exists(png_path):
+                icon_img = Image.open(png_path)
+            elif os.path.exists(self.ico_path):
+                icon_img = Image.open(self.ico_path)
+
+            if not icon_img:
+                icon_img = Image.new("RGBA", (32, 32), color=(0, 102, 204, 255))
+
+            menu = pystray.Menu(
+                pystray.MenuItem("Show / Restore HUD", lambda: self.root.after(0, self._restore_from_tray), default=True),
+                pystray.MenuItem("Minimize to Tray", lambda: self.root.after(0, self._minimize_to_tray)),
+                pystray.MenuItem("⚙ Settings...", lambda: self.root.after(0, self.open_settings_dialog)),
+                pystray.Menu.SEPARATOR,
+                pystray.MenuItem("Mode: Auto-Sense", lambda: self._tray_set_mode("auto"), checked=lambda item: self.mode == "auto"),
+                pystray.MenuItem("Mode: All 10 Harnesses", lambda: self._tray_set_mode("all"), checked=lambda item: self.mode == "all"),
+                pystray.MenuItem("Theme: Dark / Light", lambda: self.root.after(0, self._toggle_theme)),
+                pystray.MenuItem("Physics: Bounce Walls", lambda: self._tray_set_boundary("bounce"), checked=lambda item: self.boundary_mode == "bounce"),
+                pystray.MenuItem("Physics: Pinned Anchor", lambda: self._tray_set_boundary("pin"), checked=lambda item: self.boundary_mode == "pin"),
+                pystray.Menu.SEPARATOR,
+                pystray.MenuItem("Exit Aether Pulse", lambda: self.root.after(0, self._exit_application)),
+            )
+
+            self.tray_icon = pystray.Icon("AetherPulse", icon_img, "Aether Pulse Liquid HUD", menu)
+            self.tray_icon.run_detached()
+        except Exception:
+            self.tray_icon = None
+
+    def _tray_set_mode(self, mode: str) -> None:
+        def _apply():
+            self.mode = mode
+            self.settings["overlay_mode"] = mode
+            self._save_settings()
+            self._update_height_for_mode()
+        self.root.after(0, _apply)
+
+    def _tray_set_boundary(self, bmode: str) -> None:
+        def _apply():
+            self.boundary_mode = bmode
+            self.settings["boundary_mode"] = bmode
+            self.phys["boundary_mode"] = bmode
+            self._save_settings()
+        self.root.after(0, _apply)
+
+    def _minimize_to_tray(self) -> None:
+        self.root.withdraw()
+        if self.tray_icon:
+            try:
+                self.tray_icon.notify("Aether Pulse minimized to system tray. Click icon to restore.", "Aether Pulse HUD")
+            except Exception:
+                pass
+
+    def _restore_from_tray(self) -> None:
+        self.root.deiconify()
+        self.root.attributes("-topmost", bool(self.settings.get("topmost", True)))
+        self.root.update_idletasks()
+        self._apply_rounded_window_region()
+
+    def _exit_application(self) -> None:
+        if self.tray_icon:
+            try:
+                self.tray_icon.stop()
+            except Exception:
+                pass
+        self.root.quit()
+        self.root.destroy()
+        sys.exit(0)
+
     def _toggle_theme(self) -> None:
         self.theme = "light" if self.theme == "dark" else "dark"
+        self.settings["theme"] = self.theme
+        self._save_settings()
         palette = THEME_PALETTES[self.theme]
         self.root.configure(bg=palette["bg"])
         self.canvas.configure(bg=palette["bg"], highlightbackground=palette["border"])
 
+    def _on_mouse_move(self, event: tk.Event) -> None:
+        body_w = self.width - 56
+        old_hover = self._hover_control
+        self._hover_control = None
+
+        # Check top-right window controls (y: 6..28)
+        if 6 <= event.y <= 28:
+            if body_w - 78 <= event.x < body_w - 52:
+                self._hover_control = "settings"
+            elif body_w - 50 <= event.x < body_w - 26:
+                self._hover_control = "minimize"
+            elif body_w - 24 <= event.x < body_w - 2:
+                self._hover_control = "close"
+
+        if old_hover != self._hover_control:
+            self._render()
+
+    def _on_mouse_leave(self, _event: tk.Event) -> None:
+        if self._hover_control is not None:
+            self._hover_control = None
+            self._render()
+
     def _on_press(self, event: tk.Event) -> None:
         col_w = 56
         btn_x_start = self.width - col_w
+        body_w = btn_x_start
 
-        # Check if click landed on the right-side control column
+        # Check top window control buttons
+        if 6 <= event.y <= 28:
+            if body_w - 78 <= event.x < body_w - 52:
+                self.open_settings_dialog()
+                return
+            elif body_w - 50 <= event.x < body_w - 26:
+                self._minimize_to_tray()
+                return
+            elif body_w - 24 <= event.x < body_w - 2:
+                if self.settings.get("close_to_tray", True) and HAS_TRAY:
+                    self._minimize_to_tray()
+                else:
+                    self._exit_application()
+                return
+
+        # Check right-side control column
         if event.x >= btn_x_start:
             section_h = self.height / 3.0
             if event.y < section_h:
                 # Top Button: Cycle Mode (Auto -> All -> Top 10 Harnesses)
                 self.mode = aether_pulse_ws.next_overlay_mode(self.mode)
+                self.settings["overlay_mode"] = self.mode
+                self._save_settings()
                 mid = len(self.phys["wave_velocities"]) // 2
                 self.phys["wave_velocities"][mid] += 48.0
                 self._update_height_for_mode()
@@ -223,12 +404,17 @@ class AetherLiquidDesktopOverlay:
             else:
                 # Bottom Button: Cycle Boundary Mode (BNC -> PAC -> PIN)
                 self.boundary_mode = aether_pulse_ws.next_boundary_mode(self.boundary_mode)
+                self.settings["boundary_mode"] = self.boundary_mode
                 self.phys["boundary_mode"] = self.boundary_mode
+                self._save_settings()
                 mid = len(self.phys["wave_velocities"]) // 2
                 self.phys["wave_velocities"][mid] += 36.0
-                if self.boundary_mode in ("bounce", "pacman") and math.hypot(self.phys["vx"], self.phys["vy"]) < 30.0:
-                    self.phys["vx"] = 68.0
-                    self.phys["vy"] = -42.0
+                if self.boundary_mode in ("bounce", "pacman") and math.hypot(self.phys["vx"], self.phys["vy"]) < 20.0:
+                    self.phys["vx"] = 48.0
+                    self.phys["vy"] = -32.0
+                elif self.boundary_mode == "pin":
+                    self.phys["vx"] = 0.0
+                    self.phys["vy"] = 0.0
             return
 
         self._is_dragging = True
@@ -263,12 +449,17 @@ class AetherLiquidDesktopOverlay:
         if not self._is_dragging:
             return
         self._is_dragging = False
-        # Preserve throw momentum on release so it drifts/wiggles and bounces or Pac-Man wraps
-        # Notice: When thrown at high speed (>180 px/s), step_liquid_physics applies unnatural viscous eddy braking!
-        throw_spd = math.hypot(self._throw_vx, self._throw_vy)
-        scale = 0.62 if throw_spd < 350.0 else 0.48
-        self.phys["vx"] = max(-920.0, min(920.0, self._throw_vx * scale + (52.0 if abs(self._throw_vx) < 20.0 else 0.0)))
-        self.phys["vy"] = max(-920.0, min(920.0, self._throw_vy * scale + (-36.0 if abs(self._throw_vy) < 20.0 else 0.0)))
+
+        if self.boundary_mode == "pin":
+            # Rock-solid anchor when pinned: zero throw momentum
+            self.phys["vx"] = 0.0
+            self.phys["vy"] = 0.0
+        else:
+            throw_spd = math.hypot(self._throw_vx, self._throw_vy)
+            scale = 0.55 if throw_spd < 350.0 else 0.42
+            self.phys["vx"] = max(-920.0, min(920.0, self._throw_vx * scale + (36.0 if abs(self._throw_vx) < 20.0 else 0.0)))
+            self.phys["vy"] = max(-920.0, min(920.0, self._throw_vy * scale + (-24.0 if abs(self._throw_vy) < 20.0 else 0.0)))
+
         self.target_x = float(self.phys["x"])
         self.target_y = float(self.phys["y"])
 
@@ -286,14 +477,16 @@ class AetherLiquidDesktopOverlay:
             self.target_label = probed["process_name"][:34]
 
     def _update_height_for_mode(self) -> None:
-        self.height = 240 if self.mode == "all" else 114
+        self.height = 244 if self.mode == "all" else 116
         self.phys["height"] = float(self.height)
         self.canvas.config(height=self.height)
         self.root.update_idletasks()
         self._apply_rounded_window_region()
 
     def _spawn_splash_particles(self, side: str, impulse: float, accent_hex: str) -> None:
-        count = min(22, max(8, int(impulse * 0.16)))
+        if not self.settings.get("enable_particles", True):
+            return
+        count = min(20, max(6, int(impulse * 0.15)))
         body_w = self.width - 56
         palette = THEME_PALETTES[self.theme]
 
@@ -301,20 +494,20 @@ class AetherLiquidDesktopOverlay:
             if side == "left":
                 px = random.uniform(2.0, 18.0)
                 py = random.uniform(self.height * 0.35, self.height * 0.85)
-                vx = random.uniform(30.0, 160.0)
-                vy = random.uniform(-240.0, -60.0)
+                vx = random.uniform(25.0, 140.0)
+                vy = random.uniform(-220.0, -50.0)
             elif side == "right":
                 px = random.uniform(body_w - 18.0, body_w - 2.0)
                 py = random.uniform(self.height * 0.35, self.height * 0.85)
-                vx = random.uniform(-160.0, -30.0)
-                vy = random.uniform(-240.0, -60.0)
+                vx = random.uniform(-140.0, -25.0)
+                vy = random.uniform(-220.0, -50.0)
             else:
                 px = random.uniform(10.0, body_w - 10.0)
                 py = random.uniform(self.height * 0.6, self.height - 6.0)
-                vx = random.uniform(-80.0, 80.0)
-                vy = random.uniform(-190.0, -40.0)
+                vx = random.uniform(-70.0, 70.0)
+                vy = random.uniform(-180.0, -35.0)
 
-            size = random.uniform(1.8, 3.6)
+            size = random.uniform(1.8, 3.4)
             color = accent_hex if random.random() > 0.4 else palette["particle_color"]
             self.particles.append(SplashParticle(px, py, vx, vy, size, color))
 
@@ -333,9 +526,9 @@ class AetherLiquidDesktopOverlay:
             bounds_h=self.screen_h,
         )
 
-        # Trigger splash particle emission if a wall collision occurred
+        # Trigger splash particles on wall bounce if enabled
         splash_event = self.phys.get("splash_event")
-        if splash_event:
+        if splash_event and self.settings.get("enable_particles", True):
             side = splash_event.get("side", "left")
             impulse = float(splash_event.get("impulse", 50.0))
             frame_preview = aether_pulse_ws.build_ws_telemetry_frame(
@@ -383,12 +576,11 @@ class AetherLiquidDesktopOverlay:
         n = len(waves)
         tilt = float(self.phys["tilt_deg"])
 
-        # 1. Back wave layer (translucent parallax depth)
+        # 1. Back wave layer (parallax depth)
         back_pts = [0, self.height]
         for i, h in enumerate(waves):
             px = (i / max(1, n - 1)) * body_w
-            # Slight phase & amplitude difference for parallax wave feel
-            back_h = h * 0.7 + math.sin(float(self.phys["phase"]) * 2.8 + i * 0.28) * 2.2
+            back_h = h * 0.7 + math.sin(float(self.phys["phase"]) * 2.8 + i * 0.28) * 1.8
             py = max(8.0, min(self.height - 2.0, base_y - 4.0 + back_h + (tilt * ((i - n / 2) * 0.38))))
             back_pts.extend([px, py])
         back_pts.extend([body_w, self.height])
@@ -403,7 +595,7 @@ class AetherLiquidDesktopOverlay:
         front_pts.extend([body_w, self.height])
         self.canvas.create_polygon(front_pts, fill=palette["fluid_front"], outline="", smooth=True)
 
-        # 3. Specular liquid meniscus crest line (high-fidelity smoothed wave crest)
+        # 3. Specular liquid meniscus crest line
         line_pts = front_pts[2:-2]
         if len(line_pts) >= 4:
             self.canvas.create_line(line_pts, fill=active["accent_hex"], width=2.4, smooth=True)
@@ -427,34 +619,51 @@ class AetherLiquidDesktopOverlay:
             30,
             19,
             anchor="w",
-            text=badge_text[:46],
+            text=badge_text[:40],
             fill=palette["header"],
             font=(self.font_display, 8, "bold"),
         )
 
-        # 6. Primary Metric: Tabular Figures
+        # 6. Top Window Control Buttons (`⚙`, `—`, `✕`) in header before side column
+        # Settings Cog
+        cog_bg = palette["button_hover"] if self._hover_control == "settings" else palette["button_bg"]
+        self.canvas.create_rectangle(body_w - 78, 8, body_w - 54, 28, fill=cog_bg, outline=palette["button_border"])
+        self.canvas.create_text(body_w - 66, 18, text="⚙", fill=palette["primary_text"], font=(self.font_display, 8))
+
+        # Minimize Button
+        min_bg = palette["button_hover"] if self._hover_control == "minimize" else palette["button_bg"]
+        self.canvas.create_rectangle(body_w - 50, 8, body_w - 26, 28, fill=min_bg, outline=palette["button_border"])
+        self.canvas.create_text(body_w - 38, 17, text="—", fill=palette["primary_text"], font=(self.font_display, 9, "bold"))
+
+        # Close Button
+        close_bg = palette["close_hover"] if self._hover_control == "close" else palette["button_bg"]
+        close_fg = "#FFFFFF" if self._hover_control == "close" else palette["primary_text"]
+        self.canvas.create_rectangle(body_w - 22, 8, body_w + 2, 28, fill=close_bg, outline=palette["button_border"])
+        self.canvas.create_text(body_w - 10, 18, text="✕", fill=close_fg, font=(self.font_display, 8, "bold"))
+
+        # 7. Primary Metric: Tabular Figures
         metric_str = f"{active['tokens_formatted']} TOK    ${active['cost_usd']:,.2f}    {active['cache_hit_pct']}% HIT"
         self.canvas.create_text(
             14,
-            49,
+            50,
             anchor="w",
             text=metric_str,
             fill=palette["primary_text"],
             font=(self.font_mono, 11, "bold"),
         )
 
-        # 7. Subtitle / Spatial Context Line
+        # 8. Subtitle / Spatial Context Line
         sub_str = f"OVER: {frame['target_label'][:24]}   {frame['boundary_mode_label'].upper()}   SAVED ${active['saved_usd']:,}"
         self.canvas.create_text(
             14,
-            79,
+            80,
             anchor="w",
             text=sub_str,
             fill=palette["secondary_text"],
             font=(self.font_text, 8),
         )
 
-        # 8. If "All 10 Harnesses" drawer is open, render 2-column comparative grid
+        # 9. If "All 10 Harnesses" drawer is open, render 2-column comparative grid
         if frame["show_all_drawer"]:
             self.canvas.create_line(14, 98, body_w - 14, 98, fill=palette["divider"], width=1)
             y_base = 114
@@ -470,7 +679,6 @@ class AetherLiquidDesktopOverlay:
                 "openhands",
                 "t3_code",
             ]
-            # 2 columns of 5 rows
             col1 = top_harness_keys[:5]
             col2 = top_harness_keys[5:]
 
@@ -487,14 +695,14 @@ class AetherLiquidDesktopOverlay:
 
                 # Col 2
                 h2 = frame["harnesses"].get(k2, active)
-                col2_x = 196
+                col2_x = 206
                 self.canvas.create_oval(col2_x, cur_y - 4, col2_x + 6, cur_y + 2, fill=h2["accent_hex"], outline="")
                 txt2 = f"{h2['short_name'][:10]:<10} {h2['tokens_formatted']:>6} · {h2['cache_hit_pct']}%"
                 self.canvas.create_text(
                     col2_x + 10, cur_y, anchor="w", text=txt2, fill=palette["primary_text"], font=(self.font_mono, 8)
                 )
 
-        # 9. Right-Edge 3-Button Control Column
+        # 10. Right-Edge 3-Button Control Column
         self.canvas.create_line(body_w, 0, body_w, self.height, fill=palette["divider"], width=1)
         btn_x = body_w + 6
         btn_w = self.width - 6
@@ -549,25 +757,156 @@ class AetherLiquidDesktopOverlay:
             font=(self.font_mono, 8, "bold"),
         )
 
+    def open_settings_dialog(self) -> None:
+        if self._settings_window and self._settings_window.winfo_exists():
+            self._settings_window.lift()
+            return
+
+        sw = tk.Toplevel(self.root)
+        self._settings_window = sw
+        sw.title("Aether Pulse Settings")
+        sw.geometry("420x460")
+        sw.resizable(False, False)
+        sw.attributes("-topmost", True)
+
+        palette = THEME_PALETTES[self.theme]
+        sw.configure(bg=palette["bg"])
+
+        # Title
+        tk.Label(
+            sw,
+            text="⚡ Aether Pulse Settings",
+            bg=palette["bg"],
+            fg=palette["header"],
+            font=(self.font_display, 12, "bold"),
+        ).pack(anchor="w", padx=20, pady=(16, 8))
+
+        # Container Frame
+        container = tk.Frame(sw, bg=palette["bg"])
+        container.pack(fill=tk.BOTH, expand=True, padx=20, pady=8)
+
+        # 1. Physics Mode Selector
+        tk.Label(container, text="BOUNDARY DYNAMICS:", bg=palette["bg"], fg=palette["secondary_text"], font=(self.font_mono, 8, "bold")).pack(anchor="w", pady=(6, 2))
+        bmode_var = tk.StringVar(value=self.boundary_mode)
+        bframe = tk.Frame(container, bg=palette["bg"])
+        bframe.pack(fill=tk.X, pady=(0, 8))
+        for bval, blabel in [("bounce", "Bounce Walls (BNC)"), ("pacman", "Pac-Man Wrap (PAC)"), ("pin", "Pinned Anchor (Zero Wiggle)")]:
+            tk.Radiobutton(
+                bframe,
+                text=blabel,
+                variable=bmode_var,
+                value=bval,
+                bg=palette["bg"],
+                fg=palette["primary_text"],
+                selectcolor=palette["surface"],
+                activebackground=palette["bg"],
+                font=(self.font_text, 9),
+            ).pack(anchor="w")
+
+        # 2. Appearance & Theme
+        tk.Label(container, text="VISUAL PALETTE:", bg=palette["bg"], fg=palette["secondary_text"], font=(self.font_mono, 8, "bold")).pack(anchor="w", pady=(6, 2))
+        theme_var = tk.StringVar(value=self.theme)
+        tframe = tk.Frame(container, bg=palette["bg"])
+        tframe.pack(fill=tk.X, pady=(0, 8))
+        for tval, tlabel in [("dark", "Obsidian Dark Palette"), ("light", "Cupertino Light Palette")]:
+            tk.Radiobutton(
+                tframe,
+                text=tlabel,
+                variable=theme_var,
+                value=tval,
+                bg=palette["bg"],
+                fg=palette["primary_text"],
+                selectcolor=palette["surface"],
+                activebackground=palette["bg"],
+                font=(self.font_text, 9),
+            ).pack(anchor="w")
+
+        # 3. Feature Set Checkboxes
+        tk.Label(container, text="FEATURE TOGGLES:", bg=palette["bg"], fg=palette["secondary_text"], font=(self.font_mono, 8, "bold")).pack(anchor="w", pady=(6, 2))
+        part_var = tk.BooleanVar(value=bool(self.settings.get("enable_particles", True)))
+        brake_var = tk.BooleanVar(value=bool(self.settings.get("enable_viscous_braking", True)))
+        top_var = tk.BooleanVar(value=bool(self.settings.get("topmost", True)))
+        tray_close_var = tk.BooleanVar(value=bool(self.settings.get("close_to_tray", True)))
+
+        tk.Checkbutton(container, text="Wall Splash Wave & Droplet Particles", variable=part_var, bg=palette["bg"], fg=palette["primary_text"], selectcolor=palette["surface"], font=(self.font_text, 9)).pack(anchor="w")
+        tk.Checkbutton(container, text="High-Speed Viscous Eddy Braking (>180 px/s)", variable=brake_var, bg=palette["bg"], fg=palette["primary_text"], selectcolor=palette["surface"], font=(self.font_text, 9)).pack(anchor="w")
+        tk.Checkbutton(container, text="Always on Top (Topmost Window)", variable=top_var, bg=palette["bg"], fg=palette["primary_text"], selectcolor=palette["surface"], font=(self.font_text, 9)).pack(anchor="w")
+        tk.Checkbutton(container, text="Close Button ('✕') Minimizes to System Tray", variable=tray_close_var, bg=palette["bg"], fg=palette["primary_text"], selectcolor=palette["surface"], font=(self.font_text, 9)).pack(anchor="w")
+
+        # 4. Save & Apply
+        def _save_and_apply():
+            new_bmode = bmode_var.get()
+            new_theme = theme_var.get()
+
+            self.boundary_mode = new_bmode
+            self.settings["boundary_mode"] = new_bmode
+            self.phys["boundary_mode"] = new_bmode
+
+            if new_bmode == "pin":
+                self.phys["vx"] = 0.0
+                self.phys["vy"] = 0.0
+
+            if new_theme != self.theme:
+                self.theme = new_theme
+                self.settings["theme"] = new_theme
+                new_pal = THEME_PALETTES[self.theme]
+                self.root.configure(bg=new_pal["bg"])
+                self.canvas.configure(bg=new_pal["bg"], highlightbackground=new_pal["border"])
+
+            self.settings["enable_particles"] = part_var.get()
+            self.settings["enable_viscous_braking"] = brake_var.get()
+            self.settings["topmost"] = top_var.get()
+            self.settings["close_to_tray"] = tray_close_var.get()
+
+            self.root.attributes("-topmost", bool(top_var.get()))
+            self._save_settings()
+            sw.destroy()
+            self._render()
+
+        btn_row = tk.Frame(sw, bg=palette["bg"])
+        btn_row.pack(fill=tk.X, padx=20, pady=(8, 16))
+
+        tk.Button(
+            btn_row,
+            text="Save & Apply",
+            command=_save_and_apply,
+            bg="#0066CC",
+            fg="#FFFFFF",
+            font=(self.font_text, 9, "bold"),
+            relief=tk.FLAT,
+            padx=14,
+            pady=6,
+        ).pack(side=tk.RIGHT)
+
+        tk.Button(
+            btn_row,
+            text="Cancel",
+            command=sw.destroy,
+            bg=palette["button_bg"],
+            fg=palette["primary_text"],
+            font=(self.font_text, 9),
+            relief=tk.FLAT,
+            padx=12,
+            pady=6,
+        ).pack(side=tk.RIGHT, padx=8)
+
     def run(self) -> None:
         self.root.mainloop()
 
 
 if __name__ == "__main__":
     if "--smoke-test" in sys.argv:
-        phys = aether_pulse_ws.create_liquid_physics_state(100, 100, num_nodes=48, boundary_mode="bounce")
-        phys["vx"] = 520.0
-        phys["vy"] = -310.0
+        phys = aether_pulse_ws.create_liquid_physics_state(100, 100, num_nodes=48, boundary_mode="pin")
         for _ in range(40):
-            aether_pulse_ws.step_liquid_physics(phys, 240, 160, 0.016, is_dragging=False, bounds_w=500.0, bounds_h=300.0)
+            aether_pulse_ws.step_liquid_physics(phys, 100, 100, 0.016, is_dragging=False, bounds_w=500.0, bounds_h=300.0)
         print(
-            "Desktop Liquid Overlay physics smoke test OK:",
+            "Desktop Liquid Overlay physics smoke test (PINNED):",
             f"x={phys['x']}",
             f"y={phys['y']}",
+            f"vx={phys['vx']}",
+            f"vy={phys['vy']}",
             f"tilt={phys['tilt_deg']}",
-            f"nodes={len(phys['wave_heights'])}",
             f"bounces={phys['wall_bounces']}",
-            f"splash={phys.get('splash_event')}",
         )
     else:
         AetherLiquidDesktopOverlay().run()

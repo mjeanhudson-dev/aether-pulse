@@ -2703,8 +2703,8 @@ function senseHarnessUnderPoint(cx, cy) {
     if (dragging || hudBoundaryMode === "pin") {
       const fx = hudPhys.stiffness * (hudPhys.targetX - hudPhys.x) - hudPhys.damping * hudPhys.vx;
       const fy = hudPhys.stiffness * (hudPhys.targetY - hudPhys.y) - hudPhys.damping * hudPhys.vy;
-      const wigX = !dragging ? Math.sin(hudPhys.phase * 2.4) * 14.0 : 0;
-      const wigY = !dragging ? Math.cos(hudPhys.phase * 1.9) * 11.0 : 0;
+      const wigX = 0;
+      const wigY = 0;
       ax = (fx + wigX) / hudPhys.mass;
       ay = (fy + wigY) / hudPhys.mass;
       hudPhys.vx += ax * dt;
@@ -2712,9 +2712,9 @@ function senseHarnessUnderPoint(cx, cy) {
       hudPhys.x += hudPhys.vx * dt;
       hudPhys.y += hudPhys.vy * dt;
     } else {
-      // Freefloat buoyancy wiggle + drift momentum
-      const wigAx = Math.sin(hudPhys.phase * 2.6) * 44.0 + Math.cos(hudPhys.phase * 1.3) * 18.0;
-      const wigAy = Math.cos(hudPhys.phase * 2.1) * 36.0 + Math.sin(hudPhys.phase * 1.7) * 16.0;
+      // Freefloat subtle drift (greatly reduced organic currents)
+      const wigAx = Math.sin(hudPhys.phase * 1.4) * 5.5 + Math.cos(hudPhys.phase * 2.8) * 2.0;
+      const wigAy = Math.cos(hudPhys.phase * 1.1) * 4.0 + Math.sin(hudPhys.phase * 2.3) * 1.8;
       const spd = Math.hypot(hudPhys.vx, hudPhys.vy);
       const dragC = spd > 68.0 ? 0.32 : 0.02;
       ax = wigAx - dragC * hudPhys.vx;
@@ -2792,7 +2792,7 @@ function senseHarnessUnderPoint(cx, cy) {
       }
     }
 
-    hudPhys.tiltDeg = Math.max(-9.0, Math.min(9.0, hudPhys.vx * 0.013 + Math.sin(hudPhys.phase * 3.1) * 0.5));
+    hudPhys.tiltDeg = hudBoundaryMode === "pin" ? 0 : Math.max(-5.0, Math.min(5.0, hudPhys.vx * 0.008 + Math.sin(hudPhys.phase * 1.5) * 0.12));
 
     const n = hudPhys.waves.length;
     for (let i = 0; i < n; i++) {

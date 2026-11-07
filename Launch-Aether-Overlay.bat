@@ -20,8 +20,8 @@ if errorlevel 1 (
 echo.
 echo [✓] Aether Pulse Liquid HUD is now floating on your screen!
 echo     - Drag the capsule over any terminal/IDE to auto-sense top 10 harnesses.
-echo     - Click [MODE] (Top) to cycle: Claude, Antigravity, Codex, Cursor, Aider, Windsurf, Continue, Copilot, OpenHands, T3, All 10.
-echo     - Click [LGT/DRK] (Middle) to toggle Light and Dark visual themes.
-echo     - Click [BNC] (Bottom) to cycle physics: Wall Bounce (BNC) / Pac-Man Wrap (PAC) / Pinned Anchor (PIN).
+echo     - Header controls: [⚙] Settings modal, [—] Minimize to tray, [✕] Close/dock.
+echo     - System Tray: Right-click icon in taskbar for full context menu and restore.
+echo     - Side buttons: [MODE] Top 10 cycle, [LGT/DRK] Theme toggle, [BNC] Physics cycle.
 echo.
 timeout /t 3 >nul

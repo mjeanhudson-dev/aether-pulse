@@ -1,6 +1,6 @@
 {
   "name": "aether-pulse",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Universal Plop-In AI Token Efficiency Leaderboard, Top 10 Harness Liquid-Physics HUD, Cache Doctor MCP Server, and Architect Loadout Platform for Claude Code, Google Antigravity, OpenAI Codex, Cursor, Aider, Windsurf, Continue, Copilot, OpenHands, and T3 Code.",
   "main": "bin/aether-pulse.js",
   "bin": {
@@ -24,7 +24,8 @@
     "DESIGN.md",
     "aether_liquid_overlay.pyw",
     "Launch-Aether-Overlay.bat",
-    "README-DESKTOP-OVERLAY.md"
+    "README-DESKTOP-OVERLAY.md",
+    "aether_pulse.ico"
   ],
   "scripts": {
     "start": "node bin/aether-pulse.js",

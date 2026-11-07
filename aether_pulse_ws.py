@@ -260,8 +260,9 @@ def step_liquid_physics(
     state["splash_event"] = None
 
     if is_dragging or bmode == "pin":
-        wiggle_x = math.sin(phase * 2.6) * 2.5 if not is_dragging else 0.0
-        wiggle_y = math.cos(phase * 2.1) * 2.0 if not is_dragging else 0.0
+        # Zero artificial wiggle when dragging or pinned (rock-solid anchor requested by user)
+        wiggle_x = 0.0
+        wiggle_y = 0.0
         fx = k * ((float(target_x) + wiggle_x) - x) - c * vx
         fy = k * ((float(target_y) + wiggle_y) - y) - c * vy
         ax = fx / m
@@ -271,10 +272,10 @@ def step_liquid_physics(
         x += vx * dt
         y += vy * dt
     else:
-        # Freefloat Drift + Wiggle mode after letting go of drag
-        wiggle_ax = math.sin(phase * 2.4) * 42.0 + math.cos(phase * 5.1) * 18.0
-        wiggle_ay = math.cos(phase * 1.9) * 34.0 + math.sin(phase * 4.3) * 15.0
-        fluid_drag = 0.22
+        # Freefloat Drift mode (significantly reduced, subtle organic currents)
+        wiggle_ax = math.sin(phase * 1.4) * 5.5 + math.cos(phase * 2.8) * 2.0
+        wiggle_ay = math.cos(phase * 1.1) * 4.0 + math.sin(phase * 2.3) * 1.8
+        fluid_drag = 0.24
         ax = wiggle_ax - fluid_drag * vx
         ay = wiggle_ay - fluid_drag * vy
         vx += ax * dt
@@ -291,11 +292,11 @@ def step_liquid_physics(
             vy *= brake_scale
             spd = math.hypot(vx, vy)
 
-        # Maintain pleasant minimum freefloat drift velocity so it stays alive when released
-        if spd < 38.0:
-            ang = phase * 1.3 if spd < 1e-3 else math.atan2(vy, vx)
-            vx += math.cos(ang) * 26.0 * dt
-            vy += math.sin(ang) * 26.0 * dt
+        # Gentle minimum freefloat drift velocity
+        if spd < 24.0:
+            ang = phase * 1.1 if spd < 1e-3 else math.atan2(vy, vx)
+            vx += math.cos(ang) * 14.0 * dt
+            vy += math.sin(ang) * 14.0 * dt
         elif spd > 980.0:
             scale = 980.0 / spd
             vx *= scale
@@ -379,10 +380,13 @@ def step_liquid_physics(
                 for idx_w in range(n):
                     vels[idx_w] += math.sin(idx_w * 0.45) * 32.0
 
-    # Vessel tilt and subtle liquid-weight squish
-    tilt_deg = max(-12.0, min(12.0, vx * 0.015 + math.sin(phase * 3.2) * (0.65 if not is_dragging else 0.0)))
+    # Vessel tilt: strictly 0.0 when pinned, subtle when freefloating
+    if bmode == "pin":
+        tilt_deg = 0.0
+    else:
+        tilt_deg = max(-6.0, min(6.0, vx * 0.008 + math.sin(phase * 1.5) * (0.12 if not is_dragging else 0.0)))
     speed = math.hypot(vx, vy)
-    squish_x = 1.0 + max(-0.05, min(0.07, abs(vx) * 0.000045 - abs(vy) * 0.000022))
+    squish_x = 1.0 + max(-0.03, min(0.04, abs(vx) * 0.00003 - abs(vy) * 0.000015))
     squish_y = 1.0 / squish_x if squish_x != 0 else 1.0
 
     # Coupled 1D shallow-water sloshing wave along high-fidelity 48-node liquid horizon
@@ -392,7 +396,7 @@ def step_liquid_physics(
 
     for i in range(n):
         norm_pos = (i / max(1, n - 1)) * 2.0 - 1.0
-        ambient_ripple = math.sin(phase * 3.8 + i * 0.35) * 0.38
+        ambient_ripple = math.sin(phase * 3.2 + i * 0.35) * (0.04 if bmode == "pin" else 0.16)
         slosh_impulse = (-ax * 0.0042 * norm_pos) + (ay * 0.0014 * math.cos(norm_pos * math.pi)) + ambient_ripple
         restoring = -wave_tension * heights[i] - wave_damping * vels[i]
         vels[i] += (restoring * dt) + slosh_impulse
