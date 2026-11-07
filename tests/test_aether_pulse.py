@@ -241,7 +241,8 @@ class TestAetherPulseEngine(unittest.TestCase):
         self.assertEqual(aether_pulse_ws.next_overlay_mode("all"), "claude_code")
         self.assertEqual(aether_pulse_ws.next_overlay_mode("claude_code"), "antigravity")
         self.assertEqual(aether_pulse_ws.next_overlay_mode("antigravity"), "openai_codex")
-        self.assertEqual(aether_pulse_ws.next_overlay_mode("openai_codex"), "auto")
+        self.assertEqual(aether_pulse_ws.next_overlay_mode("openai_codex"), "cursor")
+        self.assertEqual(aether_pulse_ws.next_overlay_mode("t3_code"), "auto")
 
         self.assertEqual(aether_pulse_ws.next_boundary_mode("bounce"), "pacman")
         self.assertEqual(aether_pulse_ws.next_boundary_mode("pacman"), "pin")
