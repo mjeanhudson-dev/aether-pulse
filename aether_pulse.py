@@ -3590,27 +3590,6 @@ try {{
       </div>
 
       <div style="margin-top:18px;">
-        <h4 style="margin:0 0 10px 0;font-size:0.9375rem;">💎 Web3 &amp; Crypto Grants</h4>
-        <div style="display:flex;flex-direction:column;gap:10px;">
-          <div style="background:var(--bg-main);padding:10px 14px;border-radius:8px;border:1px solid var(--border-hairline);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-            <div>
-              <span style="font-size:0.75rem;font-weight:700;color:var(--text-muted);display:block;">ETHEREUM / BASE / ARBITRUM (USDC &amp; ETH)</span>
-              <code style="font-size:0.8125rem;">0x71C808E1e3A4cDb85903c58A8b7cEa25316B386e</code>
-            </div>
-            <button type="button" class="peer-btn" onclick="copyCryptoAddr('0x71C808E1e3A4cDb85903c58A8b7cEa25316B386e', this)">📋 Copy</button>
-          </div>
-
-          <div style="background:var(--bg-main);padding:10px 14px;border-radius:8px;border:1px solid var(--border-hairline);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-            <div>
-              <span style="font-size:0.75rem;font-weight:700;color:var(--text-muted);display:block;">SOLANA (USDC &amp; SOL)</span>
-              <code style="font-size:0.8125rem;">7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU</code>
-            </div>
-            <button type="button" class="peer-btn" onclick="copyCryptoAddr('7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU', this)">📋 Copy</button>
-          </div>
-        </div>
-      </div>
-
-      <div style="margin-top:18px;">
         <h4 style="margin:0 0 8px 0;font-size:0.9375rem;">🌟 Patron Tier Accolades</h4>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;">
           <div style="background:var(--bg-main);padding:12px;border-radius:8px;border:1px solid var(--border-hairline);">

@@ -59,9 +59,6 @@ Aether Pulse is an independent, zero-trust open-source initiative authored by **
 
 ### Official Sponsorship Channels:
 - **GitHub Sponsors (0% Fee):** [github.com/sponsors/mjeanhudson-dev](https://github.com/sponsors/mjeanhudson-dev)
-- **Web3 / Crypto Grants:**
-  - **Ethereum / Base / Arbitrum (USDC & ETH):** `0x71C808E1e3A4cDb85903c58A8b7cEa25316B386e`
-  - **Solana (USDC & SOL):** `7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU`
 
 ### Patron Tiers & Accolades:
 - **☕ Coffee Supporter ($5/mo):** Supporter badge in Discord & GitHub Hall of Fame.

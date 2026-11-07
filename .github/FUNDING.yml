@@ -1,8 +1,4 @@
 # Supported funding model platforms for Aether Pulse & Eloquent (@mjeanhudson-dev)
+# Activates once GitHub Sponsors enrollment is approved. Add ko_fi/buy_me_a_coffee only after the account exists.
 github: [mjeanhudson-dev]
-ko_fi: eloquent
-custom: [
-  'https://github.com/sponsors/mjeanhudson-dev',
-  'https://buymeacoffee.com/eloquent',
-  'https://mjeanhudson-dev.github.io/aether-pulse/#donate'
-]
+custom: ['https://mjeanhudson-dev.github.io/aether-pulse/#donate']
