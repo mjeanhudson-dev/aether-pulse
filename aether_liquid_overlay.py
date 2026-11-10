@@ -70,7 +70,7 @@ DEFAULT_SETTINGS: Dict[str, Any] = {
     "enable_particles": True,
     "enable_bubbles": True,
     "enable_fizz": True,
-    "simulate_lava_5hr": True,
+    "simulate_lava_5hr": False,
     "topmost": True,
     "accounting_lens": "specular",
     "close_to_tray": True,
@@ -465,15 +465,6 @@ def build_liquid_mesh_polygon(
     6. Circular fillet hugging the outer capsule's curved bottom-left glass corner (r_left)
     Result: 100% flat bottom base, flush to glass walls, ZERO weird upward rounding or hammock scooping.
     """
-    if corner_r_left <= 0.0 and corner_r_right <= 0.0:
-        pts: List[float] = [round(x_left, 2), round(y_floor, 2), round(x_right, 2), round(y_floor, 2)]
-        if surface_spline:
-            pts.extend([round(x_right, 2), round(surface_spline[-1][1], 2)])
-            for sx, sy in reversed(surface_spline):
-                pts.extend([round(sx, 2), round(sy, 2)])
-            pts.extend([round(x_left, 2), round(surface_spline[0][1], 2)])
-        return pts
-
     pts: List[float] = []
     rl = max(2.0, min(corner_r_left, (x_right - x_left) / 2.0, (y_floor - 20.0) / 2.0))
     rr = max(1.0, min(corner_r_right, 6.0))
@@ -581,10 +572,10 @@ class AetherLiquidDesktopOverlay:
         self.topmost = bool(self.settings.get("topmost", True))
         self.root.attributes("-topmost", self.topmost)
 
-        # Fully rectangular window for 100% functionality - no transparentcolor bleeding or blue corner artifacts
-        self.mask_color = "#0D0E12"
+        # Masking: set window to transparent color #010101
+        self.mask_color = "#010101"
         self.root.configure(bg=self.mask_color)
-        # Note: -transparentcolor is omitted so the window is solid without jagged 1-bit color keying
+        self.root.wm_attributes("-transparentcolor", self.mask_color)
 
         # Load native Windows icon
         self.ico_path = os.path.abspath("aether_pulse.ico")
@@ -598,10 +589,10 @@ class AetherLiquidDesktopOverlay:
         self.screen_h = float(max(600, self.root.winfo_screenheight()))
 
         self.width = 448
-        self.height = 112
+        self.height = 118
         self.target_x = 140.0
         self.target_y = 140.0
-        self.capsule_radius = 0
+        self.capsule_radius = 26
 
         self.phys = aether_pulse_ws.create_liquid_physics_state(
             x=self.target_x,
@@ -696,8 +687,11 @@ class AetherLiquidDesktopOverlay:
                 )
             except Exception:
                 pass
-            # Clear window region: 100% unclipped rectangle for maximum functionality and zero corner artifacts
-            ctypes.windll.user32.SetWindowRgn(hwnd, None, True)
+            diameter = self.capsule_radius * 2
+            rgn = ctypes.windll.gdi32.CreateRoundRectRgn(
+                0, 0, self.width + 1, self.height + 1, diameter, diameter
+            )
+            ctypes.windll.user32.SetWindowRgn(hwnd, rgn, True)
         except Exception:
             pass
 
@@ -1279,15 +1273,23 @@ class AetherLiquidDesktopOverlay:
 
         self.canvas.delete("all")
 
-        # 1. Solid rectangular body filling 100% of the window - zero corner clipping, zero blue masking leaks
-        self.canvas.create_rectangle(
-            0, 0, self.width, self.height,
-            fill=palette["pill_bg"],
-            outline=palette["border"],
-            width=1,
-        )
-        # Specular top highlight hairline
-        self.canvas.create_line(1, 1, self.width - 1, 1, fill=palette["border_highlight"], width=1)
+        # 1. Multi-Pass Optical Subpixel Anti-Aliasing on Outer Capsule Perimeter
+        # Layer 1: Ambient feather fringe against #010101 mask
+        r_out = self.capsule_radius + 2.0
+        fringe_pts = rounded_rect_polygon(3.5, 3.5, self.width - 3.5, self.height - 3.5, r_out, steps=64)
+        fringe_color = "#0A0A0C" if palette.get("is_dark", True) else "#E8E8EC"
+        self.canvas.create_polygon(fringe_pts, smooth=False, fill=fringe_color, outline="")
+
+        # Layer 2: Main outer shadow
+        shadow_pts = rounded_rect_polygon(4.5, 4.5, self.width - 4.5, self.height - 4.5, self.capsule_radius + 1.0, steps=64)
+        self.canvas.create_polygon(shadow_pts, smooth=False, fill=palette["pill_shadow"], outline="")
+
+        # Layer 3: Solid capsule body
+        body_pts = rounded_rect_polygon(6.0, 6.0, self.width - 6.0, self.height - 6.0, self.capsule_radius, steps=64)
+        self.canvas.create_polygon(body_pts, smooth=False, fill=palette["pill_bg"], outline=palette["border"], width=1)
+
+        # Layer 4: Specular top highlight curve
+        self.canvas.create_line(6.0 + self.capsule_radius * 0.7, 7.0, self.width - 6.0 - self.capsule_radius * 0.7, 7.0, fill=palette["border_highlight"], width=1)
 
         body_w = self.width - 64
         is_expanded = frame.get("show_all_drawer", False)
@@ -1297,9 +1299,9 @@ class AetherLiquidDesktopOverlay:
         n = len(waves)
         tilt = float(self.phys["tilt_deg"])
 
-        x_left = 1.0
-        x_right = float(body_w)
-        y_floor = 98.0 if is_expanded else float(self.height - 1.0)
+        x_left = 7.0
+        x_right = body_w - 1.0
+        y_floor = 96.0 if is_expanded else (self.height - 7.0)
 
         # 2. Build Smooth Catmull-Rom Splines (470+ points, zero line breaks)
         deep_nodes: List[Tuple[float, float]] = []
@@ -1322,11 +1324,11 @@ class AetherLiquidDesktopOverlay:
         caust_spline = evaluate_catmull_rom(caustic_nodes, steps_per_segment=12)
 
         # 3. Layer 1: Deep Volumetric Undercurrent (Flat Crisp Bottom, Zero Curve)
-        deep_pts = build_liquid_mesh_polygon(deep_spline, x_left, x_right, y_floor, corner_r_left=0.0, corner_r_right=0.0)
+        deep_pts = build_liquid_mesh_polygon(deep_spline, x_left, x_right, y_floor, corner_r_left=23.0, corner_r_right=3.0)
         self.canvas.create_polygon(deep_pts, smooth=False, fill=active_deep, outline="")
 
         # 4. Layer 2: Primary Radiant Liquid Mass (Flat Crisp Bottom, Zero Curve)
-        surf_pts = build_liquid_mesh_polygon(surf_spline, x_left, x_right, y_floor, corner_r_left=0.0, corner_r_right=0.0)
+        surf_pts = build_liquid_mesh_polygon(surf_spline, x_left, x_right, y_floor, corner_r_left=23.0, corner_r_right=3.0)
         self.canvas.create_polygon(surf_pts, smooth=False, fill=active_surf, outline="")
 
         # 5. Layer 3: Subsurface Caustic Refraction Light Rays or Volcanic Magma Veins
@@ -1448,19 +1450,15 @@ class AetherLiquidDesktopOverlay:
 
         if is_lava_mode:
             badge_text = f"🔥 SENTINEL · {tier_title}"
-            badge_fill = "#FFAA00"
         elif is_quota_flashing:
             badge_text = f"⚠️ CRITICAL STROBE · 92%"
-            badge_fill = "#DE8222"
-        else:
-            badge_fill = palette["header"]
 
         self.canvas.create_text(
             84,
             tl_y,
             anchor="w",
             text=badge_text[:42],
-            fill=badge_fill,
+            fill="#DE8222" if is_quota_flashing else palette["header"],
             font=(self.font_display, 8, "bold"),
         )
 
@@ -1657,10 +1655,10 @@ class AetherLiquidDesktopOverlay:
         b5_y1 = int(8 + 4 * h5 + 12)
         b5_y2 = int(self.height - 8)
         b5_fill = "#0066CC" if self._hover_control == "side_web" else palette["button_bg"]
-        b5_fg = "#FFFFFF" if self._hover_control == "side_web" else "#0A84FF"
+        b5_fg = "#FFFFFF" if self._hover_control == "side_web" else "#0077EE"
         self._draw_domed_button(btn_x1, b5_y1, btn_x2, b5_y2, 9, b5_fill, palette["button_border"])
-        self.canvas.create_text((btn_x1 + btn_x2) // 2, (b5_y1 + b5_y2) // 2 - 4, text="🌐", fill=b5_fg, font=(self.font_display, 8))
-        self.canvas.create_text((btn_x1 + btn_x2) // 2, (b5_y1 + b5_y2) // 2 + 5, text="WEB", fill=b5_fg, font=(self.font_mono, 6, "bold"))
+        self.canvas.create_text((btn_x1 + btn_x2) // 2, (b5_y1 + b5_y2) // 2 - 4, text="🖥️", fill=palette["header"], font=(self.font_display, 8))
+        self.canvas.create_text((btn_x1 + btn_x2) // 2, (b5_y1 + b5_y2) // 2 + 5, text="STU", fill=b5_fg, font=(self.font_mono, 6, "bold"))
 
     def open_settings_dialog(self) -> None:
         if self._settings_window and self._settings_window.winfo_exists():
@@ -1956,11 +1954,5 @@ if __name__ == "__main__":
             f"tilt={phys['tilt_deg']}",
             f"bounces={phys['wall_bounces']}",
         )
-    elif "--tkinter" in sys.argv or "--legacy" in sys.argv:
-        AetherLiquidDesktopOverlay().run()
     else:
-        try:
-            import launch_hud
-            launch_hud.main()
-        except Exception:
-            AetherLiquidDesktopOverlay().run()
+        AetherLiquidDesktopOverlay().run()

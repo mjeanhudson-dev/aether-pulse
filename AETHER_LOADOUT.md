@@ -2,73 +2,25 @@
 
 - **Architect:** Eloquent (`@mjeanhudson-dev`)
 - **Weight Class:** `Heavyweight (1B+)`
-- **3-Pillar Leverage Index:** `29,705`
-- **Verified Multi-Harness Volume:** `4.45B` (`94.46%` Cache Hit)
-- **Proof-of-Burn Receipt:** `9b7b38621939c461ae056af70ffa619aa97ebd71f8aec3ff9a0876d3882f3c62`
+- **3-Pillar Leverage Index:** `29,930`
+- **Verified Multi-Harness Volume:** `4.62B` (`94.49%` Cache Hit)
+- **Proof-of-Burn Receipt:** `33fcfefa083743fc811d839c1da1c1484620442e783511f9d19fcbfd53364777`
 
 ## 1. Multi-Harness Model Routing Strategy (1.24x Multiplier)
 - **High-Iteration Recon & Tool Loops:** Google Antigravity (Gemini 3.8 Flash) — $0.075/M input + 93.7% cache hit
 - **Deep Architecture & Synthesis:** Anthropic Claude Code (Opus 5.5 / Sonnet 5.5) + Gemini 4 Argon
 - **Sandboxed Formal Verification:** OpenAI Codex CLI (gpt-6.1-sol / gpt-6-luna) with Windows Sandbox + 96.9% cache hit
 
-## 2. Active MCP Server Mesh (13 Servers)
-`caveman, chrome-devtools, dak-notebook, dak-viz, rea, colab-mcp, sentry, gemini-blueprint, aether, GitKraken, aether-pulse, desktop-commander, open-design`
+## 2. Active MCP Server Mesh (1 Servers)
+`gemini-blueprint`
 
 ## 3. Sanitized High-Throughput Harness Flags
 ```json
 {
-  "CLAUDE_CODE_GIT_BASH_PATH": "C:\\Program Files\\Git\\bin\\bash.exe",
-  "CLAUDE_CODE_USE_POWERSHELL_TOOL": "1",
-  "CLAUDE_CODE_POWERSHELL_RESPECT_EXECUTION_POLICY": "0",
-  "CLAUDE_CODE_EFFORT_LEVEL": "xhigh",
-  "CLAUDE_CODE_ALWAYS_ENABLE_EFFORT": "1",
-  "CLAUDE_CODE_ENABLE_FINE_GRAINED_TOOL_STREAMING": "1",
-  "CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY": "10",
-  "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "20",
-  "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "3",
-  "CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION": "500",
-  "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-  "CLAUDE_CODE_EXPERIMENTAL_OBSERVER_AGENTS": "1",
-  "CLAUDE_CODE_FORK_SUBAGENT": "1",
-  "CLAUDE_CODE_FORWARD_SUBAGENT_TEXT": "1",
-  "CLAUDE_CODE_ENABLE_APPEND_SUBAGENT_PROMPT": "1",
-  "CLAUDE_CODE_SUBAGENT_MODEL": "sonnet",
-  "CLAUDE_CODE_SUBAGENT_EFFORT": "xhigh",
-  "CLAUDE_CODE_WORKFLOW_SUBAGENT_MODEL": "sonnet",
-  "CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS": "20",
-  "CLAUDE_CODE_PLAN_V2_AGENT_COUNT": "10",
-  "CLAUDE_CODE_PLAN_V2_EXPLORE_AGENT_COUNT": "5",
-  "CLAUDE_CODE_ENABLE_EXPERIMENTAL_ADVISOR_TOOL": "1",
-  "CLAUDE_CODE_ENABLE_REFRESH_MCP_TOOLS": "1",
-  "CLAUDE_CODE_COORDINATOR_EXTRA_TOOLS": "1",
-  "CLAUDE_CODE_UPFRONT_TOOLS": "1",
-  "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "1000000",
-  "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "85",
-  "CLAUDE_CODE_DISABLE_BG_SHELL_PRESSURE_REAP": "1",
-  "CLAUDE_CODE_SYNTAX_HIGHLIGHT": "true",
-  "CLAUDE_CODE_RETRY_WATCHDOG": "1",
-  "CLAUDE_CODE_RETRY_WATCHDOG_MAX_WAIT_MS": "120000",
-  "CLAUDE_CODE_OVERLOADED_RETRY_MAX_DELAY_MS": "60000",
-  "BASH_DEFAULT_TIMEOUT_MS": "300000",
-  "BASH_MAX_TIMEOUT_MS": "900000",
-  "API_TIMEOUT_MS": "600000",
-  "CLAUDE_CODE_PWSH_PARSE_TIMEOUT_MS": "30000",
-  "CLAUDE_CODE_SESSIONEND_HOOKS_TIMEOUT_MS": "15000",
-  "CLAUDE_ENABLE_BYTE_WATCHDOG": "1",
-  "CLAUDE_ENABLE_STREAM_WATCHDOG": "1",
-  "CLAUDE_CODE_RESUME_INTERRUPTED_TURN": "1",
-  "CLAUDE_CODE_MAX_TURNS": "1000",
-  "CLAUDE_CODE_MAX_WEB_SEARCHES_PER_SESSION": "500",
-  "TASK_MAX_OUTPUT_LENGTH": "160000",
-  "BASH_MAX_OUTPUT_LENGTH": "100000",
-  "ENABLE_TOOL_SEARCH": "auto",
-  "MCP_CONNECTION_NONBLOCKING": "1",
-  "FORCE_HYPERLINK": "1",
-  "CLAUDE_CODE_ARTIFACT_AUTO_OPEN": "1",
-  "FALLBACK_FOR_ALL_PRIMARY_MODELS": "1",
-  "CLAUDE_CODE_CHROME_LATE_MCP_SERVER": "1",
-  "CLAUDE_CHROME_PERMISSION_MODE": "allow",
-  "CLAUDE_IN_CHROME_DOMAIN_RULE_TOOL": "1",
-  "CLAUDE_CODE_AUTO_MODE_REMOTE_BROWSER": "1"
+  "CLAUDE_CODE_SUBAGENT_MODEL": "claude-opus-5-5",
+  "ANTHROPIC_SMALL_FAST_MODEL": "claude-opus-5-5",
+  "ANTHROPIC_MODEL": "claude-opus-5-5",
+  "GEMINI_DEFAULT_MODEL": "gemini-3.8-pro-ultra-max",
+  "AETHER_FLASH_SHUNT": "1"
 }
 ```

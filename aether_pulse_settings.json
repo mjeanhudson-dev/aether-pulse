@@ -1,10 +1,10 @@
 {
-  "overlay_mode": "continue_dev",
+  "overlay_mode": "all",
   "boundary_mode": "pin",
   "theme": "dark",
   "enable_particles": true,
   "topmost": true,
-  "accounting_lens": "spectacular",
+  "accounting_lens": "specular",
   "close_to_tray": true,
   "active_subscriptions": [
     "claude_code",
