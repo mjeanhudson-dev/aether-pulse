@@ -158,7 +158,7 @@ def handle_tool_call(name: str, arguments: Optional[Dict[str, Any]] = None) -> D
         recommendations = [
             "Trigger `/compact` before raw uncached input exceeds 150k tokens in long-running sessions.",
             "Avoid pausing >60 minutes mid-session on heavy contexts to prevent 5m/1h prompt-cache TTL eviction spikes.",
-            "Delegate broad codebase searches to lightweight subagents (`research` / Flash) so main-thread context stays cached.",
+            "Offload broad codebase scans to Stage 0 deterministic local scripts (`mcp_carbon_ingest.py` / `stage0_ast_slice_and_parity`) or `inherit`-tier research subagents (Flash shunted) so main-thread context stays cached.",
             "Keep static instructions and rules in top-level system files (`CLAUDE.md` / `AGENTS.md`) so the prefix hash remains invariant.",
         ]
         payload = {
