@@ -13,7 +13,9 @@ Exposes 4 tools:
 """
 
 import json
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -23,15 +25,32 @@ if str(SCRIPT_DIR) not in sys.path:
 
 import aether_pulse  # noqa: E402
 
+SUPPORTED_PROTOCOL_VERSIONS = [
+    "2026-07-28",
+    "2025-11-25",
+    "2025-06-18",
+    "2025-03-26",
+    "2024-11-05",
+]
 
 SERVER_INFO = {
     "name": "aether-pulse-mcp",
-    "version": "1.0.0",
+    "version": "1.0.1",
 }
+
+def _ann(title: str, read_only: bool = True) -> Dict[str, Any]:
+    return {
+        "title": title,
+        "readOnlyHint": read_only,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    }
 
 TOOLS_SCHEMA = [
     {
         "name": "get_my_efficiency_rank",
+        "annotations": _ann("Get My Efficiency Rank", read_only=True),
         "description": (
             "Returns the operator's live 3-Pillar Leverage Index, Weight Class "
             "(Featherweight / Cruiserweight / Heavyweight), Cache Mastery score, "
@@ -51,6 +70,7 @@ TOOLS_SCHEMA = [
     },
     {
         "name": "diagnose_cache_leaks",
+        "annotations": _ann("Diagnose Cache Leaks", read_only=True),
         "description": (
             "Audits local Claude Code, Google Antigravity, and OpenAI Codex CLI transcripts "
             "for cold-cache write spikes and low cache-reuse sessions, returning actionable "
@@ -69,6 +89,7 @@ TOOLS_SCHEMA = [
     },
     {
         "name": "compare_with_cohort",
+        "annotations": _ann("Compare With Cohort", read_only=True),
         "description": (
             "Compares the operator's 3-Pillar Leverage Index, Cache Hit %, and API cost savings "
             "against verified public cohort benchmarks in a specific weight class or across all tiers."
@@ -86,6 +107,7 @@ TOOLS_SCHEMA = [
     },
     {
         "name": "export_loadout_blueprint",
+        "annotations": _ann("Export Loadout Blueprint", read_only=False),
         "description": (
             "Exports the operator's sanitized Architect Spotlight Loadout Blueprint "
             "(aether_loadout_blueprint.json and AETHER_LOADOUT.md) with automatic secret scrubbing."
@@ -225,12 +247,14 @@ def process_rpc_request(req: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         return None
 
     if method == "initialize":
+        req_ver = str(params.get("protocolVersion") or "").strip()
+        neg_ver = req_ver if req_ver in SUPPORTED_PROTOCOL_VERSIONS else "2024-11-05"
         return {
             "jsonrpc": "2.0",
             "id": req_id,
             "result": {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {"tools": {}},
+                "protocolVersion": neg_ver,
+                "capabilities": {"tools": {"listChanged": False}},
                 "serverInfo": SERVER_INFO,
             },
         }
@@ -281,23 +305,41 @@ def run_stdio_server() -> None:
 
 
 def run_self_test() -> int:
+    global SCRIPT_DIR
     print("=== Aether Pulse MCP Server Self-Test ===")
-    init_resp = process_rpc_request({"jsonrpc": "2.0", "id": 1, "method": "initialize"})
+    init_resp = process_rpc_request({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {"protocolVersion": "2026-07-28"},
+    })
     assert init_resp and init_resp["result"]["serverInfo"]["name"] == "aether-pulse-mcp"
+    assert init_resp["result"]["protocolVersion"] == "2026-07-28"
     tools_resp = process_rpc_request({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
     tools = tools_resp["result"]["tools"]
     assert len(tools) == 4
+    assert all(isinstance(t.get("annotations", {}).get("readOnlyHint"), bool) for t in tools)
     print(f"[PASS] Registered {len(tools)} MCP tools: {[t['name'] for t in tools]}")
 
-    for idx, t in enumerate(tools, start=3):
-        call_resp = process_rpc_request({
-            "jsonrpc": "2.0",
-            "id": idx,
-            "method": "tools/call",
-            "params": {"name": t["name"], "arguments": {}},
-        })
-        assert call_resp and not call_resp["result"]["isError"]
-        print(f"[PASS] tools/call -> {t['name']} succeeded.")
+    orig_script_dir = SCRIPT_DIR
+    with tempfile.TemporaryDirectory(prefix="aether_pulse_selftest_") as tmp_dir:
+        tmp_path = Path(tmp_dir)
+        cached_report = orig_script_dir / "aether_pulse_report.json"
+        if cached_report.is_file():
+            shutil.copy2(cached_report, tmp_path / "aether_pulse_report.json")
+        SCRIPT_DIR = tmp_path
+        try:
+            for idx, t in enumerate(tools, start=3):
+                call_resp = process_rpc_request({
+                    "jsonrpc": "2.0",
+                    "id": idx,
+                    "method": "tools/call",
+                    "params": {"name": t["name"], "arguments": {}},
+                })
+                assert call_resp and not call_resp["result"]["isError"]
+                print(f"[PASS] tools/call -> {t['name']} succeeded.")
+        finally:
+            SCRIPT_DIR = orig_script_dir
     print("=== ALL MCP SELF-TESTS PASSED ===")
     return 0
 
