@@ -23,14 +23,18 @@ import glob
 import hashlib
 import json
 import math
+import os
 import re
 import subprocess
+import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
 PROJECT_DIR = Path(__file__).resolve().parent
 STATE_PATH = Path.home() / ".aether_pulse_state.json"
+SCAN_CACHE_PATH = Path.home() / ".aether_pulse_scan_cache.json"
 
 OPERATOR_NAME = "Eloquent"
 OPERATOR_HANDLE = "@mjeanhudson-dev"
@@ -152,6 +156,15 @@ def determine_weight_class(total_tokens: int) -> str:
     return "Featherweight (<100M)"
 
 
+def compute_entropy_from_buckets(buckets: Dict[Any, int]) -> float:
+    """Computes Shannon entropy (in bits) from quantized turn-delta bucket counts."""
+    total = sum(buckets.values())
+    if total < 4:
+        return 5.0
+    entropy = -sum((count / total) * math.log2(count / total) for count in buckets.values() if count > 0)
+    return round(entropy, 2)
+
+
 def compute_shannon_entropy(values: List[int]) -> float:
     """
     Computes Shannon entropy (in bits) over quantized turn token deltas.
@@ -161,11 +174,7 @@ def compute_shannon_entropy(values: List[int]) -> float:
     if not values or len(values) < 4:
         return 5.0
     buckets = collections.Counter(int(math.log2(max(v, 1)) * 4) for v in values if v > 0)
-    total = sum(buckets.values())
-    if total == 0:
-        return 0.0
-    entropy = -sum((count / total) * math.log2(count / total) for count in buckets.values())
-    return round(entropy, 2)
+    return compute_entropy_from_buckets(buckets)
 
 
 def compute_metrics(
@@ -318,134 +327,254 @@ def scan_git_velocity_proof() -> Dict[str, Any]:
     }
 
 
+def _load_scan_cache() -> Dict[str, Any]:
+    try:
+        if SCAN_CACHE_PATH.exists():
+            data = json.loads(SCAN_CACHE_PATH.read_text(encoding="utf-8"))
+            if isinstance(data, dict) and data.get("version") == 1:
+                return data
+    except Exception:
+        pass
+    return {"version": 1, "files": {}, "git": None}
+
+
+def _parse_claude_file(p: str) -> Dict[str, Any]:
+    inp = out = cr = cw = 0
+    buckets: Dict[str, int] = collections.Counter()
+    models: Dict[str, int] = collections.Counter()
+    h = hashlib.sha256()
+    try:
+        with open(p, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                if "usage" in line:
+                    try:
+                        d = json.loads(line)
+                        msg = d.get("message") or {}
+                        model_id = msg.get("model") or d.get("model") or "claude-sonnet"
+                        u = msg.get("usage") or d.get("usage") or {}
+                        if isinstance(u, dict):
+                            i = int(u.get("input_tokens", 0) or 0)
+                            o = int(u.get("output_tokens", 0) or 0)
+                            c_r = int(u.get("cache_read_input_tokens", 0) or 0)
+                            c_w = int(u.get("cache_creation_input_tokens", 0) or 0)
+                            if i or o or c_r or c_w:
+                                inp += i
+                                out += o
+                                cr += c_r
+                                cw += c_w
+                                turn_tot = i + o + c_r + c_w
+                                if turn_tot > 0:
+                                    buckets[str(int(math.log2(turn_tot) * 4))] += 1
+                                if isinstance(model_id, str) and not model_id.startswith("<"):
+                                    models[model_id] += turn_tot
+                                h.update(f"c:{i}:{o}:{c_r}:{c_w}|".encode())
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+    leak = None
+    if cw > 500_000 and cr < cw * 3:
+        leak = {
+            "harness": "Claude Code",
+            "session": scrub_personal_identity(Path(p).stem[:16]),
+            "cache_write": cw,
+            "cache_read": cr,
+            "diagnosis": "High Cache-Write Spike (Idle >1hr cache eviction or uncompacted mega-file load)",
+        }
+    return {
+        "sessions": 1,
+        "in": inp,
+        "out": out,
+        "cr": cr,
+        "cw": cw,
+        "reas": 0,
+        "buckets": dict(buckets),
+        "models": dict(models),
+        "leak": leak,
+        "hash": h.hexdigest(),
+    }
+
+
+def _parse_agy_file(p: str) -> Dict[str, Any]:
+    inp = out = cr = 0
+    buckets: Dict[str, int] = collections.Counter()
+    models: Dict[str, int] = collections.Counter()
+    h = hashlib.sha256()
+    try:
+        with open(p, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                try:
+                    d = json.loads(line)
+                    if isinstance(d, dict):
+                        i = int(d.get("input_tokens", 0) or 0)
+                        o = int(d.get("output_tokens", 0) or 0)
+                        c_r = int(d.get("cache_read_tokens", 0) or 0)
+                        if i or o or c_r:
+                            inp += i
+                            out += o
+                            cr += c_r
+                            turn_tot = i + o + c_r
+                            if turn_tot > 0:
+                                buckets[str(int(math.log2(turn_tot) * 4))] += 1
+                            models["gemini-4-hydrogen-xhigh / gemini-4-carbon"] += turn_tot
+                            h.update(f"a:{i}:{o}:{c_r}|".encode())
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    leak = None
+    if inp > 1_000_000 and cr < inp * 2:
+        leak = {
+            "harness": "Google Antigravity",
+            "session": scrub_personal_identity(Path(p).parts[-4][:16] if len(Path(p).parts) >= 4 else "brain"),
+            "cache_write": inp,
+            "cache_read": cr,
+            "diagnosis": "Low Context Reuse Ratio (<66% cache hit; candidate for /compact or subagent delegation)",
+        }
+    return {
+        "sessions": 1,
+        "in": inp,
+        "out": out,
+        "cr": cr,
+        "cw": 0,
+        "reas": 0,
+        "buckets": dict(buckets),
+        "models": dict(models),
+        "leak": leak,
+        "hash": h.hexdigest(),
+    }
+
+
+def _parse_codex_file(p: str) -> Dict[str, Any]:
+    max_total = None
+    try:
+        with open(p, "r", encoding="utf-8", errors="ignore") as f:
+            for line in f:
+                if "token_count" in line:
+                    try:
+                        d = json.loads(line)
+                        pay = d.get("payload") or {}
+                        if pay.get("type") == "token_count":
+                            tu = (pay.get("info") or {}).get("total_token_usage")
+                            if isinstance(tu, dict):
+                                max_total = tu
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+    if not max_total:
+        return {"sessions": 0, "in": 0, "out": 0, "cr": 0, "cw": 0, "reas": 0, "buckets": {}, "models": {}, "leak": None, "hash": ""}
+    raw_in = int(max_total.get("input_tokens", 0) or 0)
+    cr = int(max_total.get("cached_input_tokens", 0) or 0)
+    cw = int(max_total.get("cache_write_input_tokens", 0) or 0)
+    out = int(max_total.get("output_tokens", 0) or 0)
+    reas = int(max_total.get("reasoning_output_tokens", 0) or 0)
+    uncached_in = max(0, raw_in - cr)
+    turn_tot = uncached_in + cr + cw + out
+    buckets = {str(int(math.log2(turn_tot) * 4)): 1} if turn_tot > 0 else {}
+    digest = hashlib.sha256(f"x:{uncached_in}:{out}:{cr}:{cw}:{reas}|".encode()).hexdigest()
+    return {
+        "sessions": 1,
+        "in": uncached_in,
+        "out": out,
+        "cr": cr,
+        "cw": cw,
+        "reas": reas,
+        "buckets": buckets,
+        "models": {"gpt-6.1-sol / gpt-6-luna": turn_tot},
+        "leak": None,
+        "hash": digest,
+    }
+
+
+def _scan_harness_glob(
+    pattern: str,
+    recursive: bool,
+    kind: str,
+    parser_fn: Any,
+    cache_files: Dict[str, Any],
+    hasher: Any,
+    delta_buckets: collections.Counter,
+    model_usage: collections.Counter,
+    cold_cache_leaks: List[Dict[str, Any]],
+) -> tuple[int, int, int, int, int, int, bool]:
+    inp = out = cr = cw = reas = sessions = 0
+    dirty = False
+    for p in sorted(glob.glob(pattern, recursive=recursive)):
+        try:
+            st = os.stat(p)
+        except OSError:
+            continue
+        key = f"{kind}:{p}"
+        entry = cache_files.get(key)
+        if not (isinstance(entry, dict) and entry.get("mtime_ns") == st.st_mtime_ns and entry.get("size") == st.st_size):
+            entry = parser_fn(p)
+            entry["mtime_ns"] = st.st_mtime_ns
+            entry["size"] = st.st_size
+            cache_files[key] = entry
+            dirty = True
+        sessions += int(entry.get("sessions", 0))
+        inp += int(entry.get("in", 0))
+        out += int(entry.get("out", 0))
+        cr += int(entry.get("cr", 0))
+        cw += int(entry.get("cw", 0))
+        reas += int(entry.get("reas", 0))
+        for b_k, b_v in (entry.get("buckets") or {}).items():
+            delta_buckets[int(b_k)] += int(b_v)
+        for m_k, m_v in (entry.get("models") or {}).items():
+            model_usage[m_k] += int(m_v)
+        leak = entry.get("leak")
+        if leak:
+            cold_cache_leaks.append(leak)
+        fhash = entry.get("hash")
+        if fhash:
+            hasher.update(fhash.encode())
+    return inp, out, cr, cw, reas, sessions, dirty
+
+
 def scan_local_harnesses() -> Dict[str, Any]:
     home = Path.home()
     hasher = hashlib.sha256()
-    turn_deltas: List[int] = []
-    model_usage: Dict[str, int] = collections.Counter()
+    delta_buckets: collections.Counter = collections.Counter()
+    model_usage: collections.Counter = collections.Counter()
     cold_cache_leaks: List[Dict[str, Any]] = []
 
-    # 1. Scan Claude Code (~/.claude/projects/**/*.jsonl)
-    claude_in = claude_out = claude_cr = claude_cw = claude_sessions = 0
-    claude_pattern = str(home / ".claude" / "projects" / "**" / "*.jsonl")
-    for p in sorted(glob.glob(claude_pattern, recursive=True)):
-        claude_sessions += 1
-        sess_cr = sess_cw = sess_in = 0
-        try:
-            with open(p, "r", encoding="utf-8", errors="ignore") as f:
-                for line in f:
-                    if "usage" in line:
-                        try:
-                            d = json.loads(line)
-                            msg = d.get("message") or {}
-                            model_id = msg.get("model") or d.get("model") or "claude-sonnet"
-                            u = msg.get("usage") or d.get("usage") or {}
-                            if isinstance(u, dict):
-                                i = int(u.get("input_tokens", 0) or 0)
-                                o = int(u.get("output_tokens", 0) or 0)
-                                cr = int(u.get("cache_read_input_tokens", 0) or 0)
-                                cw = int(u.get("cache_creation_input_tokens", 0) or 0)
-                                if i or o or cr or cw:
-                                    claude_in += i
-                                    claude_out += o
-                                    claude_cr += cr
-                                    claude_cw += cw
-                                    sess_cr += cr
-                                    sess_cw += cw
-                                    sess_in += i
-                                    turn_tot = i + o + cr + cw
-                                    turn_deltas.append(turn_tot)
-                                    if isinstance(model_id, str) and not model_id.startswith("<"):
-                                        model_usage[model_id] += turn_tot
-                                    hasher.update(f"c:{i}:{o}:{cr}:{cw}|".encode())
-                        except Exception:
-                            pass
-        except Exception:
-            pass
-        if sess_cw > 500_000 and sess_cr < sess_cw * 3:
-            cold_cache_leaks.append({
-                "harness": "Claude Code",
-                "session": scrub_personal_identity(Path(p).stem[:16]),
-                "cache_write": sess_cw,
-                "cache_read": sess_cr,
-                "diagnosis": "High Cache-Write Spike (Idle >1hr cache eviction or uncompacted mega-file load)",
-            })
+    cache = _load_scan_cache()
+    cache_files = cache.setdefault("files", {})
 
-    # 2. Scan Google Antigravity (~/.gemini/antigravity/brain/*/.system_generated/logs/transcript.jsonl)
-    agy_in = agy_out = agy_cr = agy_sessions = 0
-    agy_pattern = str(home / ".gemini" / "antigravity" / "brain" / "*" / ".system_generated" / "logs" / "transcript.jsonl")
-    for p in sorted(glob.glob(agy_pattern)):
-        agy_sessions += 1
-        sess_in = sess_cr = 0
-        try:
-            with open(p, "r", encoding="utf-8", errors="ignore") as f:
-                for line in f:
-                    try:
-                        d = json.loads(line)
-                        if isinstance(d, dict):
-                            i = int(d.get("input_tokens", 0) or 0)
-                            o = int(d.get("output_tokens", 0) or 0)
-                            cr = int(d.get("cache_read_tokens", 0) or 0)
-                            if i or o or cr:
-                                agy_in += i
-                                agy_out += o
-                                agy_cr += cr
-                                sess_in += i
-                                sess_cr += cr
-                                turn_tot = i + o + cr
-                                turn_deltas.append(turn_tot)
-                                model_usage["gemini-3.8-flash / gemini-4-argon"] += turn_tot
-                                hasher.update(f"a:{i}:{o}:{cr}|".encode())
-                    except Exception:
-                        pass
-        except Exception:
-            pass
-        if sess_in > 1_000_000 and sess_cr < sess_in * 2:
-            cold_cache_leaks.append({
-                "harness": "Google Antigravity",
-                "session": scrub_personal_identity(Path(p).parts[-4][:16] if len(Path(p).parts) >= 4 else "brain"),
-                "cache_write": sess_in,
-                "cache_read": sess_cr,
-                "diagnosis": "Low Context Reuse Ratio (<66% cache hit; candidate for /compact or subagent delegation)",
-            })
-
-    # 3. Scan OpenAI Codex CLI (~/.codex/sessions/**/*.jsonl)
-    codex_in = codex_out = codex_cr = codex_cw = codex_reas = codex_sessions = 0
-    codex_pattern = str(home / ".codex" / "sessions" / "**" / "*.jsonl")
-    for p in sorted(glob.glob(codex_pattern, recursive=True)):
-        max_total = None
-        try:
-            with open(p, "r", encoding="utf-8", errors="ignore") as f:
-                for line in f:
-                    if "token_count" in line:
-                        try:
-                            d = json.loads(line)
-                            pay = d.get("payload") or {}
-                            if pay.get("type") == "token_count":
-                                tu = (pay.get("info") or {}).get("total_token_usage")
-                                if isinstance(tu, dict):
-                                    max_total = tu
-                        except Exception:
-                            pass
-        except Exception:
-            pass
-        if max_total:
-            codex_sessions += 1
-            raw_in = int(max_total.get("input_tokens", 0) or 0)
-            cr = int(max_total.get("cached_input_tokens", 0) or 0)
-            cw = int(max_total.get("cache_write_input_tokens", 0) or 0)
-            out = int(max_total.get("output_tokens", 0) or 0)
-            reas = int(max_total.get("reasoning_output_tokens", 0) or 0)
-            uncached_in = max(0, raw_in - cr)
-            codex_in += uncached_in
-            codex_cr += cr
-            codex_cw += cw
-            codex_out += out
-            codex_reas += reas
-            turn_tot = uncached_in + cr + cw + out
-            turn_deltas.append(turn_tot)
-            model_usage["gpt-6.1-sol / gpt-6-luna"] += turn_tot
-            hasher.update(f"x:{uncached_in}:{out}:{cr}:{cw}:{reas}|".encode())
+    claude_in, claude_out, claude_cr, claude_cw, _, claude_sessions, d1 = _scan_harness_glob(
+        str(home / ".claude" / "projects" / "**" / "*.jsonl"),
+        True,
+        "c",
+        _parse_claude_file,
+        cache_files,
+        hasher,
+        delta_buckets,
+        model_usage,
+        cold_cache_leaks,
+    )
+    agy_in, agy_out, agy_cr, _, _, agy_sessions, d2 = _scan_harness_glob(
+        str(home / ".gemini" / "antigravity" / "brain" / "*" / ".system_generated" / "logs" / "transcript.jsonl"),
+        False,
+        "a",
+        _parse_agy_file,
+        cache_files,
+        hasher,
+        delta_buckets,
+        model_usage,
+        cold_cache_leaks,
+    )
+    codex_in, codex_out, codex_cr, codex_cw, codex_reas, codex_sessions, d3 = _scan_harness_glob(
+        str(home / ".codex" / "sessions" / "**" / "*.jsonl"),
+        True,
+        "x",
+        _parse_codex_file,
+        cache_files,
+        hasher,
+        delta_buckets,
+        model_usage,
+        cold_cache_leaks,
+    )
 
     # 4. Scan Google Gemini (Gemini direct CLI, AI Studio API, and Foundation Models)
     gemini_in = 42_000_000
@@ -456,8 +585,23 @@ def scan_local_harnesses() -> Dict[str, Any]:
     gemini_metrics = compute_metrics(gemini_in, gemini_cr, gemini_cw, gemini_out, 0, 1.20, 6.4)
 
     proof_of_burn = hasher.hexdigest()
-    entropy_bits = compute_shannon_entropy(turn_deltas)
-    git_proof = scan_git_velocity_proof()
+    entropy_bits = compute_entropy_from_buckets(delta_buckets)
+
+    now_ts = time.time()
+    git_cache = cache.get("git")
+    if isinstance(git_cache, dict) and (now_ts - float(git_cache.get("ts", 0))) < 300 and isinstance(git_cache.get("data"), dict):
+        git_proof = git_cache["data"]
+        d4 = False
+    else:
+        git_proof = scan_git_velocity_proof()
+        cache["git"] = {"ts": now_ts, "data": git_proof}
+        d4 = True
+
+    if d1 or d2 or d3 or d4:
+        try:
+            SCAN_CACHE_PATH.write_text(json.dumps(cache), encoding="utf-8")
+        except Exception:
+            pass
 
     active_families = sum(1 for v in [claude_in + claude_cr, gemini_in + gemini_cr, agy_in + agy_cr, codex_in + codex_cr] if v > 0)
     routing_multiplier = 1.0 + (active_families - 1) * 0.12
@@ -702,8 +846,8 @@ def export_loadout_blueprint(report: Dict[str, Any], out_dir: Path) -> Dict[str,
             "proof_of_burn_sha256": report["proof_of_burn_sha256"],
         },
         "multi_harness_routing_strategy": {
-            "recon_and_high_frequency_loops": "Google Antigravity (Gemini 3.8 Flash) — $0.075/M input + 93.7% cache hit",
-            "deep_architecture_and_synthesis": "Anthropic Claude Code (Opus 5.5 / Sonnet 5.5) + Gemini 4 Argon",
+            "recon_and_high_frequency_loops": "Stage 0 Deterministic AST Scripts + Google Antigravity (Gemini 4 Hydrogen XHigh+ / Carbon High, Flash Shunted)",
+            "deep_architecture_and_synthesis": "Anthropic Claude Code (Opus 5.5 / Sonnet 5.5) + Gemini 4 Carbon / Neon (High)",
             "sandboxed_formal_verification": "OpenAI Codex CLI (gpt-6.1-sol / gpt-6-luna) with Windows Sandbox + 96.9% cache hit",
         },
         "active_mcp_mesh": mcp_servers_list,
@@ -1187,7 +1331,7 @@ def build_t3_usage_analytics(report: Dict[str, Any]) -> Dict[str, Any]:
                 "cost_usd": 271.02,
             },
             "fast_recon": {
-                "label": "High-Speed Recon & Tool Loops (Gemini 3.8 Flash · 4 Argon)",
+                "label": "Stage 0 Recon & Tool Loops (Gemini 4 Hydrogen XHigh+ · Carbon High)",
                 "harness": "Google Antigravity",
                 "share_pct": agy_share,
                 "tokens_formatted": f"{agy['total_tokens'] / 1e9:.2f}B",
@@ -3265,7 +3409,7 @@ try {{
         <h2>{OPERATOR_NAME} ({report['operator_handle']}) — The 3-Harness Trinity</h2>
         <div style="margin-block-bottom:16px;">{badges_html}</div>
         <p class="prose" style="margin-block-top:14px;">
-          <strong>1. Cost-Aware Exploratory Routing:</strong> High-frequency codebase reconnaissance and iterative test loops execute on <em>Gemini 3.8 Flash</em> inside Antigravity, reserving <em>Claude Opus 5.5</em> and <em>Gemini 4 Argon</em> for deep architectural synthesis.<br><br>
+          <strong>1. Bimodal Stage-0-to-Apex Routing:</strong> High-frequency codebase reconnaissance and AST slicing execute via deterministic <em>Stage 0</em> local scripts and <em>Gemini 4 Hydrogen XHigh+</em> inside Antigravity (Flash shunted), reserving <em>Claude Opus 5.5</em> and <em>Gemini 4 Carbon / Neon</em> for deep architectural synthesis.<br><br>
           <strong>2. Sandboxed Formal Verification:</strong> <em>OpenAI Codex CLI (gpt-6.1-sol)</em> operates at a <strong>96.92% cache hit rate</strong> inside an elevated Windows Sandbox for isolated theorem and security verification.<br><br>
           <strong>3. Continuous Statusline Telemetry:</strong> Real-time Kardashev Index and Cache Hit % feedback on every turn via <code>~/.aether_pulse_state.json</code>.
         </p>
@@ -3313,7 +3457,7 @@ try {{
             <span class="bounty-tag">Cache Architecture · Antigravity</span>
             <span class="bounty-reward">5,000 pts · 500 USDC</span>
           </div>
-          <h3 class="bounty-title">Gemini 3.8 Flash Context Caching Sweep</h3>
+          <h3 class="bounty-title">Stage-0 &amp; Antigravity Context Caching Sweep</h3>
           <p class="bounty-desc">
             Design a subagent swarm pipeline in Google Antigravity that executes a 50-repository code quality and AST audit while keeping the prompt cache hit rate &gt;95%. Must keep tool definitions immutable and eliminate prefix churn.
           </p>
@@ -3674,7 +3818,7 @@ try {{
         <div class="mc-card-callout">
           <h4>🌐 The 3 Specialized Frontiers</h4>
           <ol style="margin:0;padding-left:18px;">
-            <li><strong>High-Speed Recon &amp; Test Sweeps:</strong> <em>Google Antigravity (Gemini 3.8 Flash)</em> — $0.075/M input, 1M token context, sub-second grep/AST loops.</li>
+            <li><strong>Stage-0 Recon &amp; Test Sweeps:</strong> <em>Deterministic Local AST Scripts + Google Antigravity (Gemini 4 Hydrogen XHigh+ / Carbon High)</em> — Flash shunted, 1M token context, sub-second grep/AST loops.</li>
             <li><strong>Deep Architecture &amp; Synthesis:</strong> <em>Anthropic Claude Code (Opus 5.5 / Sonnet 5.5)</em> — maximum reasoning depth and multi-file refactoring.</li>
             <li><strong>Sandboxed Formal Verification:</strong> <em>OpenAI Codex (gpt-6.1-sol)</em> — isolated Windows Sandbox theorem and security verification at 96.9% cache hit rate.</li>
           </ol>

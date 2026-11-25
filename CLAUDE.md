@@ -1,6 +1,6 @@
 # CLAUDE.md — Aether Pulse Repository Directives & Design System Rules
 
-- **Public Identity Invariant:** All code, commits, documentation, badges, and leaderboard profiles in this repository are authored by **Eloquent (`@mjeanhudson-dev`)**. Never include local OS usernames or raw personal filesystem paths (`C:\Users\...`) in any tracked file or generated artifact; always normalize paths to `~` or `Path.home()`.
+- **Public Identity Invariant:** All code, commits, documentation, badges, and leaderboard profiles in this repository are authored by **Eloquent (`@mjeanhudson-dev`)**. Never include local OS usernames or raw personal filesystem paths (`C:\Users\<username>\...`) in any tracked file or generated artifact; always normalize paths to `~` or `Path.home()`.
 - **Design System Authority:** Read [`DESIGN.md`](./DESIGN.md) and [`PRODUCT.md`](./PRODUCT.md) before modifying any UI surface in `aether_pulse.py` or `aether_pulse_leaderboard.html`.
 - **Aesthetic Standard (Cupertino Demure Telemetry):**
   1. Maintain native **Light & Dark Mode** via `<meta name="color-scheme" content="light dark">`, CSS `light-dark()`, and the tri-state segmented controller (`System` / `Light` / `Dark`).
