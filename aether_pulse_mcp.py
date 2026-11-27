@@ -12,14 +12,22 @@ Exposes 4 tools:
   4. export_loadout_blueprint — Exports secret-scrubbed Architect Spotlight Blueprint (.json + .md)
 """
 
+import hashlib
+import hmac
 import json
+import os
 import shutil
 import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-SCRIPT_DIR = Path(__file__).resolve().parent
+HOME = Path.home()
+_SERVER_FILE_PATH = Path(__file__).resolve()
+BOOT_CODE_SHA256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+DEFAULT_CLOUD_MCP_URL = "https://alpha-mcp-mxnmqsr7gq-ue.a.run.app/mcp"
+
+SCRIPT_DIR = _SERVER_FILE_PATH.parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
@@ -37,6 +45,72 @@ SERVER_INFO = {
     "name": "aether-pulse-mcp",
     "version": "1.0.1",
 }
+
+
+def _public_path(raw: str) -> str:
+    home_str = str(HOME)
+    text = str(raw or "")
+    if text.lower().startswith(home_str.lower()):
+        return ("~" + text[len(home_str):]).replace("\\", "/")
+    return text.replace("\\", "/")
+
+
+def _env_bi(primary: str, secondary: str, default: str = "") -> str:
+    for key in (primary, secondary):
+        val = os.environ.get(key, "").strip()
+        if val:
+            return val
+    return default
+
+
+def is_flash_shunt_engaged() -> bool:
+    return _env_bi("AETHER_FLASH_SHUNT", "NEXUS_FLASH_SHUNT", "1").lower() not in ("0", "false", "no", "off")
+
+
+def get_min_model() -> str:
+    return _env_bi("AETHER_MIN_MODEL", "NEXUS_MIN_MODEL", "gemini-4-hydrogen-xhigh")
+
+
+def get_reasoning_effort() -> str:
+    return _env_bi("AETHER_REASONING_EFFORT", "NEXUS_REASONING_EFFORT", "high")
+
+
+def get_vertex_model() -> str:
+    return _env_bi("AETHER_VERTEX_MODEL", "NEXUS_VERTEX_MODEL", "gemini-4-carbon")
+
+
+def get_stage0_vault_db() -> str:
+    return _env_bi("AETHER_STAGE0_VAULT_DB", "ALPHA_MCP_VAULT_DB", "")
+
+
+def get_cloud_mcp_url() -> str:
+    return _env_bi("AETHER_CLOUD_MCP_URL", "ALPHA_MCP_CLOUD_URL", DEFAULT_CLOUD_MCP_URL)
+
+
+def get_platform_env_summary() -> Dict[str, Any]:
+    vault_raw = get_stage0_vault_db()
+    vault_disp = _public_path(str(Path(vault_raw).expanduser())) if vault_raw else "~/alpha-mcp/mcp_alpha_vault.sqlite3"
+    return {
+        "flash_shunt": "1" if is_flash_shunt_engaged() else "0",
+        "flash_shunt_engaged": is_flash_shunt_engaged(),
+        "min_model": get_min_model(),
+        "reasoning_effort": get_reasoning_effort(),
+        "vertex_model": get_vertex_model(),
+        "stage0_vault_db": vault_disp,
+        "cloud_mcp_url": get_cloud_mcp_url(),
+    }
+
+
+def get_runtime_parity_attestation() -> Dict[str, Any]:
+    try:
+        disk_sha = hashlib.sha256(_SERVER_FILE_PATH.read_bytes()).hexdigest()
+    except OSError:
+        disk_sha = ""
+    return {
+        "boot_code_sha256": BOOT_CODE_SHA256,
+        "disk_code_sha256": disk_sha,
+        "runtime_parity_ok": bool(disk_sha) and hmac.compare_digest(BOOT_CODE_SHA256, disk_sha),
+    }
 
 def _ann(title: str, read_only: bool = True) -> Dict[str, Any]:
     return {
@@ -119,6 +193,28 @@ TOOLS_SCHEMA = [
     },
 ]
 
+PROMPTS_SCHEMA = [
+    {
+        "name": "pulse_audit",
+        "description": (
+            "Run a 3-Pillar Aether Pulse token-efficiency, cache-leak, and cohort-rank audit "
+            "across Claude Code, Google Antigravity, and OpenAI Codex CLI."
+        ),
+        "arguments": [
+            {
+                "name": "weight_class",
+                "description": "Optional cohort filter ('Heavyweight', 'Cruiserweight', 'Featherweight', or 'all').",
+                "required": False,
+            },
+            {
+                "name": "limit",
+                "description": "Optional maximum number of cache-leak sessions to inspect (default: 10).",
+                "required": False,
+            },
+        ],
+    }
+]
+
 
 def load_or_scan_report(refresh: bool = False) -> Dict[str, Any]:
     report_path = SCRIPT_DIR / "aether_pulse_report.json"
@@ -145,6 +241,7 @@ def handle_tool_call(name: str, arguments: Optional[Dict[str, Any]] = None) -> D
             1,
         )
         payload = {
+            **get_runtime_parity_attestation(),
             "operator_handle": report["operator_handle"],
             "global_cohort_rank": f"#{my_rank} of {len(board)}",
             "weight_class": m["weight_class"],
@@ -161,6 +258,7 @@ def handle_tool_call(name: str, arguments: Optional[Dict[str, Any]] = None) -> D
             "verified_git_commits": ac.get("verified_30d_commits", 0),
             "proof_of_burn_sha256": report["proof_of_burn_sha256"],
             "badges": m["badges"],
+            "platform_env": get_platform_env_summary(),
             "harness_breakdown": {
                 "claude_code": report["claude_code"]["total_tokens"],
                 "google_antigravity": report["antigravity"]["total_tokens"],
@@ -240,7 +338,8 @@ def handle_tool_call(name: str, arguments: Optional[Dict[str, Any]] = None) -> D
 def process_rpc_request(req: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     method = req.get("method", "")
     req_id = req.get("id")
-    params = req.get("params") or {}
+    raw_params = req.get("params")
+    params = raw_params if isinstance(raw_params, dict) else {}
 
     # Notifications (no id) do not receive a response
     if req_id is None:
@@ -254,7 +353,10 @@ def process_rpc_request(req: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             "id": req_id,
             "result": {
                 "protocolVersion": neg_ver,
-                "capabilities": {"tools": {"listChanged": False}},
+                "capabilities": {
+                    "tools": {"listChanged": False},
+                    "prompts": {"listChanged": False},
+                },
                 "serverInfo": SERVER_INFO,
             },
         }
@@ -268,12 +370,45 @@ def process_rpc_request(req: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         }
     elif method == "tools/call":
         tool_name = params.get("name", "")
-        tool_args = params.get("arguments") or {}
+        raw_args = params.get("arguments")
+        tool_args = raw_args if isinstance(raw_args, dict) else {}
         result = handle_tool_call(tool_name, tool_args)
         return {
             "jsonrpc": "2.0",
             "id": req_id,
             "result": result,
+        }
+    elif method == "prompts/list":
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {"prompts": PROMPTS_SCHEMA},
+        }
+    elif method == "prompts/get":
+        pname = str(params.get("name") or "").strip()
+        raw_pargs = params.get("arguments")
+        p_args = raw_pargs if isinstance(raw_pargs, dict) else {}
+        if pname in ("pulse_audit", "pulse-audit"):
+            wc = str(p_args.get("weight_class") or "").strip() or "all"
+            lim = str(p_args.get("limit") or "").strip() or "10"
+            prompt_text = (
+                f"Run an Aether Pulse 3-Pillar telemetry & cache-hygiene audit (cohort='{wc}', leak_limit={lim}):\n"
+                "1. Call `get_my_efficiency_rank` to verify `runtime_parity_ok=true`, 3-Pillar Leverage Index, Cache Mastery, and Proof-of-Burn SHA-256.\n"
+                f"2. Call `diagnose_cache_leaks` (`limit={lim}`) to pinpoint cold-cache write spikes and low CR/CW sessions.\n"
+                f"3. Call `compare_with_cohort` (`weight_class='{wc}'`) while keeping Flash tiers shunted (`flash_shunt={'1' if is_flash_shunt_engaged() else '0'}`, floor `{get_min_model()}`, effort `{get_reasoning_effort()}`)."
+            )
+            return {
+                "jsonrpc": "2.0",
+                "id": req_id,
+                "result": {
+                    "description": PROMPTS_SCHEMA[0]["description"],
+                    "messages": [{"role": "user", "content": {"type": "text", "text": prompt_text}}],
+                },
+            }
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "error": {"code": -32602, "message": f"Unknown prompt: {pname}"},
         }
     else:
         return {
@@ -307,19 +442,45 @@ def run_stdio_server() -> None:
 def run_self_test() -> int:
     global SCRIPT_DIR
     print("=== Aether Pulse MCP Server Self-Test ===")
-    init_resp = process_rpc_request({
-        "jsonrpc": "2.0",
-        "id": 1,
-        "method": "initialize",
-        "params": {"protocolVersion": "2026-07-28"},
-    })
-    assert init_resp and init_resp["result"]["serverInfo"]["name"] == "aether-pulse-mcp"
-    assert init_resp["result"]["protocolVersion"] == "2026-07-28"
+    for pver in SUPPORTED_PROTOCOL_VERSIONS:
+        init_resp = process_rpc_request({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {"protocolVersion": pver},
+        })
+        assert init_resp and init_resp["result"]["serverInfo"]["name"] == "aether-pulse-mcp"
+        assert init_resp["result"]["protocolVersion"] == pver
+        assert "prompts" in init_resp["result"]["capabilities"]
     tools_resp = process_rpc_request({"jsonrpc": "2.0", "id": 2, "method": "tools/list"})
     tools = tools_resp["result"]["tools"]
     assert len(tools) == 4
     assert all(isinstance(t.get("annotations", {}).get("readOnlyHint"), bool) for t in tools)
     print(f"[PASS] Registered {len(tools)} MCP tools: {[t['name'] for t in tools]}")
+
+    prompts_resp = process_rpc_request({"jsonrpc": "2.0", "id": 2, "method": "prompts/list"})
+    assert prompts_resp and [p["name"] for p in prompts_resp["result"]["prompts"]] == ["pulse_audit"]
+    for pparams in ({"name": "pulse_audit"}, {"name": "pulse_audit", "arguments": None}, {"name": "pulse_audit", "arguments": {}}):
+        pg = process_rpc_request({"jsonrpc": "2.0", "id": 2, "method": "prompts/get", "params": pparams})
+        assert pg and "result" in pg and pg["result"]["messages"][0]["content"]["text"]
+    print("[PASS] Verified nil-arg-safe prompts/list and prompts/get (pulse_audit).")
+
+    saved_env = {k: os.environ.get(k) for k in ("AETHER_MIN_MODEL", "NEXUS_MIN_MODEL", "AETHER_VERTEX_MODEL", "NEXUS_VERTEX_MODEL", "AETHER_CLOUD_MCP_URL", "ALPHA_MCP_CLOUD_URL")}
+    try:
+        for k in saved_env:
+            os.environ.pop(k, None)
+        os.environ["NEXUS_MIN_MODEL"] = "gemini-4-neon-high"
+        os.environ["NEXUS_VERTEX_MODEL"] = "gemini-4-neon"
+        os.environ["ALPHA_MCP_CLOUD_URL"] = "https://example.run.app/mcp"
+        assert get_min_model() == "gemini-4-neon-high"
+        assert get_vertex_model() == "gemini-4-neon"
+        assert get_cloud_mcp_url() == "https://example.run.app/mcp"
+    finally:
+        for k, v in saved_env.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
 
     orig_script_dir = SCRIPT_DIR
     with tempfile.TemporaryDirectory(prefix="aether_pulse_selftest_") as tmp_dir:
@@ -337,6 +498,11 @@ def run_self_test() -> int:
                     "params": {"name": t["name"], "arguments": {}},
                 })
                 assert call_resp and not call_resp["result"]["isError"]
+                if t["name"] == "get_my_efficiency_rank":
+                    rank_obj = json.loads(call_resp["result"]["content"][0]["text"])
+                    assert rank_obj["boot_code_sha256"] == BOOT_CODE_SHA256
+                    assert rank_obj["disk_code_sha256"] == BOOT_CODE_SHA256
+                    assert rank_obj["runtime_parity_ok"] is True
                 print(f"[PASS] tools/call -> {t['name']} succeeded.")
         finally:
             SCRIPT_DIR = orig_script_dir
@@ -345,6 +511,6 @@ def run_self_test() -> int:
 
 
 if __name__ == "__main__":
-    if "--self-test" in sys.argv:
+    if "--self-test" in sys.argv or "--selftest" in sys.argv:
         sys.exit(run_self_test())
     run_stdio_server()
